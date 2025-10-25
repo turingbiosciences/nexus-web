@@ -1,13 +1,16 @@
+/* eslint-disable */
+// Jest configuration leveraging Next.js SWC transform via next/jest.
+// This fixes JSX/TSX parsing issues encountered after removing Babel.
+const nextJest = require("next/jest");
+
+const createJestConfig = nextJest({
+  dir: "./",
+});
+
 /** @type {import('jest').Config} */
-module.exports = {
-  preset: "ts-jest",
+const customJestConfig = {
   testEnvironment: "jsdom",
-  roots: ["<rootDir>/src"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
-  moduleFileExtensions: ["ts", "tsx", "js", "jsx"],
-  transform: {
-    "^.+\\.(ts|tsx)$": "babel-jest",
-  },
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
@@ -22,10 +25,12 @@ module.exports = {
   coverageReporters: ["text", "lcov", "json"],
   coverageThreshold: {
     global: {
+      statements: 80,
       branches: 80,
       functions: 80,
       lines: 80,
-      statements: 80,
     },
   },
 };
+
+module.exports = createJestConfig(customJestConfig);

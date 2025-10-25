@@ -1,5 +1,5 @@
-import { CallbackClient } from "@/components/auth/callback-client";
-
+// Obsolete callback page removed. Callback handling is performed via API routes under /api/logto.
+// This file intentionally left blank to avoid broken import; exporting a 404-like noop.
 export default function CallbackPage() {
-  return <CallbackClient />;
+  return null;
 }

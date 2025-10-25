@@ -1,12 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { Header } from "@/components/layout/header";
-import { AuthButton } from "@/components/auth/auth-button";
 import React from "react";
 
 // Mock AuthButton to avoid auth logic complexity
 jest.mock("@/components/auth/auth-button", () => ({
   AuthButton: () => <button>Mock Sign In</button>,
-}));
+})); // Mock is automatically hoisted by Jest; no direct import needed
 
 // Mock Logo component
 jest.mock("@/components/ui/logo", () => ({
