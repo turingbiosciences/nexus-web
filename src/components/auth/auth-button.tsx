@@ -1,41 +1,62 @@
-'use client'
+"use client";
 
-import { LogIn, LogOut, User } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { LogIn, LogOut, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useGlobalAuth } from "@/components/providers/global-auth-provider";
 
 export function AuthButton() {
-  const router = useRouter()
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/logto/user')
-        setIsAuthenticated(response.ok)
-      } catch (error) {
-        console.error('Auth check error:', error)
-        setIsAuthenticated(false)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    checkAuth()
-  }, [])
+  const { isAuthenticated, isLoading } = useGlobalAuth();
 
   const handleSignIn = () => {
-    window.location.href = '/api/logto/sign-in'
-  }
+    // Use API route directly (same as home page link)
+    window.location.href = "/api/logto/sign-in";
+  };
 
-  const handleSignOut = () => {
-    window.location.href = '/api/logto/sign-out'
-  }
+  const handleSignOut = async () => {
+    try {
+      // First try the standard Logto sign-out
+      try {
+        const response = await fetch("/api/logto/sign-out", {
+          method: "GET",
+          credentials: "include",
+        });
 
-  // Debug logging
-  console.log('AuthButton - isLoading:', isLoading, 'isAuthenticated:', isAuthenticated)
+        if (response.ok || response.status === 307) {
+          // If successful or redirect, follow the redirect
+          window.location.href = "/api/logto/sign-out";
+          return;
+        }
+      } catch (error) {
+        console.warn(
+          "Standard sign-out failed, trying manual sign-out:",
+          error
+        );
+      }
+
+      // Fallback to manual sign-out
+      try {
+        const manualResponse = await fetch("/api/logto/manual-sign-out", {
+          method: "POST",
+          credentials: "include",
+        });
+
+        if (manualResponse.ok) {
+          // Manual sign-out successful, reload the page
+          window.location.reload();
+          return;
+        }
+      } catch (error) {
+        console.error("Manual sign-out also failed:", error);
+      }
+
+      // Last resort: just reload the page
+      window.location.reload();
+    } catch (error) {
+      console.error("Sign out error:", error);
+      // If everything fails, just reload
+      window.location.reload();
+    }
+  };
 
   if (isLoading) {
     return (
@@ -43,7 +64,7 @@ export function AuthButton() {
         <User className="mr-2 h-4 w-4" />
         Loading...
       </Button>
-    )
+    );
   }
 
   if (isAuthenticated) {
@@ -52,7 +73,7 @@ export function AuthButton() {
         <LogOut className="mr-2 h-4 w-4" />
         Sign Out
       </Button>
-    )
+    );
   }
 
   return (
@@ -60,5 +81,5 @@ export function AuthButton() {
       <LogIn className="mr-2 h-4 w-4" />
       Sign In
     </Button>
-  )
+  );
 }

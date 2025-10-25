@@ -1,15 +1,47 @@
 @import "tailwindcss";
 
+/**
+ * Design Tokens
+ * Centralized color and spacing values for easier maintenance
+ */
 :root {
+  /* Base colors */
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Brand colors */
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+
+  /* Semantic colors */
+  --color-success: #10b981;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+
+  /* Layout */
+  --max-width-container: 80rem; /* 1280px */
+  --spacing-page: 2rem;
+
+  /* Border radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
 }
 
 @theme inline {
+  /* Map design tokens to Tailwind theme */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+
+  /* Typography */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Container sizes */
+  --width-container: var(--max-width-container);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +55,51 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/**
+ * Component Base Styles
+ * Reusable base classes for common patterns
+ */
+@layer components {
+  /* Container utility */
+  .container-page {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Card utility */
+  .card {
+    @apply bg-white rounded-lg shadow-sm border;
+  }
+
+  /* Alert base styles */
+  .alert-error {
+    @apply rounded-lg p-4 border bg-red-50 border-red-200;
+  }
+
+  .alert-success {
+    @apply rounded-lg p-4 border bg-green-50 border-green-200;
+  }
+
+  .alert-info {
+    @apply rounded-lg p-4 border bg-blue-50 border-blue-200;
+  }
+
+  .alert-warning {
+    @apply rounded-lg p-4 border bg-yellow-50 border-yellow-200;
+  }
+
+  /* Button base */
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-lg font-medium transition-colors bg-gray-200 hover:bg-gray-300 text-gray-900;
+  }
+
+  /* Stat card */
+  .stat-card {
+    @apply rounded-lg p-4;
+  }
 }
