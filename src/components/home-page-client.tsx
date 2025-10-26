@@ -54,8 +54,6 @@ export function HomePageClient() {
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Dashboard</h2>
           </div>
 
-          <Dummy />
-
           {isLoading ? (
             <LoadingCard />
           ) : !isAuthenticated ? (
@@ -74,7 +72,8 @@ export function HomePageClient() {
                 />
               </div>
 
-              <UploadStatistics />
+              {/* <UploadStatistics /> */}
+              <Dummy />
             </>
           )}
         </div>
