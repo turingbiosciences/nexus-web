@@ -94,8 +94,11 @@ export function DatasetsSection({
                     size="sm"
                     variant="ghost"
                     className="text-xs"
-                    disabled
-                    title="Download coming soon"
+                    onClick={() => {
+                      // Temporary stub for download action; logs for test instrumentation
+                      console.log("Download dataset", d.id);
+                    }}
+                    aria-label={`Download ${d.filename}`}
                   >
                     Download
                   </Button>
