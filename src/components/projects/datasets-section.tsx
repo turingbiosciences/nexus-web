@@ -97,14 +97,12 @@ export function DatasetsSection({
                     className="text-xs"
                     disabled={deleteMutation.isPending}
                     onClick={() => {
+                      const newDatasets = project.datasets?.filter(
+                        (x) => x.id !== d.id
+                      ) || [];
                       updateProject(project.id, {
-                        datasets: project.datasets?.filter(
-                          (x) => x.id !== d.id
-                        ),
-                        datasetCount: Math.max(
-                          (project.datasetCount || 1) - 1,
-                          0
-                        ),
+                        datasets: newDatasets,
+                        datasetCount: newDatasets.length,
                         lastActivity: "dataset deleted",
                       });
                       deleteMutation.mutate(d.id);
