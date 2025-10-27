@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   ReactNode,
 } from "react";
 import {
@@ -33,16 +34,17 @@ const ProjectsContext = createContext<ProjectsContextValue | undefined>(
 
 export function ProjectsProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Initial load (mock or live via repository)
-  if (projects.length === 0) {
-    // This is a client component; safe to kick async load without useEffect minimal risk here, but better with effect.
-    // Using lazy pattern to avoid multiple set states.
-    (async () => {
-      const list = await projectsRepository.list();
-      if (projects.length === 0) setProjects(list);
-    })();
-  }
+  useEffect(() => {
+    if (projects.length === 0 && !loading) {
+      setLoading(true);
+      projectsRepository.list().then((list) => {
+        setProjects((prev) => (prev.length === 0 ? list : prev));
+        setLoading(false);
+      });
+    }
+  }, [projects.length, loading]);
 
   const createProject = useCallback(
     (data: { name: string; description: string }) => {
