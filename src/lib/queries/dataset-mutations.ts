@@ -38,13 +38,17 @@ export function useUploadDatasetMutation(projectId: string) {
     mutationKey: ["upload", projectId],
     mutationFn: (file: File) => apiUploadDataset({ projectId, file }),
     onMutate: async () => {
+      // Cancel in-flight queries to prevent race conditions
       await qc.cancelQueries({ queryKey: datasetsKey(projectId) });
-      qc.invalidateQueries({ queryKey: datasetsKey(projectId) });
+      // Note: Do NOT invalidate here - that defeats optimistic updates
+      // The component handles optimistic state via local state management
     },
     onError: () => {
+      // On error, invalidate to refetch and revert to server state
       qc.invalidateQueries({ queryKey: datasetsKey(projectId) });
     },
     onSuccess: () => {
+      // On success, invalidate to refetch with fresh server data
       qc.invalidateQueries({ queryKey: datasetsKey(projectId) });
     },
   });
@@ -57,14 +61,18 @@ export function useDeleteDatasetMutation(projectId: string) {
     mutationFn: (datasetId: string) =>
       apiDeleteDataset({ projectId, datasetId }),
     onMutate: async () => {
+      // Cancel in-flight queries to prevent race conditions
       await qc.cancelQueries({ queryKey: datasetsKey(projectId) });
-      qc.invalidateQueries({ queryKey: datasetsKey(projectId) });
+      // Note: Do NOT invalidate here - that defeats optimistic updates
+      // The component handles optimistic state via pendingDeleteIds
     },
     onError: () => {
-      // Rollback by refetching; UI component already keeps local pendingDeleteIds state which will be cleared via onSettled
+      // On error, invalidate to refetch and revert to server state
+      // The component's onSettled callback will clear pendingDeleteIds
       qc.invalidateQueries({ queryKey: datasetsKey(projectId) });
     },
     onSuccess: () => {
+      // On success, invalidate to refetch with fresh server data
       qc.invalidateQueries({ queryKey: datasetsKey(projectId) });
     },
   });
