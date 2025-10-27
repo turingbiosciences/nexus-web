@@ -2,36 +2,12 @@
 
 import Link from "next/link";
 import { Project } from "@/types/project";
-import { Clock, Database, CheckCircle, Play, Settings2 } from "lucide-react";
+import { Clock, Database } from "lucide-react";
+import { statusConfig } from "@/types/project";
 
 interface ProjectCardProps {
   project: Project;
 }
-
-const statusConfig = {
-  complete: {
-    icon: CheckCircle,
-    label: "Complete",
-    color: "text-green-600",
-    bg: "bg-green-50",
-    border: "border-green-200",
-  },
-  running: {
-    icon: Play,
-    label: "Running",
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
-  },
-  setup: {
-    icon: Settings2,
-    label: "Setup",
-    color: "text-yellow-600",
-    bg: "bg-yellow-50",
-    border: "border-yellow-200",
-  },
-};
-
 export function ProjectCard({ project }: ProjectCardProps) {
   const config = statusConfig[project.status];
   const StatusIcon = config.icon;
