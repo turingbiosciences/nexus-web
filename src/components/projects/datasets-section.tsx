@@ -94,7 +94,8 @@ export function DatasetsSection({
                     size="sm"
                     variant="ghost"
                     className="text-xs"
-                    onClick={() => console.log("Download dataset", d.id)}
+                    disabled
+                    title="Download coming soon"
                   >
                     Download
                   </Button>
