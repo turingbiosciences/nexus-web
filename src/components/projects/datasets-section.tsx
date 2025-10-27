@@ -7,6 +7,7 @@ import { useProjects } from "@/components/providers/projects-provider";
 import { useDatasets } from "@/lib/queries/datasets";
 import { reconcileDatasets } from "@/lib/reconcile-datasets";
 import { useState } from "react";
+import { useToast } from "@/components/ui/toast-provider";
 import {
   useUploadDatasetMutation,
   useDeleteDatasetMutation,
@@ -38,13 +39,19 @@ export function DatasetsSection({
   const nextCursor = (datasetsQuery as { nextCursor?: string }).nextCursor;
   const uploadMutation = useUploadDatasetMutation(projectId);
   const deleteMutation = useDeleteDatasetMutation(projectId);
+  const { push } = useToast();
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
 
   if (!project) return null;
 
   const optimistic = (project.datasets || []).filter((d) =>
     d.id.startsWith("optimistic-")
   );
-  const combined = reconcileDatasets({ remote: remoteDatasets, optimistic });
+  const combined = reconcileDatasets({
+    remote: remoteDatasets,
+    optimistic,
+    pendingDeleteIds,
+  });
 
   return (
     <div className="card">
@@ -97,15 +104,35 @@ export function DatasetsSection({
                     className="text-xs"
                     disabled={deleteMutation.isPending}
                     onClick={() => {
-                      const newDatasets = project.datasets?.filter(
-                        (x) => x.id !== d.id
-                      ) || [];
+                      const newDatasets =
+                        project.datasets?.filter((x) => x.id !== d.id) || [];
                       updateProject(project.id, {
                         datasets: newDatasets,
                         datasetCount: newDatasets.length,
                         lastActivity: "dataset deleted",
                       });
-                      deleteMutation.mutate(d.id);
+                      setPendingDeleteIds((prev) => [...prev, d.id]);
+                      deleteMutation.mutate(d.id, {
+                        onSuccess: () => {
+                          push({
+                            title: "Dataset deleted",
+                            description: `${d.filename} was removed successfully.`,
+                            variant: "default",
+                          });
+                        },
+                        onError: () => {
+                          push({
+                            title: "Deletion failed",
+                            description: `Could not delete ${d.filename}. Please retry.`,
+                            variant: "destructive",
+                          });
+                        },
+                        onSettled: () => {
+                          setPendingDeleteIds((prev) =>
+                            prev.filter((id) => id !== d.id)
+                          );
+                        },
+                      });
                     }}
                   >
                     {deleteMutation.isPending ? "Deleting..." : "Delete"}
@@ -134,7 +161,22 @@ export function DatasetsSection({
               if (!project) return;
               files.forEach((f) => {
                 addDataset(project.id, { name: f.name, size: f.size });
-                uploadMutation.mutate(f);
+                uploadMutation.mutate(f, {
+                  onSuccess: () => {
+                    push({
+                      title: "Upload complete",
+                      description: `${f.name} was uploaded successfully.`,
+                      variant: "default",
+                    });
+                  },
+                  onError: () => {
+                    push({
+                      title: "Upload failed",
+                      description: `Could not upload ${f.name}. Please try again.`,
+                      variant: "destructive",
+                    });
+                  },
+                });
               });
             }}
           />

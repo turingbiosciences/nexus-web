@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { datasetsKey } from "@/lib/queries/keys";
 import { ProjectDataset } from "@/types/project";
 
 interface UploadArgs {
@@ -36,33 +37,15 @@ export function useUploadDatasetMutation(projectId: string) {
   return useMutation({
     mutationKey: ["upload", projectId],
     mutationFn: (file: File) => apiUploadDataset({ projectId, file }),
-    onMutate: async (file: File) => {
-      await qc.cancelQueries({ queryKey: ["datasets", projectId] });
-      const prev = qc.getQueryData<ProjectDataset[]>(["datasets", projectId]);
-      const optimistic: ProjectDataset = {
-        id: `optimistic-${crypto.randomUUID()}`,
-        filename: file.name,
-        size: file.size,
-        uploadedAt: new Date(),
-      };
-      qc.setQueryData<ProjectDataset[]>(
-        ["datasets", projectId],
-        [...(prev || []), optimistic]
-      );
-      return { prev, optimisticId: optimistic.id };
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: datasetsKey(projectId) });
+      qc.invalidateQueries({ queryKey: datasetsKey(projectId) });
     },
-    onError: (_err, _file, ctx) => {
-      if (ctx?.prev) {
-        qc.setQueryData(["datasets", projectId], ctx.prev);
-      }
+    onError: () => {
+      qc.invalidateQueries({ queryKey: datasetsKey(projectId) });
     },
-    onSuccess: (data, _file, ctx) => {
-      const current =
-        qc.getQueryData<ProjectDataset[]>(["datasets", projectId]) || [];
-      qc.setQueryData<ProjectDataset[]>(
-        ["datasets", projectId],
-        current.map((d) => (d.id === ctx?.optimisticId ? data : d))
-      );
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: datasetsKey(projectId) });
     },
   });
 }
@@ -73,20 +56,16 @@ export function useDeleteDatasetMutation(projectId: string) {
     mutationKey: ["delete", projectId],
     mutationFn: (datasetId: string) =>
       apiDeleteDataset({ projectId, datasetId }),
-    onMutate: async (datasetId: string) => {
-      await qc.cancelQueries({ queryKey: ["datasets", projectId] });
-      const prev = qc.getQueryData<ProjectDataset[]>(["datasets", projectId]);
-      qc.setQueryData<ProjectDataset[]>(
-        ["datasets", projectId],
-        (prev || []).filter((d) => d.id !== datasetId)
-      );
-      return { prev };
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: datasetsKey(projectId) });
+      qc.invalidateQueries({ queryKey: datasetsKey(projectId) });
     },
-    onError: (_err, _id, ctx) => {
-      if (ctx?.prev) qc.setQueryData(["datasets", projectId], ctx.prev);
+    onError: () => {
+      // Rollback by refetching; UI component already keeps local pendingDeleteIds state which will be cleared via onSettled
+      qc.invalidateQueries({ queryKey: datasetsKey(projectId) });
     },
     onSuccess: () => {
-      // Optionally refetch for server reconciliation
+      qc.invalidateQueries({ queryKey: datasetsKey(projectId) });
     },
   });
 }

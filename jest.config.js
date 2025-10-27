@@ -14,11 +14,11 @@ const customJestConfig = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
-  testMatch: ["**/__tests__/**/*.(ts|tsx)"],
+  testMatch: ["**/__tests__/**/*.(ts|tsx)", "**/?(*.)+(test|spec).(ts|tsx)"],
   collectCoverageFrom: [
-    "src/components/layout/**/*.{ts,tsx}",
-    "src/components/auth/**/*.{ts,tsx}",
+    "src/**/*.{ts,tsx}",
     "!src/**/*.d.ts",
+    "!src/app/**", // exclude Next.js route files for now
   ],
   collectCoverage: true,
   coverageDirectory: "coverage",

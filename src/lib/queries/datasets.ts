@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { datasetsKey } from "@/lib/queries/keys";
 import { ProjectDataset } from "@/types/project";
 import { IS_MOCK } from "@/config/flags";
 import { projectsRepository } from "@/data";
@@ -72,7 +73,7 @@ export function useDatasets(
       : enabledOrOptions;
   const { enabled = true, cursor, limit, paginated } = options;
   const query = useQuery({
-    queryKey: ["datasets", projectId, cursor, limit],
+    queryKey: datasetsKey(projectId, cursor, limit),
     queryFn: () => fetchDatasets(projectId, { cursor, limit }),
     enabled: enabled && !!projectId,
     staleTime: 30_000,
