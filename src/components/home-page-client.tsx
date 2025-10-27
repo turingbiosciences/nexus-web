@@ -9,16 +9,21 @@ import { LoadingCard } from "@/components/ui/loading-card";
 import { SignInPrompt } from "@/components/auth/sign-in-prompt";
 import { ProjectList } from "@/components/projects/project-list";
 import { ProjectStatusChart } from "@/components/projects/project-status-chart";
-import { mockProjects, getProjectStatusCount } from "@/lib/mock-data";
+// Projects come from provider now
+import { useProjects } from "@/components/providers/projects-provider";
+import { useState } from "react";
+import { NewProjectDialog } from "@/components/projects/new-project-dialog";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function HomePageClient() {
+  const [dialogOpen, setDialogOpen] = useState(false);
   const searchParams = useSearchParams();
   const authError = searchParams.get("error");
   const { isAuthenticated, isLoading } = useGlobalAuth();
 
-  const statusCount = getProjectStatusCount(mockProjects);
+  const { projects, getStatusCounts } = useProjects();
+  const statusCount = getStatusCounts();
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -68,7 +73,7 @@ export function HomePageClient() {
                     Manage and monitor your biosciences research projects
                   </p>
                 </div>
-                <Button>
+                <Button onClick={() => setDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   New Project
                 </Button>
@@ -83,9 +88,17 @@ export function HomePageClient() {
 
                 {/* Project List - Main content */}
                 <div className="lg:col-span-2">
-                  <ProjectList projects={mockProjects} />
+                  <ProjectList projects={projects} />
                 </div>
               </div>
+              <NewProjectDialog
+                open={dialogOpen}
+                onClose={() => setDialogOpen(false)}
+                onCreated={(id) => {
+                  // Optional: navigate to new project detail page
+                  console.log("Project created", id);
+                }}
+              />
             </>
           )}
         </div>

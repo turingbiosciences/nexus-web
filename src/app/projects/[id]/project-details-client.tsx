@@ -4,11 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { getProjectById } from "@/lib/mock-data";
+// Use projects provider for dynamic state
+import { useProjects } from "@/components/providers/projects-provider";
 import { useGlobalAuth } from "@/components/providers/global-auth-provider";
 import { SignInPrompt } from "@/components/auth/sign-in-prompt";
 import { LoadingCard } from "@/components/ui/loading-card";
 import { Button } from "@/components/ui/button";
+import { DatasetsSection } from "@/components/projects/datasets-section";
 import {
   ArrowLeft,
   Settings,
@@ -18,7 +20,6 @@ import {
   Calendar,
   Database,
   Clock,
-  Upload,
 } from "lucide-react";
 
 interface ProjectDetailsClientProps {
@@ -56,6 +57,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     "overview"
   );
 
+  const { getProjectById, updateProject } = useProjects();
   const project = getProjectById(projectId);
 
   if (isLoading) {
@@ -219,69 +221,56 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
           {/* Tab Content */}
           {activeTab === "overview" ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Datasets Section */}
-              <div className="card">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Datasets
-                </h3>
-                {project.datasetCount === 0 ? (
-                  <div className="text-center py-8">
-                    <Database className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600 mb-4">
-                      No datasets uploaded yet
-                    </p>
-                    <Button size="sm">
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload Dataset
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="text-gray-600">
-                      This project has {project.datasetCount} dataset(s)
-                      uploaded.
-                    </p>
-                    <Button size="sm" variant="outline">
-                      View Datasets
-                    </Button>
-                  </div>
-                )}
-              </div>
+              <DatasetsSection projectId={project.id} />
 
               {/* Activity Section */}
               <div className="card">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Recent Activity
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3 text-sm">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5" />
-                    <div>
-                      <p className="text-gray-900 font-medium">
-                        Project updated
-                      </p>
-                      <p className="text-gray-600">{project.lastActivity}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 text-sm">
-                    <div className="w-2 h-2 bg-gray-300 rounded-full mt-1.5" />
-                    <div>
-                      <p className="text-gray-900 font-medium">
-                        Project created
-                      </p>
-                      <p className="text-gray-600">
-                        {project.createdAt.toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
+                <h3 className="card-title">Recent Activity</h3>
+                <div className="space-y-4">
+                  {(!project.activities || project.activities.length === 0) && (
+                    <p className="text-sm text-gray-600">No activity yet.</p>
+                  )}
+                  {project.activities && project.activities.length > 0 && (
+                    <ul className="space-y-3">
+                      {[...project.activities]
+                        .sort((a, b) => b.at.getTime() - a.at.getTime())
+                        .slice(0, 20)
+                        .map((act) => (
+                          <li
+                            key={act.id}
+                            className="flex items-start gap-3 text-sm"
+                          >
+                            <div
+                              className={`w-2 h-2 rounded-full mt-1.5 ${
+                                act.type === "upload"
+                                  ? "bg-blue-500"
+                                  : act.type === "status_change"
+                                  ? "bg-yellow-500"
+                                  : act.type === "delete"
+                                  ? "bg-red-500"
+                                  : act.type === "updated"
+                                  ? "bg-gray-400"
+                                  : "bg-green-500"
+                              }`}
+                            />
+                            <div>
+                              <p className="text-gray-900 font-medium">
+                                {act.message}
+                              </p>
+                              <p className="text-gray-600 text-xs">
+                                {act.at.toLocaleString()}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                    </ul>
+                  )}
                 </div>
               </div>
             </div>
           ) : (
             <div className="card">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Project Settings
-              </h3>
+              <h3 className="card-title">Project Settings</h3>
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -290,6 +279,9 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
                   <input
                     type="text"
                     defaultValue={project.name}
+                    onBlur={(e) =>
+                      updateProject(project.id, { name: e.target.value })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -299,25 +291,15 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
                   </label>
                   <textarea
                     defaultValue={project.description}
+                    onBlur={(e) =>
+                      updateProject(project.id, { description: e.target.value })
+                    }
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status
-                  </label>
-                  <select
-                    defaultValue={project.status}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="setup">Setup</option>
-                    <option value="running">Running</option>
-                    <option value="complete">Complete</option>
-                  </select>
-                </div>
                 <div className="pt-4 border-t">
-                  <Button>Save Changes</Button>
+                  <Button disabled>All changes auto-saved</Button>
                 </div>
               </div>
             </div>

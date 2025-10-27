@@ -31,9 +31,7 @@ export function ProjectStatusChart({ statusCount }: ProjectStatusChartProps) {
   if (total === 0) {
     return (
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Project Status
-        </h3>
+        <h3 className="card-title">Project Status</h3>
         <div className="text-center py-8 text-gray-500">
           No projects to display
         </div>
@@ -64,9 +62,7 @@ export function ProjectStatusChart({ statusCount }: ProjectStatusChartProps) {
 
   return (
     <div className="card">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">
-        Project Status Overview
-      </h3>
+      <h3 className="card-title mb-6">Project Status Overview</h3>
 
       <div className="flex items-center justify-center mb-6">
         <div className="relative">

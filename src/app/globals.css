@@ -69,7 +69,17 @@ body {
 
   /* Card utility */
   .card {
-    @apply bg-white rounded-lg shadow-sm border p-4;
+    @apply bg-white rounded-lg shadow-sm border-dashed p-4;
+  }
+
+  /* Card title utility */
+  .card-title {
+    @apply text-lg font-semibold text-gray-900 mb-4;
+  }
+
+  /* Borderless card variant */
+  .card--borderless {
+    @apply bg-white rounded-lg p-4; /* no border, no shadow */
   }
 
   /* Alert base styles */

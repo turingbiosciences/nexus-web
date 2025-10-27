@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ReactQueryProvider } from "@/components/providers/react-query-provider";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { ProjectsProvider } from "@/components/providers/projects-provider";
 import { GlobalAuthProvider } from "@/components/providers/global-auth-provider";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -20,11 +21,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ReactQueryProvider>
-          <AuthProvider>
-            <GlobalAuthProvider>{children}</GlobalAuthProvider>
-          </AuthProvider>
-        </ReactQueryProvider>
+        <AuthProvider>
+          <GlobalAuthProvider>
+            <ProjectsProvider>
+              <ReactQueryProvider>{children}</ReactQueryProvider>
+            </ProjectsProvider>
+          </GlobalAuthProvider>
+        </AuthProvider>
       </body>
     </html>
   );
