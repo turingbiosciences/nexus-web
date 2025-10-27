@@ -69,7 +69,7 @@ body {
 
   /* Card utility */
   .card {
-    @apply bg-white rounded-lg shadow-sm border;
+    @apply bg-white rounded-lg shadow-sm border p-4;
   }
 
   /* Alert base styles */

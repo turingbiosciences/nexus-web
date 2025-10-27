@@ -2,19 +2,23 @@
 
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { FileUploader } from "@/components/file-upload/file-uploader";
 import { DebugPanel } from "@/components/debug/debug-panel";
 import { useSearchParams } from "next/navigation";
 import { useGlobalAuth } from "@/components/providers/global-auth-provider";
-import { Dummy } from "./dummy/dummy";
-import { UploadStatistics } from "@/components/upload/upload-statistics";
 import { LoadingCard } from "@/components/ui/loading-card";
 import { SignInPrompt } from "@/components/auth/sign-in-prompt";
+import { ProjectList } from "@/components/projects/project-list";
+import { ProjectStatusChart } from "@/components/projects/project-status-chart";
+import { mockProjects, getProjectStatusCount } from "@/lib/mock-data";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function HomePageClient() {
   const searchParams = useSearchParams();
   const authError = searchParams.get("error");
   const { isAuthenticated, isLoading } = useGlobalAuth();
+
+  const statusCount = getProjectStatusCount(mockProjects);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -50,30 +54,38 @@ export function HomePageClient() {
         )}
 
         <div className="space-y-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Dashboard</h2>
-          </div>
-
           {isLoading ? (
             <LoadingCard />
           ) : !isAuthenticated ? (
             <SignInPrompt />
           ) : (
             <>
-              <div className="card p-6">
-                <FileUploader
-                  maxSize={5 * 1024 * 1024 * 1024} // 5GB
-                  onUploadComplete={(files) => {
-                    console.log("Upload completed:", files);
-                  }}
-                  onUploadProgress={(fileId, progress) => {
-                    console.log("Upload progress:", fileId, progress);
-                  }}
-                />
+              {/* Dashboard Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
+                  <p className="text-gray-600 mt-1">
+                    Manage and monitor your biosciences research projects
+                  </p>
+                </div>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Project
+                </Button>
               </div>
 
-              {/* <UploadStatistics /> */}
-              <Dummy />
+              {/* Dashboard Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Status Chart - Left sidebar */}
+                <div className="lg:col-span-1">
+                  <ProjectStatusChart statusCount={statusCount} />
+                </div>
+
+                {/* Project List - Main content */}
+                <div className="lg:col-span-2">
+                  <ProjectList projects={mockProjects} />
+                </div>
+              </div>
             </>
           )}
         </div>
