@@ -1,6 +1,6 @@
 "use client";
 
-import { ProjectStatusCount } from "@/types/project";
+import { ProjectStatusCount, STATUS_ORDER } from "@/types/project";
 import { CheckCircle, Play, Settings2 } from "lucide-react";
 
 interface ProjectStatusChartProps {
@@ -51,7 +51,7 @@ export function ProjectStatusChart({ statusCount }: ProjectStatusChartProps) {
   let currentAngle = 0;
   const gradientStops: string[] = [];
 
-  (["complete", "running", "setup"] as const).forEach((status) => {
+  STATUS_ORDER.forEach((status) => {
     const percent = percentages[status];
     if (percent > 0) {
       const endAngle = currentAngle + (percent * 360) / 100;
@@ -86,7 +86,7 @@ export function ProjectStatusChart({ statusCount }: ProjectStatusChartProps) {
       </div>
 
       <div className="space-y-3">
-        {(["complete", "running", "setup"] as const).map((status) => {
+        {STATUS_ORDER.map((status) => {
           const config = statusConfig[status];
           const Icon = config.icon;
           const count = statusCount[status];

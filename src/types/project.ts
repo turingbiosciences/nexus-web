@@ -1,5 +1,8 @@
 export type ProjectStatus = "complete" | "running" | "setup";
 
+// Define status order for consistent iteration across the application
+export const STATUS_ORDER = ["complete", "running", "setup"] as const;
+
 export interface Project {
   id: string;
   name: string;
