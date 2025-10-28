@@ -44,7 +44,9 @@ describe("ToastProvider", () => {
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
     jest.useRealTimers();
   });
 
@@ -163,6 +165,34 @@ describe("ToastProvider", () => {
     await waitFor(() => {
       expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
+  });
+
+  it("cancels auto-dismiss timer when manually dismissed early", async () => {
+    const user = userEvent.setup({ delay: null });
+    render(
+      <ToastProvider>
+        <TestComponent />
+      </ToastProvider>
+    );
+
+    // Push a toast with short custom duration
+    const customButton = screen.getByRole("button", { name: /show custom duration/i });
+    await user.click(customButton);
+    expect(screen.getByRole("status")).toHaveTextContent(/custom duration/i);
+
+    // Manually dismiss immediately
+    const dismissButton = screen.getByRole("button", { name: /dismiss notification/i });
+    await user.click(dismissButton);
+
+    await waitFor(() => {
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
+
+    // Advance timers beyond original duration; toast should not reappear
+    act(() => {
+      jest.advanceTimersByTime(5000);
+    });
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("does not auto-dismiss when duration is 0", async () => {

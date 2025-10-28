@@ -4,6 +4,8 @@ import {
   useCallback,
   useContext,
   useState,
+  useRef,
+  useEffect,
   ReactNode,
 } from "react";
 import { cn } from "@/lib/utils";
@@ -27,7 +29,16 @@ const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  // Track timeout handles so we can clear them on manual dismiss or unmount
+  const timersRef = useRef<Map<string, number>>(new Map());
+
   const dismiss = useCallback((id: string) => {
+    // Clear any scheduled auto-dismiss timer
+    const handle = timersRef.current.get(id);
+    if (handle) {
+      clearTimeout(handle);
+      timersRef.current.delete(id);
+    }
     setToasts((ts) => ts.filter((t) => t.id !== id));
   }, []);
 
@@ -37,12 +48,27 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       const toast: Toast = { duration: 5000, variant: "default", ...t, id };
       setToasts((ts) => [...ts, toast]);
       if (toast.duration && toast.duration > 0) {
-        setTimeout(() => dismiss(id), toast.duration);
+        const handle = window.setTimeout(() => {
+          // Remove timer reference before invoking dismiss to avoid double clear
+          timersRef.current.delete(id);
+          dismiss(id);
+        }, toast.duration);
+        timersRef.current.set(id, handle);
       }
       return id;
     },
     [dismiss]
   );
+
+  // Ensure all timers are cleared if provider unmounts
+  useEffect(() => {
+    // Snapshot map reference once; we never replace the Map instance
+    const timers = timersRef.current;
+    return () => {
+      timers.forEach((h) => clearTimeout(h));
+      timers.clear();
+    };
+  }, []);
 
   return (
     <ToastContext.Provider value={{ toasts, push, dismiss }}>
