@@ -431,8 +431,8 @@ export function FileUploader({
   });
 
   return (
-    <div className="w-full space-y-4">
-      <h3 className="text-xl font-semibold text-gray-900 mb-4">Upload Files</h3>
+    <div className="card--borderless w-full">
+      <h3 className="card-title">Upload Files</h3>
       {authError && (
         <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {authError}
@@ -467,7 +467,7 @@ export function FileUploader({
       {/* Upload List */}
       {uploads.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-lg font-medium">Upload Queue</h3>
+          <h3 className="card-title mb-2">Upload Queue</h3>
           {uploads.map((u) => (
             <UploadRow
               key={u.id}
