@@ -176,12 +176,16 @@ describe("ToastProvider", () => {
     );
 
     // Push a toast with short custom duration
-    const customButton = screen.getByRole("button", { name: /show custom duration/i });
+    const customButton = screen.getByRole("button", {
+      name: /show custom duration/i,
+    });
     await user.click(customButton);
     expect(screen.getByRole("status")).toHaveTextContent(/custom duration/i);
 
     // Manually dismiss immediately
-    const dismissButton = screen.getByRole("button", { name: /dismiss notification/i });
+    const dismissButton = screen.getByRole("button", {
+      name: /dismiss notification/i,
+    });
     await user.click(dismissButton);
 
     await waitFor(() => {

@@ -26,10 +26,11 @@ const customJestConfig = {
   coverageThreshold: {
     global: {
       // Raised thresholds after expanding test coverage across UI, upload, dummy components
-      statements: 55,
-      branches: 46,
-      functions: 54,
-      lines: 56,
+      // Updated after provider + utility + mock-data tests; keep conservative buffer below current (~71/57/70/73)
+      statements: 65,
+      branches: 52,
+      functions: 62,
+      lines: 66,
     },
   },
 };

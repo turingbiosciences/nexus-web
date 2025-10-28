@@ -5,7 +5,9 @@ import { UploadStatistics } from "../upload-statistics";
 describe("UploadStatistics", () => {
   it("renders heading and default stats", () => {
     render(<UploadStatistics />);
-    expect(screen.getByRole("heading", { name: /upload statistics/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /upload statistics/i })
+    ).toBeInTheDocument();
     expect(screen.getByText(/total files/i)).toBeInTheDocument();
     expect(screen.getByText("5")).toBeInTheDocument(); // default totalFiles
     expect(screen.getByText(/total size/i)).toBeInTheDocument();
