@@ -22,9 +22,14 @@ export function HomePageClient() {
   const authError = searchParams.get("error");
   const { isAuthenticated, isLoading: authLoading } = useGlobalAuth();
 
-  const { projects, loading: projectsLoading, error: projectsError, getStatusCounts } = useProjects();
+  const {
+    projects,
+    loading: projectsLoading,
+    error: projectsError,
+    getStatusCounts,
+  } = useProjects();
   const statusCount = getStatusCounts();
-  
+
   const isLoading = authLoading || projectsLoading;
 
   return (

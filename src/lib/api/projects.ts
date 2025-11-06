@@ -14,18 +14,16 @@ interface ProjectsAPIResponse {
  * @param accessToken - Logto access token for authentication
  * @returns Promise resolving to array of projects
  */
-export async function fetchProjects(
-  accessToken: string
-): Promise<Project[]> {
+export async function fetchProjects(accessToken: string): Promise<Project[]> {
   const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
-  
+
   if (!baseUrl) {
     throw new Error("Missing NEXT_PUBLIC_TURING_API environment variable");
   }
 
   // Remove trailing slash if present
   const apiUrl = baseUrl.replace(/\/$/, "");
-  
+
   const response = await fetch(`${apiUrl}/projects`, {
     method: "GET",
     headers: {
@@ -42,7 +40,7 @@ export async function fetchProjects(
   }
 
   const data = (await response.json()) as ProjectsAPIResponse;
-  
+
   return data.projects || [];
 }
 
@@ -57,13 +55,13 @@ export async function createProject(
   data: { name: string; description: string }
 ): Promise<Project> {
   const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
-  
+
   if (!baseUrl) {
     throw new Error("Missing NEXT_PUBLIC_TURING_API environment variable");
   }
 
   const apiUrl = baseUrl.replace(/\/$/, "");
-  
+
   const response = await fetch(`${apiUrl}/projects`, {
     method: "POST",
     headers: {

@@ -14,7 +14,10 @@ import {
   STATUS_ORDER,
   ProjectActivity,
 } from "@/types/project";
-import { fetchProjects, createProject as createProjectAPI } from "@/lib/api/projects";
+import {
+  fetchProjects,
+  createProject as createProjectAPI,
+} from "@/lib/api/projects";
 import { useLogto } from "@logto/react";
 
 interface ProjectsContextValue {
@@ -52,10 +55,22 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         // Get access token for API resource
-        const token = await getAccessToken(process.env.NEXT_PUBLIC_TURING_API);
-        
+        // Try with resource first, fallback to no resource if that fails
+        let token: string | undefined;
+        try {
+          token = await getAccessToken(process.env.NEXT_PUBLIC_TURING_API);
+        } catch (err) {
+          console.warn(
+            "Failed to get access token with resource, trying without resource:",
+            err
+          );
+          token = await getAccessToken();
+        }
+
         if (!token) {
-          throw new Error("Failed to obtain access token");
+          throw new Error(
+            "Failed to obtain access token. Please try signing out and back in."
+          );
         }
 
         const fetchedProjects = await fetchProjects(token);
@@ -74,10 +89,23 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   const createProject = useCallback(
     async (data: { name: string; description: string }) => {
       try {
-        const token = await getAccessToken(process.env.NEXT_PUBLIC_TURING_API);
-        
+        // Get access token for API resource
+        // Try with resource first, fallback to no resource if that fails
+        let token: string | undefined;
+        try {
+          token = await getAccessToken(process.env.NEXT_PUBLIC_TURING_API);
+        } catch (err) {
+          console.warn(
+            "Failed to get access token with resource, trying without resource:",
+            err
+          );
+          token = await getAccessToken();
+        }
+
         if (!token) {
-          throw new Error("Failed to obtain access token");
+          throw new Error(
+            "Failed to obtain access token. Please try signing out and back in."
+          );
         }
 
         const newProject = await createProjectAPI(token, data);
