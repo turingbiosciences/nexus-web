@@ -18,7 +18,7 @@ import {
   fetchProjects,
   createProject as createProjectAPI,
 } from "@/lib/api/projects";
-import { useLogto } from "@logto/react";
+import { useAccessToken } from "./token-provider";
 
 interface ProjectsContextValue {
   projects: Project[];
@@ -43,14 +43,20 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const {
-    isAuthenticated,
-    isLoading: authLoading,
-    getAccessToken,
-  } = useLogto();
+    accessToken,
+    isLoading: tokenLoading,
+    error: tokenError,
+  } = useAccessToken();
 
   useEffect(() => {
-    // Don't fetch if not authenticated, still loading auth, already loading, or already have projects
-    if (!isAuthenticated || authLoading || loading || projects.length > 0) {
+    // Don't fetch if no token, token still loading, already loading, or already have projects
+    if (!accessToken || tokenLoading || loading || projects.length > 0) {
+      return;
+    }
+
+    // If there's a token error, set it and don't fetch
+    if (tokenError) {
+      setError(tokenError);
       return;
     }
 
@@ -59,134 +65,43 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       try {
-        // Get access token for API resource
-        // Try with resource first, fallback to no resource if that fails
-        let token: string | undefined;
-        const resource = process.env.NEXT_PUBLIC_TURING_API;
-
-        console.log(
-          "[ProjectsProvider] Fetching projects - attempting to get access token...",
-          {
-            resource,
-            hasResource: !!resource,
-            isAuthenticated,
-            authLoading,
-          }
-        );
-
-        try {
-          token = await getAccessToken(resource);
-          console.log("[ProjectsProvider] Got token with resource for fetch:", {
-            hasToken: !!token,
-          });
-        } catch (err) {
-          console.warn(
-            "[ProjectsProvider] Failed to get access token with resource for fetch, trying without resource:",
-            err
-          );
-          try {
-            token = await getAccessToken();
-            console.log(
-              "[ProjectsProvider] Got token without resource for fetch:",
-              { hasToken: !!token }
-            );
-          } catch (fallbackErr) {
-            console.error(
-              "[ProjectsProvider] Failed to get token even without resource for fetch:",
-              fallbackErr
-            );
-          }
-        }
-
-        if (!token) {
-          console.error(
-            "[ProjectsProvider] No token available for fetch. User may need to re-authenticate."
-          );
-          throw new Error(
-            "Authentication token unavailable. Please sign out and sign back in, then try again."
-          );
-        }
-
-        const fetchedProjects = await fetchProjects(token);
+        console.log("[ProjectsProvider] Fetching projects with cached token");
+        const fetchedProjects = await fetchProjects(accessToken);
         setProjects(fetchedProjects);
       } catch (err) {
-        console.error("Failed to fetch projects:", err);
+        console.error("[ProjectsProvider] Failed to fetch projects:", err);
         setError(err instanceof Error ? err : new Error("Unknown error"));
-        // Keep empty array on error
         setProjects([]);
       } finally {
         setLoading(false);
       }
     })();
-  }, [isAuthenticated, authLoading, loading, projects.length, getAccessToken]);
+  }, [accessToken, tokenLoading, tokenError, loading, projects.length]);
 
   const createProject = useCallback(
     async (data: { name: string; description: string }) => {
-      // Check authentication state first
-      if (!isAuthenticated) {
-        throw new Error("You must be signed in to create a project.");
-      }
-
-      if (authLoading) {
+      // Check if token is available
+      if (!accessToken) {
         throw new Error(
-          "Authentication still loading. Please wait and try again."
+          "Authentication token unavailable. Please sign in and try again."
         );
       }
 
+      if (tokenLoading) {
+        throw new Error("Authentication loading. Please wait and try again.");
+      }
+
       try {
-        // Get access token for API resource
-        // Try with resource first, fallback to no resource if that fails
-        let token: string | undefined;
-        const resource = process.env.NEXT_PUBLIC_TURING_API;
-
-        console.log("[ProjectsProvider] Attempting to get access token...", {
-          resource,
-          hasResource: !!resource,
-          isAuthenticated,
-          authLoading,
-        });
-
-        try {
-          token = await getAccessToken(resource);
-          console.log("[ProjectsProvider] Got token with resource:", {
-            hasToken: !!token,
-          });
-        } catch (err) {
-          console.warn(
-            "[ProjectsProvider] Failed to get access token with resource, trying without resource:",
-            err
-          );
-          try {
-            token = await getAccessToken();
-            console.log("[ProjectsProvider] Got token without resource:", {
-              hasToken: !!token,
-            });
-          } catch (fallbackErr) {
-            console.error(
-              "[ProjectsProvider] Failed to get token even without resource:",
-              fallbackErr
-            );
-          }
-        }
-
-        if (!token) {
-          console.error(
-            "[ProjectsProvider] No token available. User may need to re-authenticate."
-          );
-          throw new Error(
-            "Authentication token unavailable. Please sign out and sign back in, then try again."
-          );
-        }
-
-        const newProject = await createProjectAPI(token, data);
+        console.log("[ProjectsProvider] Creating project with cached token");
+        const newProject = await createProjectAPI(accessToken, data);
         setProjects((prev) => [newProject, ...prev]);
         return newProject;
       } catch (err) {
-        console.error("Failed to create project:", err);
+        console.error("[ProjectsProvider] Failed to create project:", err);
         throw err;
       }
     },
-    [isAuthenticated, authLoading, getAccessToken]
+    [accessToken, tokenLoading]
   );
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {

@@ -5,13 +5,13 @@ import {
   useProjects,
 } from "@/components/providers/projects-provider";
 
-// Mock Logto
-const mockGetAccessToken = jest.fn().mockResolvedValue("test-token");
-jest.mock("@logto/react", () => ({
-  useLogto: () => ({
-    isAuthenticated: true,
+// Mock TokenProvider
+jest.mock("../token-provider", () => ({
+  useAccessToken: () => ({
+    accessToken: "test-token",
     isLoading: false,
-    getAccessToken: mockGetAccessToken,
+    error: null,
+    refreshToken: jest.fn(),
   }),
 }));
 
