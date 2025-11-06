@@ -223,9 +223,7 @@ The `TokenProvider` is already configured in your app layout:
 ```typescript
 // src/app/layout.tsx
 <AuthProvider>
-  <TokenProvider>
-    {/* Your app */}
-  </TokenProvider>
+  <TokenProvider>{/* Your app */}</TokenProvider>
 </AuthProvider>
 ```
 

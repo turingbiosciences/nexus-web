@@ -25,13 +25,13 @@ export default function RootLayout({
       <body className={inter.className}>
         <ToastProvider>
           <AuthProvider>
-            <TokenProvider>
-              <GlobalAuthProvider>
+            <GlobalAuthProvider>
+              <TokenProvider>
                 <ProjectsProvider>
                   <ReactQueryProvider>{children}</ReactQueryProvider>
                 </ProjectsProvider>
-              </GlobalAuthProvider>
-            </TokenProvider>
+              </TokenProvider>
+            </GlobalAuthProvider>
           </AuthProvider>
         </ToastProvider>
       </body>

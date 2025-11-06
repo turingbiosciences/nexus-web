@@ -8,7 +8,7 @@ import {
   ReactNode,
   useCallback,
 } from "react";
-import { useLogto } from "@logto/react";
+import { useGlobalAuth } from "./global-auth-provider";
 
 interface TokenContextValue {
   accessToken: string | null;
@@ -27,11 +27,25 @@ export function TokenProvider({ children }: { children: ReactNode }) {
     isAuthenticated,
     isLoading: authLoading,
     getAccessToken,
-  } = useLogto();
+  } = useGlobalAuth();
 
   const fetchToken = useCallback(async () => {
-    if (!isAuthenticated || authLoading) {
+    console.log("[TokenProvider] fetchToken called", {
+      isAuthenticated,
+      authLoading,
+    });
+
+    // Wait for auth to finish loading
+    if (authLoading) {
+      console.log("[TokenProvider] Auth still loading, skipping token fetch");
+      return;
+    }
+
+    // Clear token if not authenticated
+    if (!isAuthenticated) {
+      console.log("[TokenProvider] Not authenticated, clearing token");
       setAccessToken(null);
+      setError(null);
       return;
     }
 
@@ -40,13 +54,21 @@ export function TokenProvider({ children }: { children: ReactNode }) {
 
     try {
       const resource = process.env.NEXT_PUBLIC_TURING_API;
-      console.log("[TokenProvider] Fetching access token...", { resource });
+      console.log("[TokenProvider] Fetching access token...", {
+        resource,
+        hasResource: !!resource,
+      });
 
       const token = await getAccessToken(resource);
 
+      console.log("[TokenProvider] getAccessToken result:", {
+        hasToken: !!token,
+        tokenLength: token?.length,
+      });
+
       if (!token) {
         throw new Error(
-          "Failed to obtain access token. Please sign out and sign back in."
+          "Failed to obtain access token. Please sign out and sign back in. Make sure the API resource is configured in Logto Console."
         );
       }
 

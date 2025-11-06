@@ -80,11 +80,20 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 
   const createProject = useCallback(
     async (data: { name: string; description: string }) => {
+      console.log("[ProjectsProvider] createProject called", {
+        hasToken: !!accessToken,
+        tokenLength: accessToken?.length,
+        tokenLoading,
+        tokenError: tokenError?.message,
+      });
+
       // Check if token is available
       if (!accessToken) {
-        throw new Error(
-          "Authentication token unavailable. Please sign in and try again."
-        );
+        const errorMsg = tokenError
+          ? `Authentication error: ${tokenError.message}`
+          : "Authentication token unavailable. Please sign out and sign back in to obtain an access token.";
+        console.error("[ProjectsProvider]", errorMsg);
+        throw new Error(errorMsg);
       }
 
       if (tokenLoading) {
@@ -101,7 +110,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         throw err;
       }
     },
-    [accessToken, tokenLoading]
+    [accessToken, tokenLoading, tokenError]
   );
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
