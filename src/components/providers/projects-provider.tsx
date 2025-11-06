@@ -14,10 +14,13 @@ import {
   STATUS_ORDER,
   ProjectActivity,
 } from "@/types/project";
-import { projectsRepository } from "@/data";
+import { fetchProjects, createProject as createProjectAPI } from "@/lib/api/projects";
+import { useLogto } from "@logto/react";
 
 interface ProjectsContextValue {
   projects: Project[];
+  loading: boolean;
+  error: Error | null;
   createProject: (data: {
     name: string;
     description: string;
@@ -35,25 +38,57 @@ const ProjectsContext = createContext<ProjectsContextValue | undefined>(
 export function ProjectsProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const { isAuthenticated, getAccessToken } = useLogto();
 
   useEffect(() => {
-    if (projects.length === 0 && !loading) {
-      setLoading(true);
-      projectsRepository.list().then((list) => {
-        setProjects((prev) => (prev.length === 0 ? list : prev));
-        setLoading(false);
-      });
+    if (!isAuthenticated || loading || projects.length > 0) {
+      return;
     }
-  }, [projects.length, loading]);
+
+    setLoading(true);
+    setError(null);
+
+    (async () => {
+      try {
+        // Get access token for API resource
+        const token = await getAccessToken(process.env.NEXT_PUBLIC_TURING_API);
+        
+        if (!token) {
+          throw new Error("Failed to obtain access token");
+        }
+
+        const fetchedProjects = await fetchProjects(token);
+        setProjects(fetchedProjects);
+      } catch (err) {
+        console.error("Failed to fetch projects:", err);
+        setError(err instanceof Error ? err : new Error("Unknown error"));
+        // Keep empty array on error
+        setProjects([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [isAuthenticated, loading, projects.length, getAccessToken]);
 
   const createProject = useCallback(
-    (data: { name: string; description: string }) => {
-      return projectsRepository.create(data).then((p) => {
-        setProjects((prev) => [p, ...prev]);
-        return p;
-      });
+    async (data: { name: string; description: string }) => {
+      try {
+        const token = await getAccessToken(process.env.NEXT_PUBLIC_TURING_API);
+        
+        if (!token) {
+          throw new Error("Failed to obtain access token");
+        }
+
+        const newProject = await createProjectAPI(token, data);
+        setProjects((prev) => [newProject, ...prev]);
+        return newProject;
+      } catch (err) {
+        console.error("Failed to create project:", err);
+        throw err;
+      }
     },
-    []
+    [getAccessToken]
   );
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
@@ -95,9 +130,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         };
       })
     );
-    projectsRepository.update(id, updates).catch(() => {
-      /* swallow mock */
-    });
+    // TODO: Add API call to persist updates
   }, []);
 
   const addDataset = useCallback(
@@ -132,9 +165,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
           };
         })
       );
-      projectsRepository.addDataset(projectId, file).catch(() => {
-        /* swallow mock */
-      });
+      // TODO: Add API call to persist dataset addition
     },
     []
   );
@@ -157,6 +188,8 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 
   const value: ProjectsContextValue = {
     projects,
+    loading,
+    error,
     createProject,
     updateProject,
     getProjectById,

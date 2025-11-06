@@ -38,7 +38,12 @@ describe("auth-utils", () => {
       isLoading: false,
       getAccessToken: jest.fn().mockResolvedValue("token-abc"),
     });
-    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ claims: { sub: "xyz" } }) });
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({
+        ok: true,
+        json: async () => ({ claims: { sub: "xyz" } }),
+      });
 
     render(
       <GlobalAuthProvider>
@@ -59,7 +64,9 @@ describe("auth-utils", () => {
       isLoading: true,
       getAccessToken: jest.fn().mockResolvedValue("token-abc"),
     });
-    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({}) });
     const result = await checkAuth();
     expect(result).toBe(true);
   });

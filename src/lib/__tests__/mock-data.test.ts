@@ -1,4 +1,8 @@
-import { mockProjects, getProjectStatusCount, getProjectById } from "@/lib/mock-data";
+import {
+  mockProjects,
+  getProjectStatusCount,
+  getProjectById,
+} from "@/lib/mock-data";
 
 describe("mock-data", () => {
   it("exposes a non-empty projects array", () => {

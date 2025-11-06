@@ -5,40 +5,42 @@ import {
   useProjects,
 } from "@/components/providers/projects-provider";
 
-// Mock data repository
-jest.mock("@/data", () => ({
-  projectsRepository: {
-    list: jest
-      .fn()
-      .mockResolvedValue([
-        {
-          id: "p1",
-          name: "Project 1",
-          description: "Desc",
-          status: "setup",
-          datasets: [],
-          datasetCount: 0,
-          lastActivity: "just now",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ]),
-    create: jest
-      .fn()
-      .mockResolvedValue({
-        id: "new",
-        name: "New",
-        description: "New Desc",
-        status: "setup",
-        datasets: [],
-        datasetCount: 0,
-        lastActivity: "just now",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }),
-    update: jest.fn().mockResolvedValue(undefined),
-    addDataset: jest.fn().mockResolvedValue(undefined),
-  },
+// Mock Logto
+const mockGetAccessToken = jest.fn().mockResolvedValue("test-token");
+jest.mock("@logto/react", () => ({
+  useLogto: () => ({
+    isAuthenticated: true,
+    isLoading: false,
+    getAccessToken: mockGetAccessToken,
+  }),
+}));
+
+// Mock API
+jest.mock("@/lib/api/projects", () => ({
+  fetchProjects: jest.fn().mockResolvedValue([
+    {
+      id: "p1",
+      name: "Project 1",
+      description: "Desc",
+      status: "setup",
+      datasets: [],
+      datasetCount: 0,
+      lastActivity: "just now",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ]),
+  createProject: jest.fn().mockResolvedValue({
+    id: "new",
+    name: "New",
+    description: "New Desc",
+    status: "setup",
+    datasets: [],
+    datasetCount: 0,
+    lastActivity: "just now",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }),
 }));
 
 function Consumer() {
@@ -47,7 +49,9 @@ function Consumer() {
     <div>
       <ul data-testid="project-list">
         {projects.map((p) => (
-          <li key={p.id} data-testid={`project-${p.id}`}>{p.name}:{p.status}:{p.datasetCount}</li>
+          <li key={p.id} data-testid={`project-${p.id}`}>
+            {p.name}:{p.status}:{p.datasetCount}
+          </li>
         ))}
       </ul>
       <button
@@ -75,7 +79,9 @@ function Consumer() {
       >
         update-status
       </button>
-      <div data-testid="first-project-status">{projects[0]?.status ?? "none"}</div>
+      <div data-testid="first-project-status">
+        {projects[0]?.status ?? "none"}
+      </div>
     </div>
   );
 }
@@ -127,10 +133,14 @@ describe("ProjectsProvider", () => {
       </ProjectsProvider>
     );
     await screen.findByTestId("project-p1");
-    expect(screen.getByTestId("first-project-status")).toHaveTextContent(/setup/);
+    expect(screen.getByTestId("first-project-status")).toHaveTextContent(
+      /setup/
+    );
     screen.getByText(/update-status/i).click();
     await waitFor(() => {
-      expect(screen.getByTestId("first-project-status")).toHaveTextContent(/running/);
+      expect(screen.getByTestId("first-project-status")).toHaveTextContent(
+        /running/
+      );
     });
   });
 });

@@ -40,12 +40,10 @@ function Consumer() {
 describe("GlobalAuthProvider", () => {
   it("provides auth context values (authenticated)", async () => {
     // Polyfill fetch for provider's refreshAuth call
-    global.fetch = jest
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        json: async () => ({ isAuthenticated: true, claims: { sub: "123" } }),
-      });
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ isAuthenticated: true, claims: { sub: "123" } }),
+    });
     render(
       <GlobalAuthProvider>
         <Consumer />

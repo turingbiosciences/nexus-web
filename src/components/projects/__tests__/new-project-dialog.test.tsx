@@ -2,19 +2,32 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NewProjectDialog } from "../new-project-dialog";
 
+// Mock Logto
+jest.mock("@logto/react", () => ({
+  useLogto: () => ({
+    isAuthenticated: true,
+    isLoading: false,
+    getAccessToken: jest.fn().mockResolvedValue("test-token"),
+  }),
+}));
+
+// Mock API
+jest.mock("@/lib/api/projects");
+
 // Mock useProjects hook
 const mockCreateProject = jest.fn();
 
 jest.mock("@/components/providers/projects-provider", () => ({
-  ...jest.requireActual("@/components/providers/projects-provider"),
+  ProjectsProvider: ({ children }: { children: React.ReactNode }) => children,
   useProjects: () => ({
     projects: [],
+    loading: false,
+    error: null,
     createProject: mockCreateProject,
     updateProject: jest.fn(),
-    deleteProject: jest.fn(),
     getProjectById: jest.fn(),
     addDataset: jest.fn(),
-    getStatusCount: jest.fn(() => ({
+    getStatusCounts: jest.fn(() => ({
       complete: 0,
       running: 0,
       setup: 0,
