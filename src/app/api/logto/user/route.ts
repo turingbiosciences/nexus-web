@@ -13,7 +13,8 @@ const logto = new LogtoClient({
   baseUrl: process.env.NEXTAUTH_URL!,
   cookieSecret: process.env.NEXTAUTH_SECRET!,
   cookieSecure: process.env.NODE_ENV === "production",
-  scopes: ["openid", "profile", "email", "offline_access"],
+  scopes: ["openid", "profile", "email", "offline_access", "all"],
+  resources: [process.env.NEXT_PUBLIC_TURING_API!],
 });
 
 export const GET = async (req: NextRequest) => {

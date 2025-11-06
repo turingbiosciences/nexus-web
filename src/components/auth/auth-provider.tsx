@@ -11,7 +11,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const config = {
     endpoint: process.env.NEXT_PUBLIC_LOGTO_ENDPOINT!,
     appId: process.env.NEXT_PUBLIC_LOGTO_APP_ID!,
-    scopes: ["openid", "profile", "email", "offline_access"],
+    scopes: ["openid", "profile", "email", "offline_access", "all"],
     resources: [process.env.NEXT_PUBLIC_TURING_API!],
   };
 
