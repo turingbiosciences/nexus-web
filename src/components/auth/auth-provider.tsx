@@ -12,6 +12,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     endpoint: process.env.NEXT_PUBLIC_LOGTO_ENDPOINT!,
     appId: process.env.NEXT_PUBLIC_LOGTO_APP_ID!,
     scopes: ["openid", "profile", "email", "offline_access"],
+    resources: [process.env.NEXT_PUBLIC_TURING_API!],
   };
 
   console.log("Logto config:", config);
