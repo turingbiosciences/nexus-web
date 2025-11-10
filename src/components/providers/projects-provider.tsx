@@ -43,18 +43,27 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [hasFetched, setHasFetched] = useState(false); // Track if we've attempted fetch
+  const [previousAuthState, setPreviousAuthState] = useState<boolean>(false);
   const {
     accessToken,
     isLoading: tokenLoading,
     error: tokenError,
   } = useAccessToken();
 
-  // Reset hasFetched and clear projects when accessToken changes (new user session)
+  // Track authentication state (boolean) to detect user switching, not token refresh
+  const isAuthenticated = !!accessToken;
+
+  // Reset hasFetched and clear projects only when authentication state changes
+  // (false → true or true → false), not when token value changes for same session
   useEffect(() => {
-    setHasFetched(false);
-    setProjects([]);
-    setError(null);
-  }, [accessToken]);
+    // Only reset if auth state actually changed (user logged in/out)
+    if (isAuthenticated !== previousAuthState) {
+      setHasFetched(false);
+      setProjects([]);
+      setError(null);
+      setPreviousAuthState(isAuthenticated);
+    }
+  }, [isAuthenticated, previousAuthState]); // Only reacts to auth state transitions, not token refreshes
 
   useEffect(() => {
     // Don't fetch if no token, token still loading, or already attempted fetch

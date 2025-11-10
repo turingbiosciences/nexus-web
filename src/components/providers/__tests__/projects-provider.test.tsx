@@ -7,7 +7,7 @@ import {
 
 // Mock TokenProvider - initially return default mock
 const mockUseAccessToken = jest.fn(() => ({
-  accessToken: "test-token",
+  accessToken: "test-token" as string | null,
   isLoading: false,
   error: null,
   refreshToken: jest.fn(),
@@ -182,7 +182,29 @@ describe("ProjectsProvider", () => {
       expect(screen.getByTestId("project-user-a-project")).toBeInTheDocument();
     });
 
-    // User A signs out, User B signs in with token-b
+    // User A signs out (token becomes null)
+    mockUseAccessToken.mockReturnValue({
+      accessToken: null as string | null,
+      isLoading: false,
+      error: null,
+      refreshToken: jest.fn(),
+    });
+
+    // Force re-render to trigger sign-out
+    rerender(
+      <ProjectsProvider>
+        <Consumer />
+      </ProjectsProvider>
+    );
+
+    // Wait for projects to clear after sign-out
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId("project-user-a-project")
+      ).not.toBeInTheDocument();
+    });
+
+    // User B signs in with token-b
     mockUseAccessToken.mockReturnValue({
       accessToken: "token-b",
       isLoading: false,
