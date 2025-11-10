@@ -14,10 +14,16 @@ import {
   STATUS_ORDER,
   ProjectActivity,
 } from "@/types/project";
-import { projectsRepository } from "@/data";
+import {
+  fetchProjects,
+  createProject as createProjectAPI,
+} from "@/lib/api/projects";
+import { useAccessToken } from "./token-provider";
 
 interface ProjectsContextValue {
   projects: Project[];
+  loading: boolean;
+  error: Error | null;
   createProject: (data: {
     name: string;
     description: string;
@@ -35,25 +41,95 @@ const ProjectsContext = createContext<ProjectsContextValue | undefined>(
 export function ProjectsProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [hasFetched, setHasFetched] = useState(false); // Track if we've attempted fetch
+  const [previousAuthState, setPreviousAuthState] = useState<boolean>(false);
+  const {
+    accessToken,
+    isLoading: tokenLoading,
+    error: tokenError,
+  } = useAccessToken();
+
+  // Track authentication state (boolean) to detect user switching, not token refresh
+  const isAuthenticated = !!accessToken;
+
+  // Reset hasFetched and clear projects only when authentication state changes
+  // (false → true or true → false), not when token value changes for same session
+  useEffect(() => {
+    // Only reset if auth state actually changed (user logged in/out)
+    if (isAuthenticated !== previousAuthState) {
+      setHasFetched(false);
+      setProjects([]);
+      setError(null);
+      setPreviousAuthState(isAuthenticated);
+    }
+  }, [isAuthenticated, previousAuthState]); // Only reacts to auth state transitions, not token refreshes
 
   useEffect(() => {
-    if (projects.length === 0 && !loading) {
-      setLoading(true);
-      projectsRepository.list().then((list) => {
-        setProjects((prev) => (prev.length === 0 ? list : prev));
-        setLoading(false);
-      });
+    // Don't fetch if no token, token still loading, or already attempted fetch
+    if (!accessToken || tokenLoading || hasFetched) {
+      return;
     }
-  }, [projects.length, loading]);
+
+    // If there's a token error, set it and don't fetch
+    if (tokenError) {
+      setError(tokenError);
+      setHasFetched(true); // Mark as attempted to prevent retry loop
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    (async () => {
+      try {
+        console.log("[ProjectsProvider] Fetching projects with cached token");
+        const fetchedProjects = await fetchProjects(accessToken);
+        setProjects(fetchedProjects);
+      } catch (err) {
+        console.error("[ProjectsProvider] Failed to fetch projects:", err);
+        setError(err instanceof Error ? err : new Error("Unknown error"));
+        setProjects([]);
+      } finally {
+        setLoading(false);
+        setHasFetched(true); // Mark as attempted regardless of success/failure
+      }
+    })();
+  }, [accessToken, tokenLoading, tokenError, hasFetched]);
 
   const createProject = useCallback(
-    (data: { name: string; description: string }) => {
-      return projectsRepository.create(data).then((p) => {
-        setProjects((prev) => [p, ...prev]);
-        return p;
+    async (data: { name: string; description: string }) => {
+      console.log("[ProjectsProvider] createProject called", {
+        hasToken: !!accessToken,
+        tokenLength: accessToken?.length,
+        tokenLoading,
+        tokenError: tokenError?.message,
       });
+
+      // Check if token is available
+      if (!accessToken) {
+        const errorMsg = tokenError
+          ? `Authentication error: ${tokenError.message}`
+          : "Authentication token unavailable. Please sign out and sign back in to obtain an access token.";
+        console.error("[ProjectsProvider]", errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      if (tokenLoading) {
+        throw new Error("Authentication loading. Please wait and try again.");
+      }
+
+      try {
+        console.log("[ProjectsProvider] Creating project with cached token");
+        const newProject = await createProjectAPI(accessToken, data);
+        setProjects((prev) => [newProject, ...prev]);
+        return newProject;
+      } catch (err) {
+        console.error("[ProjectsProvider] Failed to create project:", err);
+        throw err;
+      }
     },
-    []
+    [accessToken, tokenLoading, tokenError]
   );
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
@@ -95,9 +171,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         };
       })
     );
-    projectsRepository.update(id, updates).catch(() => {
-      /* swallow mock */
-    });
+    // TODO: Add API call to persist updates
   }, []);
 
   const addDataset = useCallback(
@@ -132,9 +206,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
           };
         })
       );
-      projectsRepository.addDataset(projectId, file).catch(() => {
-        /* swallow mock */
-      });
+      // TODO: Add API call to persist dataset addition
     },
     []
   );
@@ -157,6 +229,8 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 
   const value: ProjectsContextValue = {
     projects,
+    loading,
+    error,
     createProject,
     updateProject,
     getProjectById,

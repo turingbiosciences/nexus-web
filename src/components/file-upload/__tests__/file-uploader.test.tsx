@@ -25,12 +25,18 @@ jest.mock("@/components/providers/global-auth-provider", () => ({
   useGlobalAuth: jest.fn(),
 }));
 
+jest.mock("@/components/providers/token-provider", () => ({
+  useAccessToken: jest.fn(),
+}));
+
 import { useDropzone } from "react-dropzone";
 import { useGlobalAuth } from "@/components/providers/global-auth-provider";
+import { useAccessToken } from "@/components/providers/token-provider";
 import { Upload as TusUpload } from "tus-js-client";
 
 const mockUseDropzone = useDropzone as jest.Mock;
 const mockUseGlobalAuth = useGlobalAuth as jest.Mock;
+const mockUseAccessToken = useAccessToken as jest.Mock;
 
 describe("FileUploader", () => {
   beforeEach(() => {
@@ -39,7 +45,12 @@ describe("FileUploader", () => {
     mockUseGlobalAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
-      getAccessToken: jest.fn().mockResolvedValue("mock-token"),
+    });
+    mockUseAccessToken.mockReturnValue({
+      accessToken: "mock-token",
+      isLoading: false,
+      error: null,
+      refreshToken: jest.fn().mockResolvedValue(undefined),
     });
     // Mock crypto.randomUUID for Jest environment
     global.crypto = {
@@ -60,7 +71,6 @@ describe("FileUploader", () => {
     mockUseGlobalAuth.mockReturnValue({
       isAuthenticated: false,
       isLoading: false,
-      getAccessToken: jest.fn(),
     });
     render(<FileUploader />);
     expect(
@@ -72,7 +82,6 @@ describe("FileUploader", () => {
     mockUseGlobalAuth.mockReturnValue({
       isAuthenticated: false,
       isLoading: true,
-      getAccessToken: jest.fn(),
     });
     render(<FileUploader />);
     expect(screen.getByText(/checking authentication/i)).toBeInTheDocument();
@@ -265,7 +274,12 @@ describe("FileUploader", () => {
     mockUseGlobalAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
-      getAccessToken: jest.fn().mockResolvedValue(undefined),
+    });
+    mockUseAccessToken.mockReturnValue({
+      accessToken: null,
+      isLoading: false,
+      error: null,
+      refreshToken: jest.fn(),
     });
 
     (TusUpload as unknown as jest.Mock).mockImplementation(function () {
@@ -290,46 +304,8 @@ describe("FileUploader", () => {
     startBtn.click();
 
     await waitFor(() => {
-      expect(screen.getByText(/access token/i)).toBeInTheDocument();
-    });
-  });
-
-  it("retries token without resource if first call fails", async () => {
-    const first = jest.fn().mockRejectedValue(new Error("fail"));
-    const second = jest.fn().mockResolvedValue("token2");
-    mockUseGlobalAuth.mockReturnValue({
-      isAuthenticated: true,
-      isLoading: false,
-      getAccessToken: jest.fn(async (res?: string) => {
-        if (res) return first();
-        return second();
-      }),
-    });
-
-    (TusUpload as unknown as jest.Mock).mockImplementation(function () {
-      return { start: jest.fn(), abort: jest.fn(), options: { headers: {} } };
-    });
-
-    let capturedOnDrop: ((files: File[]) => void) | undefined;
-    mockUseDropzone.mockImplementation((config) => {
-      capturedOnDrop = config.onDrop;
-      return {
-        getRootProps: () => ({ "data-testid": "dropzone" }),
-        getInputProps: () => ({ type: "file" }),
-        isDragActive: false,
-      };
-    });
-
-    render(<FileUploader />);
-    capturedOnDrop?.([new File(["x"], "retry-token.txt")]);
-    const startBtn = await screen.findByRole("button", {
-      name: /start upload/i,
-    });
-    startBtn.click();
-
-    await waitFor(() => {
-      expect(first).toHaveBeenCalled();
-      expect(second).toHaveBeenCalled();
+      // Should show authError banner
+      expect(screen.getByText(/access token unavailable/i)).toBeInTheDocument();
     });
   });
 
@@ -337,7 +313,6 @@ describe("FileUploader", () => {
     mockUseGlobalAuth.mockReturnValue({
       isAuthenticated: false,
       isLoading: false,
-      getAccessToken: jest.fn(),
     });
 
     render(<FileUploader />);

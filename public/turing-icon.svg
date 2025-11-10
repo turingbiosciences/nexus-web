@@ -1,0 +1,13 @@
+<svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Network nodes -->
+  <circle cx="15" cy="15" r="4" fill="#6794EF"/>
+  <circle cx="35" cy="10" r="4" fill="#6794EF"/>
+  <circle cx="30" cy="35" r="4" fill="#6794EF"/>
+  <circle cx="10" cy="40" r="4" fill="#6794EF"/>
+  
+  <!-- Connecting lines -->
+  <line x1="15" y1="15" x2="35" y2="10" stroke="#6794EF" stroke-width="2.5"/>
+  <line x1="15" y1="15" x2="30" y2="35" stroke="#6794EF" stroke-width="2.5"/>
+  <line x1="15" y1="15" x2="10" y2="40" stroke="#6794EF" stroke-width="2.5"/>
+  <line x1="35" y1="10" x2="30" y2="35" stroke="#6794EF" stroke-width="2.5"/>
+</svg>

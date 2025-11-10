@@ -6,12 +6,16 @@ import { AuthProvider } from "@/components/auth/auth-provider";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import { ProjectsProvider } from "@/components/providers/projects-provider";
 import { GlobalAuthProvider } from "@/components/providers/global-auth-provider";
+import { TokenProvider } from "@/components/providers/token-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Turing Biosciences",
   description: "Secure file upload and management platform",
+  icons: {
+    icon: "/turing-icon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -25,9 +29,11 @@ export default function RootLayout({
         <ToastProvider>
           <AuthProvider>
             <GlobalAuthProvider>
-              <ProjectsProvider>
-                <ReactQueryProvider>{children}</ReactQueryProvider>
-              </ProjectsProvider>
+              <TokenProvider>
+                <ProjectsProvider>
+                  <ReactQueryProvider>{children}</ReactQueryProvider>
+                </ProjectsProvider>
+              </TokenProvider>
             </GlobalAuthProvider>
           </AuthProvider>
         </ToastProvider>
