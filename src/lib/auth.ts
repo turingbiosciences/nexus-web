@@ -9,7 +9,8 @@ export const logtoScopes = [
 ];
 
 // Determine resource from environment variables
-const turingApiResource = process.env.NEXT_PUBLIC_TURING_API || process.env.TURING_API;
+const turingApiResource =
+  process.env.NEXT_PUBLIC_TURING_API || process.env.TURING_API;
 
 // Build resources array - only include if resource is configured
 export const logtoResources = turingApiResource ? [turingApiResource] : [];
