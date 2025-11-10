@@ -57,8 +57,8 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   }, [accessToken]);
 
   useEffect(() => {
-    // Don't fetch if no token, token still loading, already loading, or already attempted fetch
-    if (!accessToken || tokenLoading || loading || hasFetched) {
+    // Don't fetch if no token, token still loading, or already attempted fetch
+    if (!accessToken || tokenLoading || hasFetched) {
       return;
     }
 

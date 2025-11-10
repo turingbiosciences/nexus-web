@@ -209,10 +209,10 @@ export function FileUploader({
     // If TUS upload exists, resume it
     if (upload.tusUpload) {
       try {
-        // Refresh access token (may have expired during pause)
-        await refreshToken();
+        // Refresh access token (may have expired during pause) and get the new token value
+        const freshToken = await refreshToken();
 
-        if (!accessToken) {
+        if (!freshToken) {
           throw new Error(
             "Failed to obtain access token. Please try signing out and back in."
           );
@@ -220,7 +220,7 @@ export function FileUploader({
 
         // Update auth token in case it expired
         upload.tusUpload.options.headers = {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${freshToken}`,
         };
 
         setUploads((prev) =>
