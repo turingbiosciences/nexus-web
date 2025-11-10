@@ -2,7 +2,7 @@
 
 ## Summary
 
-Fixed 8 critical bugs in M2M authentication implementation and React state management. All issues addressed with proper architecture patterns, comprehensive tests, and validation.
+Fixed 9 critical bugs in M2M authentication implementation and React state management. All issues addressed with proper architecture patterns, comprehensive tests, and validation.
 
 **Status**: ✅ All fixes committed and pushed to `file-upload` branch
 
@@ -201,6 +201,67 @@ if (!freshToken) throw...;                // Uses fresh value
 
 ---
 
+## Bug #9: Session Continuity Broken by Token Update
+
+**Commit**: `c79046d`
+
+### Problem
+
+`ProjectsProvider` cleared all projects whenever `accessToken` changed value, including during token refresh operations for the same user session.
+
+### User Impact
+
+- User uploads file → pause → resume triggers `refreshToken()`
+- New token value obtained (same user, fresh token)
+- `useEffect` detected token change and cleared all projects
+- User loses all project data despite staying logged in
+
+### Root Cause
+
+```typescript
+// ❌ BEFORE: Resets on ANY token change
+useEffect(() => {
+  setHasFetched(false);
+  setProjects([]);
+  setError(null);
+}, [accessToken]); // Triggers on token value change
+```
+
+The effect triggered on every `accessToken` value change, treating token refresh (same session) the same as user switching (different session).
+
+### Solution
+
+Track authentication **state** (boolean) instead of token **value** (string):
+
+```typescript
+// ✅ AFTER: Only resets on auth state change
+const isAuthenticated = !!accessToken;
+const [previousAuthState, setPreviousAuthState] = useState<boolean>(false);
+
+useEffect(() => {
+  if (isAuthenticated !== previousAuthState) {
+    setHasFetched(false);
+    setProjects([]);
+    setError(null);
+    setPreviousAuthState(isAuthenticated);
+  }
+}, [isAuthenticated, previousAuthState]);
+```
+
+### Behavior After Fix
+
+**Token Refresh (Same User)**:
+- `"token-abc123"` → `"token-xyz789"` 
+- `isAuthenticated` stays `true` → no reset
+- Projects preserved ✅
+
+**User Switching**:
+- User A: `"token-a"` → Sign out: `null` → `isAuthenticated` changes to `false` → reset
+- User B: `null` → Sign in: `"token-b"` → `isAuthenticated` changes to `true` → reset
+- Fresh data for new user ✅
+
+---
+
 ## Testing & Validation
 
 ### Test Suite
@@ -254,4 +315,15 @@ if (!freshToken) throw...;                // Uses fresh value
 **PR**: #6 - "feat: Implement M2M authentication and standardize UI components"  
 **Status**: Ready for review
 
-All commits pushed and validated. Authentication architecture is now secure, consistent, and performant.
+**Commits**:
+1. `febea40` - Bug #1: Auth Resource Handshake
+2. `718c27e` - Bug #2: Unauthorized Token Access
+3. `dbdb806` - Bug #3: Missing Environment Validation
+4. `d00807b` - Bug #4: Deprecated getAccessToken()
+5. `b75d52d` - Bug #5: Debug Config Inconsistency
+6. `5930cff` - Bug #6: Stale Projects Across Sessions
+7. `df3ef28` - Bug #7: useEffect Dependency Loop
+8. `aecb598` - Bug #8: Stale Token in resumeUpload
+9. `c79046d` - Bug #9: Session Continuity Broken
+
+All commits pushed and validated. Authentication architecture is now secure, consistent, and performant with proper session continuity.
