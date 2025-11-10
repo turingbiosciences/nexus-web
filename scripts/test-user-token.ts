@@ -204,7 +204,7 @@ async function testUserToken() {
 
       console.log("Common Causes:");
       console.log("  1. API resource not configured in Logto Console");
-      console.log("     → Go to https://q98adz.logto.app/");
+      console.log(`     → Go to ${process.env.LOGTO_ENDPOINT || "<your-logto-endpoint>"}/`);
       console.log("     → Navigate to API Resources");
       console.log(`     → Create resource: ${apiResource}`);
       console.log("     → Ensure no trailing slash");
