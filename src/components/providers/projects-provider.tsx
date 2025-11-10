@@ -95,7 +95,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         setHasFetched(true); // Mark as attempted regardless of success/failure
       }
     })();
-  }, [accessToken, tokenLoading, tokenError, loading, hasFetched]);
+  }, [accessToken, tokenLoading, tokenError, hasFetched]);
 
   const createProject = useCallback(
     async (data: { name: string; description: string }) => {
