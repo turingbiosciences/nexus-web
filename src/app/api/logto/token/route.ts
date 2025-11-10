@@ -28,16 +28,45 @@ export const GET = async (req: NextRequest) => {
     );
   }
 
-  console.log("[logto:token] Config:", {
-    endpoint: process.env.LOGTO_ENDPOINT,
-    m2mAppId: process.env.LOGTO_M2M_APP_ID,
-    resource: process.env.LOGTO_M2M_ENDPOINT,
+  // Validate required M2M environment variables
+  const requiredEnvVars = {
+    LOGTO_ENDPOINT: process.env.LOGTO_ENDPOINT,
+    LOGTO_M2M_APP_ID: process.env.LOGTO_M2M_APP_ID,
+    LOGTO_M2M_APP_SECRET: process.env.LOGTO_M2M_APP_SECRET,
+    LOGTO_M2M_ENDPOINT: process.env.LOGTO_M2M_ENDPOINT,
+  };
+
+  const missingVars = Object.entries(requiredEnvVars)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+
+  if (missingVars.length > 0) {
+    console.error(
+      "[logto:token] ❌ Missing required environment variables:",
+      missingVars.join(", ")
+    );
+    return NextResponse.json(
+      {
+        error: "Server misconfiguration: Missing required environment variables",
+        details:
+          process.env.NODE_ENV === "development"
+            ? `Missing: ${missingVars.join(", ")}`
+            : undefined,
+      },
+      { status: 500 }
+    );
+  }
+
+  console.log("[logto:token] Config validated:", {
+    endpoint: requiredEnvVars.LOGTO_ENDPOINT,
+    m2mAppId: requiredEnvVars.LOGTO_M2M_APP_ID,
+    resource: requiredEnvVars.LOGTO_M2M_ENDPOINT,
   });
 
   try {
-    // Fetch M2M token from Logto
+    // Fetch M2M token from Logto (variables validated above, safe to assert)
     const tokenResponse = await fetch(
-      `${process.env.LOGTO_ENDPOINT}/oidc/token`,
+      `${requiredEnvVars.LOGTO_ENDPOINT}/oidc/token`,
       {
         method: "POST",
         headers: {
@@ -45,9 +74,9 @@ export const GET = async (req: NextRequest) => {
         },
         body: new URLSearchParams({
           grant_type: "client_credentials",
-          client_id: process.env.LOGTO_M2M_APP_ID!,
-          client_secret: process.env.LOGTO_M2M_APP_SECRET!,
-          resource: process.env.LOGTO_M2M_ENDPOINT!,
+          client_id: requiredEnvVars.LOGTO_M2M_APP_ID!,
+          client_secret: requiredEnvVars.LOGTO_M2M_APP_SECRET!,
+          resource: requiredEnvVars.LOGTO_M2M_ENDPOINT!,
           scope: "all",
         }),
       }
