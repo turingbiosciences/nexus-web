@@ -10,6 +10,21 @@ const logto = new LogtoClient(logtoConfig);
 
 export const GET = async (req: NextRequest) => {
   logRequest("sign-in-callback", req);
+  
+  // Log error parameters if present
+  const url = new URL(req.url);
+  const error = url.searchParams.get("error");
+  const errorDescription = url.searchParams.get("error_description");
+  
+  if (error) {
+    console.error("[logto:sign-in-callback] Logto error:", {
+      error,
+      errorDescription,
+      configuredResources: logtoConfig.resources,
+      state: url.searchParams.get("state"),
+    });
+  }
+  
   const handler = logto.handleSignInCallback();
   const res = await handler(req);
 
