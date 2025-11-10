@@ -190,11 +190,10 @@ export function FileUploader({
           return u;
         })
       );
-      if (authError) {
-        setAuthError(null);
-      }
+      // Use functional setState to read current authError without including it in dependencies
+      setAuthError((prev) => (prev ? null : prev));
     }
-  }, [isAuthenticated, authError]);
+  }, [isAuthenticated]);
 
   const pauseUpload = (upload: FileUploadItem) => {
     if (upload.tusUpload) {

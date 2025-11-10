@@ -304,7 +304,8 @@ describe("FileUploader", () => {
     startBtn.click();
 
     await waitFor(() => {
-      expect(screen.getByText(/access token/i)).toBeInTheDocument();
+      // Should show authError banner
+      expect(screen.getByText(/access token unavailable/i)).toBeInTheDocument();
     });
   });
 
