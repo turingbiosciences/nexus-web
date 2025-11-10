@@ -81,7 +81,7 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
 
       if (!data.accessToken) {
         throw new Error(
-          "No access token returned. API resource may not be configured in Logto Console."
+          "No access token returned. This may be due to either: (1) the M2M application not being configured correctly, or (2) the API resource not being assigned to the M2M app in Logto Console. Please check both settings."
         );
       }
 
