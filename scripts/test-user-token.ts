@@ -211,7 +211,7 @@ async function testUserToken() {
       console.log("\n");
       console.log("  2. API resource not assigned to application");
       console.log("     → Go to Logto Console → Applications");
-      console.log("     → Select your app (h28vlbexr7nmgjk5f2qdg)");
+      console.log(`     → Select your app (${process.env.LOGTO_APP_ID || "<your-app-id>"})`);
       console.log("     → API Resources tab → Add the resource");
       console.log("\n");
       console.log("  3. Session created before API resource was configured");
