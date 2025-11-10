@@ -251,11 +251,13 @@ useEffect(() => {
 ### Behavior After Fix
 
 **Token Refresh (Same User)**:
-- `"token-abc123"` → `"token-xyz789"` 
+
+- `"token-abc123"` → `"token-xyz789"`
 - `isAuthenticated` stays `true` → no reset
 - Projects preserved ✅
 
 **User Switching**:
+
 - User A: `"token-a"` → Sign out: `null` → `isAuthenticated` changes to `false` → reset
 - User B: `null` → Sign in: `"token-b"` → `isAuthenticated` changes to `true` → reset
 - Fresh data for new user ✅
@@ -316,6 +318,7 @@ useEffect(() => {
 **Status**: Ready for review
 
 **Commits**:
+
 1. `febea40` - Bug #1: Auth Resource Handshake
 2. `718c27e` - Bug #2: Unauthorized Token Access
 3. `dbdb806` - Bug #3: Missing Environment Validation
