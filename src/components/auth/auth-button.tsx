@@ -2,10 +2,10 @@
 
 import { LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useGlobalAuth } from "@/components/providers/global-auth-provider";
+import { useLogto } from "@logto/react";
 
 export function AuthButton() {
-  const { isAuthenticated, isLoading } = useGlobalAuth();
+  const { isAuthenticated, isLoading } = useLogto();
 
   const handleSignIn = () => {
     // Use API route directly (same as home page link)

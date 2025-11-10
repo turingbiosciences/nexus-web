@@ -5,7 +5,6 @@ import { ReactQueryProvider } from "@/components/providers/react-query-provider"
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import { ProjectsProvider } from "@/components/providers/projects-provider";
-import { GlobalAuthProvider } from "@/components/providers/global-auth-provider";
 import { TokenProvider } from "@/components/providers/token-provider";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -28,13 +27,11 @@ export default function RootLayout({
       <body className={inter.className}>
         <ToastProvider>
           <AuthProvider>
-            <GlobalAuthProvider>
-              <TokenProvider>
-                <ProjectsProvider>
-                  <ReactQueryProvider>{children}</ReactQueryProvider>
-                </ProjectsProvider>
-              </TokenProvider>
-            </GlobalAuthProvider>
+            <TokenProvider>
+              <ProjectsProvider>
+                <ReactQueryProvider>{children}</ReactQueryProvider>
+              </ProjectsProvider>
+            </TokenProvider>
           </AuthProvider>
         </ToastProvider>
       </body>

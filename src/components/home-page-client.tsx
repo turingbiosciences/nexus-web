@@ -4,7 +4,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { DebugPanel } from "@/components/debug/debug-panel";
 import { useSearchParams } from "next/navigation";
-import { useGlobalAuth } from "@/components/providers/global-auth-provider";
+import { useAccessToken } from "@/components/providers/token-provider";
 import { LoadingCard } from "@/components/ui/loading-card";
 import { SignInPrompt } from "@/components/auth/sign-in-prompt";
 import { ProjectList } from "@/components/projects/project-list";
@@ -20,7 +20,7 @@ export function HomePageClient() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const searchParams = useSearchParams();
   const authError = searchParams.get("error");
-  const { isAuthenticated, isLoading: authLoading } = useGlobalAuth();
+  const { isAuthenticated, authLoading } = useAccessToken();
 
   const {
     projects,
@@ -31,6 +31,14 @@ export function HomePageClient() {
   const statusCount = getStatusCounts();
 
   const isLoading = authLoading || projectsLoading;
+
+  console.log("[HomePageClient] Render state:", {
+    isAuthenticated,
+    authLoading,
+    projectsLoading,
+    isLoading,
+    projectsCount: projects.length,
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">

@@ -8,35 +8,86 @@ import {
   ReactNode,
   useCallback,
 } from "react";
-import { useGlobalAuth } from "./global-auth-provider";
 
 interface TokenContextValue {
   accessToken: string | null;
   isLoading: boolean;
   error: Error | null;
   refreshToken: () => Promise<string | null>;
+  // Add auth state so components can check authentication
+  isAuthenticated: boolean;
+  authLoading: boolean;
 }
 
 const TokenContext = createContext<TokenContextValue | undefined>(undefined);
 
 export const TokenProvider = ({ children }: { children: ReactNode }) => {
+  console.log(
+    "[TokenProvider] 🔥 FUNCTION BODY EXECUTING - typeof window:",
+    typeof window
+  );
+
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  // Use GlobalAuth for authentication state (server-side, more reliable)
-  const { isAuthenticated, isLoading: authLoading } = useGlobalAuth();
-  // Note: useLogto().getAccessToken() is NOT used here because in Next.js App Router,
-  // client-side authentication state can become out-of-sync with the server session,
-  // especially during SSR/RSC hydration and navigation. This can result in stale or missing
-  // access tokens, causing API requests to fail. By fetching the token from a server-side
-  // API route, we ensure the token is always up-to-date with the user's session, avoid
-  // hydration mismatches, and support both SSR and client navigation reliably.
   console.log("[TokenProvider] Component render", {
+    window: typeof window,
     isAuthenticated,
     authLoading,
     accessToken: accessToken ? "present" : "null",
   });
+
+  // Check authentication by calling the server-side API
+  // This ensures client state syncs with server session after callback
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkAuthStatus() {
+      console.log(
+        "[TokenProvider] 🌐 CLIENT: useEffect running, checking auth status..."
+      );
+
+      try {
+        const res = await fetch("/api/logto/user", { credentials: "include" });
+        if (cancelled) return;
+
+        if (res.ok) {
+          const data = await res.json();
+          const authenticated = Boolean(data?.isAuthenticated);
+          console.log("[TokenProvider] 🌐 CLIENT: Auth status received:", {
+            authenticated,
+          });
+          setIsAuthenticated(authenticated);
+        } else {
+          console.log(
+            "[TokenProvider] 🌐 CLIENT: Auth check failed, status:",
+            res.status
+          );
+          setIsAuthenticated(false);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[TokenProvider] 🌐 CLIENT: Auth check error:", err);
+        setIsAuthenticated(false);
+      } finally {
+        if (!cancelled) {
+          console.log(
+            "[TokenProvider] 🌐 CLIENT: Setting authLoading to false"
+          );
+          setAuthLoading(false);
+        }
+      }
+    }
+
+    checkAuthStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []); // Run once on mount
 
   const fetchToken = useCallback(async (): Promise<string | null> => {
     console.log("[TokenProvider] fetchToken called", {
@@ -113,6 +164,8 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
     isLoading,
     error,
     refreshToken,
+    isAuthenticated,
+    authLoading,
   };
 
   return (

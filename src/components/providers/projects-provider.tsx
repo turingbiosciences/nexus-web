@@ -50,6 +50,15 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     error: tokenError,
   } = useAccessToken();
 
+  console.log("[ProjectsProvider] Component render", {
+    projectsCount: projects.length,
+    loading,
+    hasFetched,
+    hasToken: !!accessToken,
+    tokenLoading,
+    error: error?.message,
+  });
+
   // Track authentication state (boolean) to detect user switching, not token refresh
   const isAuthenticated = !!accessToken;
 
@@ -66,18 +75,34 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, previousAuthState]); // Only reacts to auth state transitions, not token refreshes
 
   useEffect(() => {
+    console.log("[ProjectsProvider] useEffect triggered", {
+      hasToken: !!accessToken,
+      tokenLoading,
+      hasFetched,
+      tokenError: tokenError?.message,
+    });
+
     // Don't fetch if no token, token still loading, or already attempted fetch
     if (!accessToken || tokenLoading || hasFetched) {
+      console.log("[ProjectsProvider] Skipping fetch:", {
+        reason: !accessToken
+          ? "no token"
+          : tokenLoading
+          ? "token loading"
+          : "already fetched",
+      });
       return;
     }
 
     // If there's a token error, set it and don't fetch
     if (tokenError) {
+      console.log("[ProjectsProvider] Token error detected:", tokenError);
       setError(tokenError);
       setHasFetched(true); // Mark as attempted to prevent retry loop
       return;
     }
 
+    console.log("[ProjectsProvider] Starting fetch...");
     setLoading(true);
     setError(null);
 
@@ -85,6 +110,11 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       try {
         console.log("[ProjectsProvider] Fetching projects with cached token");
         const fetchedProjects = await fetchProjects(accessToken);
+        console.log(
+          "[ProjectsProvider] Fetch successful, received",
+          fetchedProjects.length,
+          "projects"
+        );
         setProjects(fetchedProjects);
       } catch (err) {
         console.error("[ProjectsProvider] Failed to fetch projects:", err);

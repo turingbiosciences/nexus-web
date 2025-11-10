@@ -54,8 +54,21 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
 
   const data = (await response.json()) as ProjectsAPIResponse;
 
+  // Debug: Log full API response
+  console.log("[fetchProjects] API Response:", JSON.stringify(data, null, 2));
+
   // Normalize projects to ensure valid status values and convert date strings to Date objects
   const projects = (data.projects || []).map((project) => {
+    // Debug: Log individual project data before transformation
+    console.log("[fetchProjects] Raw project data:", {
+      id: project.id,
+      name: project.name,
+      status: project.status,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+      completedAt: project.completedAt,
+    });
+
     // Helper to safely parse dates, fallback to current date if invalid
     const parseDate = (dateValue: string | Date | null | undefined): Date => {
       if (!dateValue) return new Date();
@@ -144,6 +157,12 @@ export async function createProject(
 
   const project = await response.json();
 
+  // Debug: Log full API response for created project
+  console.log(
+    "[createProject] API Response:",
+    JSON.stringify(project, null, 2)
+  );
+
   // Helper to safely parse dates, fallback to current date if invalid
   const parseDate = (dateValue: string | Date | null | undefined): Date => {
     if (!dateValue) return new Date();
@@ -163,6 +182,8 @@ export async function createProject(
     // Convert date strings to Date objects with fallback
     createdAt: parseDate(project.createdAt),
     updatedAt: parseDate(project.updatedAt),
-    completedAt: project.completedAt ? parseDate(project.completedAt) : undefined,
+    completedAt: project.completedAt
+      ? parseDate(project.completedAt)
+      : undefined,
   };
 }

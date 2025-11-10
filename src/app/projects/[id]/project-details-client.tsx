@@ -6,7 +6,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 // Use projects provider for dynamic state
 import { useProjects } from "@/components/providers/projects-provider";
-import { useGlobalAuth } from "@/components/providers/global-auth-provider";
+import { useLogto } from "@logto/react";
 import { SignInPrompt } from "@/components/auth/sign-in-prompt";
 import { LoadingCard } from "@/components/ui/loading-card";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,7 @@ const statusConfig = {
 
 export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useGlobalAuth();
+  const { isAuthenticated, isLoading } = useLogto();
   const [activeTab, setActiveTab] = useState<"overview" | "settings">(
     "overview"
   );
