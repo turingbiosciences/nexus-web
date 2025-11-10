@@ -12,14 +12,18 @@ export const GET = async (req: NextRequest) => {
     const { isAuthenticated } = await logto.getLogtoContext(req);
 
     if (!isAuthenticated) {
-      console.warn("[logto:token] ❌ Unauthorized token request - user not authenticated");
+      console.warn(
+        "[logto:token] ❌ Unauthorized token request - user not authenticated"
+      );
       return NextResponse.json(
         { error: "Unauthorized. Authentication required." },
         { status: 401 }
       );
     }
 
-    console.log("[logto:token] ✅ User authenticated, proceeding with M2M token fetch");
+    console.log(
+      "[logto:token] ✅ User authenticated, proceeding with M2M token fetch"
+    );
   } catch (authError) {
     console.error("[logto:token] ❌ Authentication check failed:", authError);
     return NextResponse.json(
@@ -47,7 +51,8 @@ export const GET = async (req: NextRequest) => {
     );
     return NextResponse.json(
       {
-        error: "Server misconfiguration: Missing required environment variables",
+        error:
+          "Server misconfiguration: Missing required environment variables",
         details:
           process.env.NODE_ENV === "development"
             ? `Missing: ${missingVars.join(", ")}`

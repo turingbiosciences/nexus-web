@@ -7,6 +7,7 @@ import { Upload, X, CheckCircle, AlertCircle, Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, formatBytes, formatUploadProgress } from "@/lib/utils";
 import { useGlobalAuth } from "@/components/providers/global-auth-provider";
+import { useAccessToken } from "@/components/providers/token-provider";
 
 interface FileUploadItem {
   file: File;
@@ -29,7 +30,8 @@ export function FileUploader({
   onUploadProgress,
 }: FileUploaderProps) {
   const [uploads, setUploads] = useState<FileUploadItem[]>([]);
-  const { getAccessToken, isAuthenticated, isLoading } = useGlobalAuth();
+  const { isAuthenticated, isLoading } = useGlobalAuth();
+  const { accessToken, refreshToken } = useAccessToken();
   const [authError, setAuthError] = useState<string | null>(null);
   const resource = process.env.NEXT_PUBLIC_TURING_API;
 
@@ -74,22 +76,8 @@ export function FileUploader({
         throw new Error("Missing NEXT_PUBLIC_TURING_API environment variable.");
       }
 
-      // Get Logto access token for API authentication
-      // Note: Without API resources configured in Logto, getAccessToken() may return undefined
-      // In that case, we'll need to get the ID token instead
-      let token: string | undefined;
-      try {
-        token = await getAccessToken(resource);
-      } catch (err) {
-        console.warn(
-          "Failed to get access token with resource, trying without resource:",
-          err
-        );
-        // Fallback: try getting token without resource parameter
-        token = await getAccessToken();
-      }
-
-      if (!token) {
+      // Use M2M access token from TokenProvider
+      if (!accessToken) {
         throw new Error(
           "Failed to obtain access token. Try signing out and back in."
         );
@@ -111,7 +99,7 @@ export function FileUploader({
           filetype: upload.file.type,
         },
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         onError: (error) => {
           console.error("TUS upload error:", error);
@@ -222,10 +210,10 @@ export function FileUploader({
     // If TUS upload exists, resume it
     if (upload.tusUpload) {
       try {
-        // Get fresh access token (may have expired during pause)
-        const token = await getAccessToken(process.env.NEXT_PUBLIC_TURING_API);
+        // Refresh access token (may have expired during pause)
+        await refreshToken();
 
-        if (!token) {
+        if (!accessToken) {
           throw new Error(
             "Failed to obtain access token. Please try signing out and back in."
           );
@@ -233,7 +221,7 @@ export function FileUploader({
 
         // Update auth token in case it expired
         upload.tusUpload.options.headers = {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${accessToken}`,
         };
 
         setUploads((prev) =>
