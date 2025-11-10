@@ -1,7 +1,33 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import LogtoClient from "@logto/next/edge";
+import { logtoConfig } from "@/lib/auth";
 
-export const GET = async () => {
+const logto = new LogtoClient(logtoConfig);
+
+export const GET = async (req: NextRequest) => {
   console.log("[logto:token] M2M token request received");
+
+  // CRITICAL SECURITY: Verify user is authenticated before issuing tokens
+  try {
+    const { isAuthenticated } = await logto.getLogtoContext(req);
+
+    if (!isAuthenticated) {
+      console.warn("[logto:token] ❌ Unauthorized token request - user not authenticated");
+      return NextResponse.json(
+        { error: "Unauthorized. Authentication required." },
+        { status: 401 }
+      );
+    }
+
+    console.log("[logto:token] ✅ User authenticated, proceeding with M2M token fetch");
+  } catch (authError) {
+    console.error("[logto:token] ❌ Authentication check failed:", authError);
+    return NextResponse.json(
+      { error: "Authentication verification failed" },
+      { status: 401 }
+    );
+  }
+
   console.log("[logto:token] Config:", {
     endpoint: process.env.LOGTO_ENDPOINT,
     m2mAppId: process.env.LOGTO_M2M_APP_ID,
