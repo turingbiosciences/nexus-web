@@ -54,7 +54,19 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
 
   const data = (await response.json()) as ProjectsAPIResponse;
 
-  return data.projects || [];
+  // Normalize projects to ensure valid status values
+  const projects = (data.projects || []).map((project) => ({
+    ...project,
+    // Default to 'setup' if status is missing or invalid
+    status:
+      project.status === "complete" ||
+      project.status === "running" ||
+      project.status === "setup"
+        ? project.status
+        : "setup",
+  }));
+
+  return projects;
 }
 
 /**
@@ -115,5 +127,16 @@ export async function createProject(
     );
   }
 
-  return await response.json();
+  const project = await response.json();
+
+  // Normalize status to ensure it's valid
+  return {
+    ...project,
+    status:
+      project.status === "complete" ||
+      project.status === "running" ||
+      project.status === "setup"
+        ? project.status
+        : "setup",
+  };
 }
