@@ -55,20 +55,31 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
   const data = (await response.json()) as ProjectsAPIResponse;
 
   // Normalize projects to ensure valid status values and convert date strings to Date objects
-  const projects = (data.projects || []).map((project) => ({
-    ...project,
-    // Default to 'setup' if status is missing or invalid
-    status:
-      project.status === "complete" ||
-      project.status === "running" ||
-      project.status === "setup"
-        ? project.status
-        : "setup",
-    // Convert date strings to Date objects
-    createdAt: new Date(project.createdAt),
-    updatedAt: new Date(project.updatedAt),
-    completedAt: project.completedAt ? new Date(project.completedAt) : undefined,
-  }));
+  const projects = (data.projects || []).map((project) => {
+    // Helper to safely parse dates, fallback to current date if invalid
+    const parseDate = (dateValue: string | Date | null | undefined): Date => {
+      if (!dateValue) return new Date();
+      const parsed = new Date(dateValue);
+      return isNaN(parsed.getTime()) ? new Date() : parsed;
+    };
+
+    return {
+      ...project,
+      // Default to 'setup' if status is missing or invalid
+      status:
+        project.status === "complete" ||
+        project.status === "running" ||
+        project.status === "setup"
+          ? project.status
+          : "setup",
+      // Convert date strings to Date objects with fallback
+      createdAt: parseDate(project.createdAt),
+      updatedAt: parseDate(project.updatedAt),
+      completedAt: project.completedAt
+        ? parseDate(project.completedAt)
+        : undefined,
+    };
+  });
 
   return projects;
 }
@@ -133,6 +144,13 @@ export async function createProject(
 
   const project = await response.json();
 
+  // Helper to safely parse dates, fallback to current date if invalid
+  const parseDate = (dateValue: string | Date | null | undefined): Date => {
+    if (!dateValue) return new Date();
+    const parsed = new Date(dateValue);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  };
+
   // Normalize status to ensure it's valid and convert date strings to Date objects
   return {
     ...project,
@@ -142,9 +160,9 @@ export async function createProject(
       project.status === "setup"
         ? project.status
         : "setup",
-    // Convert date strings to Date objects
-    createdAt: new Date(project.createdAt),
-    updatedAt: new Date(project.updatedAt),
-    completedAt: project.completedAt ? new Date(project.completedAt) : undefined,
+    // Convert date strings to Date objects with fallback
+    createdAt: parseDate(project.createdAt),
+    updatedAt: parseDate(project.updatedAt),
+    completedAt: project.completedAt ? parseDate(project.completedAt) : undefined,
   };
 }
