@@ -7,7 +7,19 @@ interface MockConfig {
   endpoint: string;
   appId: string;
   scopes: string[];
+  resources?: string[];
 }
+
+// Mock the auth config
+jest.mock("@/lib/auth", () => ({
+  logtoClientConfig: {
+    endpoint: "https://logto.example.com",
+    appId: "app_123",
+    scopes: ["openid", "profile", "email", "offline_access", "all"],
+    resources: ["https://api.example.com"],
+  },
+}));
+
 jest.mock("@logto/react", () => ({
   LogtoProvider: ({
     children,
@@ -20,6 +32,7 @@ jest.mock("@logto/react", () => ({
       data-testid="logto-provider"
       data-endpoint={config.endpoint}
       data-appid={config.appId}
+      data-scopes={config.scopes?.join(",")}
     >
       {children}
     </div>
@@ -27,16 +40,6 @@ jest.mock("@logto/react", () => ({
 }));
 
 describe("AuthProvider", () => {
-  const ORIGINAL_ENV = process.env;
-  beforeEach(() => {
-    process.env = { ...ORIGINAL_ENV };
-    process.env.NEXT_PUBLIC_LOGTO_ENDPOINT = "https://logto.example.com";
-    process.env.NEXT_PUBLIC_LOGTO_APP_ID = "app_123";
-  });
-  afterAll(() => {
-    process.env = ORIGINAL_ENV;
-  });
-
   it("passes config to LogtoProvider and renders children", () => {
     render(
       <AuthProvider>
@@ -49,6 +52,10 @@ describe("AuthProvider", () => {
       "https://logto.example.com"
     );
     expect(provider).toHaveAttribute("data-appid", "app_123");
+    expect(provider).toHaveAttribute(
+      "data-scopes",
+      "openid,profile,email,offline_access,all"
+    );
     expect(screen.getByTestId("child")).toBeInTheDocument();
   });
 });
