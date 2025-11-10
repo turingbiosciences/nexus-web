@@ -13,6 +13,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Turing Biosciences",
   description: "Secure file upload and management platform",
+  icons: {
+    icon: "/turing-icon.svg",
+  },
 };
 
 export default function RootLayout({

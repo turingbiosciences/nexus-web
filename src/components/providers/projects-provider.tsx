@@ -42,6 +42,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [hasFetched, setHasFetched] = useState(false); // Track if we've attempted fetch
   const {
     accessToken,
     isLoading: tokenLoading,
@@ -49,14 +50,15 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   } = useAccessToken();
 
   useEffect(() => {
-    // Don't fetch if no token, token still loading, already loading, or already have projects
-    if (!accessToken || tokenLoading || loading || projects.length > 0) {
+    // Don't fetch if no token, token still loading, already loading, or already attempted fetch
+    if (!accessToken || tokenLoading || loading || hasFetched) {
       return;
     }
 
     // If there's a token error, set it and don't fetch
     if (tokenError) {
       setError(tokenError);
+      setHasFetched(true); // Mark as attempted to prevent retry loop
       return;
     }
 
@@ -74,9 +76,10 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         setProjects([]);
       } finally {
         setLoading(false);
+        setHasFetched(true); // Mark as attempted regardless of success/failure
       }
     })();
-  }, [accessToken, tokenLoading, tokenError, loading, projects.length]);
+  }, [accessToken, tokenLoading, tokenError, loading, hasFetched]);
 
   const createProject = useCallback(
     async (data: { name: string; description: string }) => {

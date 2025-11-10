@@ -2,20 +2,14 @@
 
 import { LogtoProvider } from "@logto/react";
 import { ReactNode } from "react";
+import { logtoClientConfig } from "@/lib/auth";
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const config = {
-    endpoint: process.env.NEXT_PUBLIC_LOGTO_ENDPOINT!,
-    appId: process.env.NEXT_PUBLIC_LOGTO_APP_ID!,
-    scopes: ["openid", "profile", "email", "offline_access", "all"],
-    resources: [process.env.NEXT_PUBLIC_TURING_API!],
-  };
+  console.log("Logto config:", logtoClientConfig);
 
-  console.log("Logto config:", config);
-
-  return <LogtoProvider config={config}>{children}</LogtoProvider>;
+  return <LogtoProvider config={logtoClientConfig}>{children}</LogtoProvider>;
 }

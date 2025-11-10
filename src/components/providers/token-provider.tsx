@@ -19,15 +19,20 @@ interface TokenContextValue {
 
 const TokenContext = createContext<TokenContextValue | undefined>(undefined);
 
-export function TokenProvider({ children }: { children: ReactNode }) {
+export const TokenProvider = ({ children }: { children: ReactNode }) => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const {
+
+  // Use GlobalAuth for authentication state (server-side, more reliable)
+  const { isAuthenticated, isLoading: authLoading } = useGlobalAuth();
+  // Note: useLogto().getAccessToken() not used due to client/server sync issues
+
+  console.log("[TokenProvider] Component render", {
     isAuthenticated,
-    isLoading: authLoading,
-    getAccessToken,
-  } = useGlobalAuth();
+    authLoading,
+    accessToken: accessToken ? "present" : "null",
+  });
 
   const fetchToken = useCallback(async () => {
     console.log("[TokenProvider] fetchToken called", {
@@ -46,6 +51,7 @@ export function TokenProvider({ children }: { children: ReactNode }) {
       console.log("[TokenProvider] Not authenticated, clearing token");
       setAccessToken(null);
       setError(null);
+      setIsLoading(false);
       return;
     }
 
@@ -53,38 +59,42 @@ export function TokenProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     try {
-      const resource = process.env.NEXT_PUBLIC_TURING_API;
-      console.log("[TokenProvider] Fetching access token...", {
-        resource,
-        hasResource: !!resource,
-      });
+      console.log("[TokenProvider] Fetching access token from server...");
 
-      const token = await getAccessToken(resource);
+      // Fetch token from server-side API route
+      // This route will use @logto/next to get the token from the server session
+      const response = await fetch("/api/logto/token");
 
-      console.log("[TokenProvider] getAccessToken result:", {
-        hasToken: !!token,
-        tokenLength: token?.length,
-      });
-
-      if (!token) {
+      if (!response.ok) {
+        const errorData = await response.json();
         throw new Error(
-          "Failed to obtain access token. Please sign out and sign back in. Make sure the API resource is configured in Logto Console."
+          errorData.error ||
+            `Failed to fetch token: ${response.status} ${response.statusText}`
         );
       }
 
-      console.log("[TokenProvider] Access token obtained successfully");
-      setAccessToken(token);
+      const data = await response.json();
+
+      if (!data.accessToken) {
+        throw new Error(
+          "No access token returned. API resource may not be configured in Logto Console."
+        );
+      }
+
+      console.log("[TokenProvider] ✅ Access token obtained from server");
+      setAccessToken(data.accessToken);
     } catch (err) {
-      console.error("[TokenProvider] Failed to fetch access token:", err);
-      setError(err instanceof Error ? err : new Error("Unknown error"));
+      console.error("[TokenProvider] ❌ Token fetch failed:", err);
+      setError(err instanceof Error ? err : new Error(String(err)));
       setAccessToken(null);
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, authLoading, getAccessToken]);
+  }, [isAuthenticated, authLoading]);
 
   // Fetch token when authentication state changes
   useEffect(() => {
+    console.log("[TokenProvider] useEffect triggered - calling fetchToken");
     fetchToken();
   }, [fetchToken]);
 
@@ -102,7 +112,7 @@ export function TokenProvider({ children }: { children: ReactNode }) {
   return (
     <TokenContext.Provider value={value}>{children}</TokenContext.Provider>
   );
-}
+};
 
 export function useAccessToken() {
   const ctx = useContext(TokenContext);

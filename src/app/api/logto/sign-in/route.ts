@@ -13,8 +13,8 @@ const logto = new LogtoClient({
   baseUrl: process.env.NEXTAUTH_URL || "http://localhost:3000",
   cookieSecret: process.env.NEXTAUTH_SECRET!,
   cookieSecure: process.env.NODE_ENV === "production",
-  scopes: ["openid", "profile", "email", "offline_access", "all"],
-  resources: [process.env.NEXT_PUBLIC_TURING_API!],
+  scopes: ["openid", "profile", "email", "offline_access"],
+  // Note: User authentication doesn't need API resources - M2M tokens handle API access
 });
 
 export const GET = async (req: NextRequest) => {

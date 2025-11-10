@@ -4,17 +4,28 @@
  */
 
 import { Project } from "@/types/project";
+import { mockProjects } from "@/lib/mock-data";
 
 interface ProjectsAPIResponse {
   projects: Project[];
 }
 
 /**
- * Fetch projects list from the backend API
+ * Fetch projects list from the backend API or mock data
  * @param accessToken - Logto access token for authentication
  * @returns Promise resolving to array of projects
  */
 export async function fetchProjects(accessToken: string): Promise<Project[]> {
+  // Check if mock mode is enabled
+  const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
+
+  if (dataMode === "mock") {
+    console.log("[fetchProjects] Using mock data (NEXT_PUBLIC_DATA_MODE=mock)");
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return mockProjects;
+  }
+
   const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
 
   if (!baseUrl) {
@@ -23,6 +34,8 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
 
   // Remove trailing slash if present
   const apiUrl = baseUrl.replace(/\/$/, "");
+
+  console.log(`[fetchProjects] Fetching from API: ${apiUrl}/projects`);
 
   const response = await fetch(`${apiUrl}/projects`, {
     method: "GET",
@@ -45,7 +58,7 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
 }
 
 /**
- * Create a new project via the backend API
+ * Create a new project via the backend API or mock
  * @param accessToken - Logto access token for authentication
  * @param data - Project creation data
  * @returns Promise resolving to created project
@@ -54,6 +67,28 @@ export async function createProject(
   accessToken: string,
   data: { name: string; description: string }
 ): Promise<Project> {
+  // Check if mock mode is enabled
+  const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
+
+  if (dataMode === "mock") {
+    console.log("[createProject] Using mock data (NEXT_PUBLIC_DATA_MODE=mock)");
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Return mock project
+    const newProject: Project = {
+      id: `mock-${Date.now()}`,
+      name: data.name,
+      description: data.description,
+      status: "setup",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      datasets: [],
+      datasetCount: 0,
+      lastActivity: "just now",
+    };
+    return newProject;
+  }
+
   const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
 
   if (!baseUrl) {
@@ -61,6 +96,8 @@ export async function createProject(
   }
 
   const apiUrl = baseUrl.replace(/\/$/, "");
+
+  console.log(`[createProject] Creating via API: ${apiUrl}/projects`);
 
   const response = await fetch(`${apiUrl}/projects`, {
     method: "POST",

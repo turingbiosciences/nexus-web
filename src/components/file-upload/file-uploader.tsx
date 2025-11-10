@@ -314,12 +314,9 @@ export function FileUploader({
         <p className="text-sm text-blue-700">
           Sign in required to upload files.
         </p>
-        <a
-          href="/api/logto/sign-in"
-          className="mt-3 inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          Sign In
-        </a>
+        <Button asChild className="mt-3">
+          <a href="/api/logto/sign-in">Sign In</a>
+        </Button>
       </div>
     ) : null;
 

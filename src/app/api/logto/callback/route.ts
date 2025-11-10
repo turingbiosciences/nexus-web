@@ -1,4 +1,4 @@
-import LogtoClient from '@logto/next/edge'
+import LogtoClient from "@logto/next/edge";
 
 const logto = new LogtoClient({
   endpoint: process.env.LOGTO_ENDPOINT!,
@@ -6,9 +6,8 @@ const logto = new LogtoClient({
   appSecret: process.env.LOGTO_APP_SECRET!,
   baseUrl: process.env.NEXTAUTH_URL!,
   cookieSecret: process.env.NEXTAUTH_SECRET!,
-  cookieSecure: process.env.NODE_ENV === 'production',
-  scopes: ['openid', 'profile', 'email', 'offline_access', 'all'],
-  resources: [process.env.NEXT_PUBLIC_TURING_API!],
-})
+  cookieSecure: process.env.NODE_ENV === "production",
+  scopes: ["openid", "profile", "email", "offline_access"],
+});
 
-export const GET = logto.handleSignInCallback()
+export const GET = logto.handleSignInCallback();
