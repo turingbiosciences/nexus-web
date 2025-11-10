@@ -51,7 +51,7 @@ const mockedUseProjects = useProjects as jest.Mock;
 describe("HomePageClient", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Default mocks
     mockedUseGlobalAuth.mockReturnValue({
       isAuthenticated: false,
@@ -81,7 +81,7 @@ describe("HomePageClient", () => {
 
   it("renders the main page structure", () => {
     render(<HomePageClient />);
-    
+
     expect(screen.getByAltText("Turing Biosciences")).toBeInTheDocument();
     expect(screen.getByText("Auth Button")).toBeInTheDocument();
   });
@@ -96,7 +96,7 @@ describe("HomePageClient", () => {
     });
 
     render(<HomePageClient />);
-    
+
     expect(screen.getByText("Sign in Required")).toBeInTheDocument();
   });
 
@@ -110,9 +110,13 @@ describe("HomePageClient", () => {
     });
 
     render(<HomePageClient />);
-    
-    expect(screen.getByRole("heading", { name: "Projects" })).toBeInTheDocument();
-    expect(screen.getByText("Manage and monitor your biosciences research projects")).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("heading", { name: "Projects" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Manage and monitor your biosciences research projects")
+    ).toBeInTheDocument();
   });
 
   it("renders project list when authenticated", () => {
@@ -125,7 +129,7 @@ describe("HomePageClient", () => {
     });
 
     render(<HomePageClient />);
-    
+
     expect(screen.getByText("Project List")).toBeInTheDocument();
   });
 
@@ -139,7 +143,7 @@ describe("HomePageClient", () => {
     });
 
     render(<HomePageClient />);
-    
+
     expect(screen.getByText("Project Status Overview")).toBeInTheDocument();
   });
 
@@ -153,7 +157,7 @@ describe("HomePageClient", () => {
     });
 
     render(<HomePageClient />);
-    
+
     expect(screen.getByText("New Project")).toBeInTheDocument();
   });
 
@@ -167,13 +171,13 @@ describe("HomePageClient", () => {
     });
 
     render(<HomePageClient />);
-    
+
     expect(screen.getByText("New Project Dialog")).toBeInTheDocument();
   });
 
   it("renders debug panel", () => {
     render(<HomePageClient />);
-    
+
     expect(screen.getByText("Debug Panel")).toBeInTheDocument();
   });
 
@@ -187,7 +191,7 @@ describe("HomePageClient", () => {
     });
 
     render(<HomePageClient />);
-    
+
     // Should show loading card
     expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
@@ -219,7 +223,7 @@ describe("HomePageClient", () => {
     });
 
     render(<HomePageClient />);
-    
+
     expect(screen.getByText("Failed to Load Projects")).toBeInTheDocument();
   });
 });

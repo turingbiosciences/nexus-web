@@ -1,6 +1,9 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
-import { TokenProvider, useAccessToken } from "@/components/providers/token-provider";
+import {
+  TokenProvider,
+  useAccessToken,
+} from "@/components/providers/token-provider";
 
 // Mock GlobalAuthProvider
 jest.mock("@/components/providers/global-auth-provider", () => ({
@@ -13,7 +16,7 @@ const mockedUseGlobalAuth = useGlobalAuth as jest.Mock;
 // Test component that uses the token hook
 function TestComponent() {
   const { accessToken, isLoading, error } = useAccessToken();
-  
+
   if (isLoading) return <div>Loading token...</div>;
   if (error) return <div>Error: {error.message}</div>;
   if (accessToken) return <div>Token: {accessToken}</div>;
@@ -33,11 +36,11 @@ describe("TokenProvider", () => {
   it("throws error when useAccessToken is used outside TokenProvider", () => {
     // Suppress console.error for this test
     const consoleSpy = jest.spyOn(console, "error").mockImplementation();
-    
+
     expect(() => {
       render(<TestComponent />);
     }).toThrow("useAccessToken must be used within a TokenProvider");
-    
+
     consoleSpy.mockRestore();
   });
 
@@ -219,7 +222,7 @@ describe("TokenProvider", () => {
 
     function RefreshTestComponent() {
       const { accessToken, refreshToken } = useAccessToken();
-      
+
       return (
         <div>
           <div>Token: {accessToken || "none"}</div>
