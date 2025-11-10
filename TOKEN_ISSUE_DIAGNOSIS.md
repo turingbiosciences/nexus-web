@@ -23,7 +23,7 @@ The **API resource is not configured in Logto Console**. While the code is corre
 
 ### Step 1: Configure API Resource in Logto Console
 
-1. Go to [Logto Console](https://q98adz.logto.app/)
+1. Go to [Logto Console](https://YOUR_TENANT.logto.app/)
 2. Navigate to **API Resources** (in the left sidebar)
 3. Click **Create API Resource**
 4. Enter the following details:
