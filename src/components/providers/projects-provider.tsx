@@ -49,6 +49,13 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     error: tokenError,
   } = useAccessToken();
 
+  // Reset hasFetched and clear projects when accessToken changes (new user session)
+  useEffect(() => {
+    setHasFetched(false);
+    setProjects([]);
+    setError(null);
+  }, [accessToken]);
+
   useEffect(() => {
     // Don't fetch if no token, token still loading, already loading, or already attempted fetch
     if (!accessToken || tokenLoading || loading || hasFetched) {

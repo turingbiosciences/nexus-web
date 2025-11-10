@@ -5,14 +5,16 @@ import {
   useProjects,
 } from "@/components/providers/projects-provider";
 
-// Mock TokenProvider
+// Mock TokenProvider - initially return default mock
+const mockUseAccessToken = jest.fn(() => ({
+  accessToken: "test-token",
+  isLoading: false,
+  error: null,
+  refreshToken: jest.fn(),
+}));
+
 jest.mock("../token-provider", () => ({
-  useAccessToken: () => ({
-    accessToken: "test-token",
-    isLoading: false,
-    error: null,
-    refreshToken: jest.fn(),
-  }),
+  useAccessToken: () => mockUseAccessToken(),
 }));
 
 // Mock API
@@ -141,6 +143,79 @@ describe("ProjectsProvider", () => {
       expect(screen.getByTestId("first-project-status")).toHaveTextContent(
         /running/
       );
+    });
+  });
+
+  it("refetches projects when accessToken changes (new user session)", async () => {
+    const { fetchProjects } = await import("@/lib/api/projects");
+    const mockFetchProjects = fetchProjects as jest.Mock;
+
+    // User A signs in with token-a
+    mockUseAccessToken.mockReturnValue({
+      accessToken: "token-a",
+      isLoading: false,
+      error: null,
+      refreshToken: jest.fn(),
+    });
+    mockFetchProjects.mockResolvedValue([
+      {
+        id: "user-a-project",
+        name: "User A Project",
+        description: "A's project",
+        status: "setup",
+        datasets: [],
+        datasetCount: 0,
+        lastActivity: "just now",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ]);
+
+    const { rerender } = render(
+      <ProjectsProvider>
+        <Consumer />
+      </ProjectsProvider>
+    );
+
+    // User A's project should appear
+    await waitFor(() => {
+      expect(screen.getByTestId("project-user-a-project")).toBeInTheDocument();
+    });
+
+    // User A signs out, User B signs in with token-b
+    mockUseAccessToken.mockReturnValue({
+      accessToken: "token-b",
+      isLoading: false,
+      error: null,
+      refreshToken: jest.fn(),
+    });
+    mockFetchProjects.mockResolvedValue([
+      {
+        id: "user-b-project",
+        name: "User B Project",
+        description: "B's project",
+        status: "running",
+        datasets: [],
+        datasetCount: 0,
+        lastActivity: "just now",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ]);
+
+    // Force re-render to trigger the accessToken change effect
+    rerender(
+      <ProjectsProvider>
+        <Consumer />
+      </ProjectsProvider>
+    );
+
+    // User B's project should appear, User A's should be gone
+    await waitFor(() => {
+      expect(screen.getByTestId("project-user-b-project")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("project-user-a-project")
+      ).not.toBeInTheDocument();
     });
   });
 });
