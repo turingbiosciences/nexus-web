@@ -17,6 +17,7 @@ import {
 import {
   fetchProjects,
   createProject as createProjectAPI,
+  deleteProject as deleteProjectAPI,
 } from "@/lib/api/projects";
 import { useAccessToken } from "./token-provider";
 
@@ -29,6 +30,7 @@ interface ProjectsContextValue {
     description: string;
   }) => Promise<Project>;
   updateProject: (id: string, updates: Partial<Project>) => void;
+  deleteProject: (id: string) => Promise<void>;
   getProjectById: (id: string) => Project | undefined;
   getStatusCounts: () => ProjectStatusCount;
   addDataset: (projectId: string, file: { name: string; size: number }) => void;
@@ -204,6 +206,42 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     // TODO: Add API call to persist updates
   }, []);
 
+  const deleteProject = useCallback(
+    async (id: string) => {
+      console.log("[ProjectsProvider] deleteProject called", {
+        projectId: id,
+        hasToken: !!accessToken,
+        tokenLoading,
+        tokenError: tokenError?.message,
+      });
+
+      // Check if token is available
+      if (!accessToken) {
+        const errorMsg = tokenError
+          ? `Authentication error: ${tokenError.message}`
+          : "Authentication token unavailable. Please sign out and sign back in to obtain an access token.";
+        console.error("[ProjectsProvider]", errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      if (tokenLoading) {
+        throw new Error("Authentication loading. Please wait and try again.");
+      }
+
+      try {
+        console.log("[ProjectsProvider] Deleting project with cached token");
+        await deleteProjectAPI(accessToken, id);
+        // Remove from local state after successful deletion
+        setProjects((prev) => prev.filter((p) => p.id !== id));
+        console.log("[ProjectsProvider] Project deleted successfully");
+      } catch (err) {
+        console.error("[ProjectsProvider] Failed to delete project:", err);
+        throw err;
+      }
+    },
+    [accessToken, tokenLoading, tokenError]
+  );
+
   const addDataset = useCallback(
     (projectId: string, file: { name: string; size: number }) => {
       setProjects((prev) =>
@@ -263,6 +301,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     error,
     createProject,
     updateProject,
+    deleteProject,
     getProjectById,
     getStatusCounts,
     addDataset,

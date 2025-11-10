@@ -10,6 +10,9 @@ interface ProjectsAPIResponse {
   projects: Project[];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type RawProject = any;
+
 /**
  * Fetch projects list from the backend API or mock data
  * @param accessToken - Logto access token for authentication
@@ -52,13 +55,25 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
     );
   }
 
-  const data = (await response.json()) as ProjectsAPIResponse;
+  const data = await response.json();
 
   // Debug: Log full API response
   console.log("[fetchProjects] API Response:", JSON.stringify(data, null, 2));
+  console.log("[fetchProjects] API Response type:", typeof data);
+  console.log("[fetchProjects] Is Array?", Array.isArray(data));
+  console.log(
+    "[fetchProjects] Has 'projects' property?",
+    "projects" in (data || {})
+  );
+
+  // Handle both array response and object with projects property
+  const projectsArray: RawProject[] = Array.isArray(data)
+    ? data
+    : data?.projects || [];
+  console.log("[fetchProjects] Projects array length:", projectsArray.length);
 
   // Normalize projects to ensure valid status values and convert date strings to Date objects
-  const projects = (data.projects || []).map((project) => {
+  const projects = projectsArray.map((project: RawProject) => {
     // Debug: Log individual project data before transformation
     console.log("[fetchProjects] Raw project data:", {
       id: project.id,
@@ -94,7 +109,64 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
     };
   });
 
+  console.log(
+    "[fetchProjects] Returning",
+    projects.length,
+    "normalized projects"
+  );
   return projects;
+}
+
+/**
+ * Delete a project via the backend API
+ * @param accessToken - Logto access token for authentication
+ * @param projectId - ID of the project to delete
+ * @returns Promise resolving when deletion is complete
+ */
+export async function deleteProject(
+  accessToken: string,
+  projectId: string
+): Promise<void> {
+  // Check if mock mode is enabled
+  const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
+
+  if (dataMode === "mock") {
+    console.log(
+      `[deleteProject] Mock deletion of project ${projectId} (NEXT_PUBLIC_DATA_MODE=mock)`
+    );
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return;
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
+
+  if (!baseUrl) {
+    throw new Error("Missing NEXT_PUBLIC_TURING_API environment variable");
+  }
+
+  const apiUrl = baseUrl.replace(/\/$/, "");
+
+  console.log(
+    `[deleteProject] Deleting via API: ${apiUrl}/projects/${projectId}`
+  );
+
+  const response = await fetch(`${apiUrl}/projects/${projectId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "Unknown error");
+    throw new Error(
+      `Failed to delete project: ${response.status} ${response.statusText} - ${errorText}`
+    );
+  }
+
+  console.log(`[deleteProject] Successfully deleted project ${projectId}`);
 }
 
 /**

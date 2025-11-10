@@ -6,7 +6,6 @@ import * as tus from "tus-js-client";
 import { Upload, X, CheckCircle, AlertCircle, Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, formatBytes, formatUploadProgress } from "@/lib/utils";
-import { useGlobalAuth } from "@/components/providers/global-auth-provider";
 import { useAccessToken } from "@/components/providers/token-provider";
 
 interface FileUploadItem {
@@ -15,23 +14,26 @@ interface FileUploadItem {
   progress: number;
   status: "pending" | "uploading" | "paused" | "completed" | "error";
   error?: string;
+  xhr?: XMLHttpRequest;
   tusUpload?: tus.Upload;
+  uploadMethod?: "tus" | "xhr"; // Track which method is being used
 }
 
 interface FileUploaderProps {
+  projectId?: string;
   maxSize?: number;
   onUploadComplete?: (files: File[]) => void;
   onUploadProgress?: (fileId: string, progress: number) => void;
 }
 
 export function FileUploader({
+  projectId,
   maxSize = 5 * 1024 * 1024 * 1024, // 5GB default
   onUploadComplete,
   onUploadProgress,
 }: FileUploaderProps) {
   const [uploads, setUploads] = useState<FileUploadItem[]>([]);
-  const { isAuthenticated, isLoading } = useGlobalAuth();
-  const { accessToken, refreshToken } = useAccessToken();
+  const { isAuthenticated, authLoading, accessToken } = useAccessToken();
   const [authError, setAuthError] = useState<string | null>(null);
   const resource = process.env.NEXT_PUBLIC_TURING_API;
 
@@ -59,9 +61,96 @@ export function FileUploader({
     },
   });
 
+  const startUploadWithXHR = async (upload: FileUploadItem) => {
+    const apiEndpoint = resource!;
+
+    // Use standard FormData upload (fallback method)
+    const formData = new FormData();
+    formData.append("file", upload.file);
+
+    const xhr = new XMLHttpRequest();
+
+    // Track progress
+    xhr.upload.addEventListener("progress", (e) => {
+      if (e.lengthComputable) {
+        const percentage = Math.round((e.loaded / e.total) * 100);
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.id === upload.id ? { ...u, progress: percentage } : u
+          )
+        );
+        onUploadProgress?.(upload.id, percentage);
+      }
+    });
+
+    // Handle completion
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.id === upload.id
+              ? { ...u, status: "completed", progress: 100 }
+              : u
+          )
+        );
+        onUploadComplete?.([upload.file]);
+      } else {
+        const errorMsg =
+          xhr.responseText || `Upload failed with status ${xhr.status}`;
+        console.error("XHR upload error:", errorMsg);
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.id === upload.id
+              ? {
+                  ...u,
+                  status: "error",
+                  error: errorMsg,
+                }
+              : u
+          )
+        );
+      }
+    });
+
+    // Handle errors
+    xhr.addEventListener("error", () => {
+      console.error("XHR upload network error");
+      setUploads((prev) =>
+        prev.map((u) =>
+          u.id === upload.id
+            ? {
+                ...u,
+                status: "error",
+                error: "Network error during upload",
+              }
+            : u
+        )
+      );
+    });
+
+    // Handle abort
+    xhr.addEventListener("abort", () => {
+      setUploads((prev) =>
+        prev.map((u) => (u.id === upload.id ? { ...u, status: "paused" } : u))
+      );
+    });
+
+    // Store XHR instance and method for pause/resume functionality
+    setUploads((prev) =>
+      prev.map((u) =>
+        u.id === upload.id ? { ...u, xhr, uploadMethod: "xhr" } : u
+      )
+    );
+
+    // Start the upload
+    xhr.open("POST", `${apiEndpoint}/projects/${projectId}/files`);
+    xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+    xhr.send(formData);
+  };
+
   const startUpload = async (upload: FileUploadItem) => {
     // Block if auth not ready; don't mutate upload status yet
-    if (isLoading) {
+    if (authLoading) {
       setAuthError("Authentication loading. Please wait.");
       return;
     }
@@ -90,10 +179,23 @@ export function FileUploader({
         throw new Error("Upload endpoint not configured");
       }
 
-      // Create TUS upload instance
+      // Validate projectId is provided
+      if (!projectId) {
+        throw new Error("Project ID is required for file uploads");
+      }
+
+      // Set status to uploading
+      setUploads((prev) =>
+        prev.map((u) =>
+          u.id === upload.id ? { ...u, status: "uploading" } : u
+        )
+      );
+
+      // Try TUS protocol first
+      console.log("Attempting TUS upload...");
       const tusUpload = new tus.Upload(upload.file, {
-        endpoint: `${apiEndpoint}/uploads`,
-        retryDelays: [0, 3000, 5000, 10000, 20000],
+        endpoint: `${apiEndpoint}/projects/${projectId}/files`,
+        retryDelays: [0, 1000, 3000], // Shorter delays for fallback
         metadata: {
           filename: upload.file.name,
           filetype: upload.file.type,
@@ -103,30 +205,45 @@ export function FileUploader({
         },
         onError: (error) => {
           console.error("TUS upload error:", error);
-          setUploads((prev) =>
-            prev.map((u) =>
-              u.id === upload.id
-                ? {
-                    ...u,
-                    status: "error",
-                    error: error.message || "Upload failed",
-                  }
-                : u
-            )
-          );
+
+          // Check if it's a 422 error (TUS not supported) or other client error
+          const is422Error =
+            error.message?.includes("422") ||
+            error.message?.includes("Unprocessable Entity") ||
+            error.message?.includes("Field required");
+
+          if (is422Error) {
+            console.log(
+              "TUS not supported (422 error), falling back to XHR upload"
+            );
+            // Fallback to standard XHR upload
+            startUploadWithXHR(upload);
+          } else {
+            // Other errors - mark as failed
+            setUploads((prev) =>
+              prev.map((u) =>
+                u.id === upload.id
+                  ? {
+                      ...u,
+                      status: "error",
+                      error: error.message || "Upload failed",
+                    }
+                  : u
+              )
+            );
+          }
         },
         onProgress: (bytesUploaded, bytesTotal) => {
           const percentage = Math.round((bytesUploaded / bytesTotal) * 100);
-
           setUploads((prev) =>
             prev.map((u) =>
               u.id === upload.id ? { ...u, progress: percentage } : u
             )
           );
-
           onUploadProgress?.(upload.id, percentage);
         },
         onSuccess: () => {
+          console.log("TUS upload completed successfully");
           setUploads((prev) =>
             prev.map((u) =>
               u.id === upload.id
@@ -134,19 +251,18 @@ export function FileUploader({
                 : u
             )
           );
-
           onUploadComplete?.([upload.file]);
         },
       });
 
-      // Store TUS upload instance and set status to uploading
+      // Store TUS upload instance for pause/resume functionality
       setUploads((prev) =>
         prev.map((u) =>
-          u.id === upload.id ? { ...u, status: "uploading", tusUpload } : u
+          u.id === upload.id ? { ...u, tusUpload, uploadMethod: "tus" } : u
         )
       );
 
-      // Start the upload
+      // Start the TUS upload
       tusUpload.start();
     } catch (error) {
       console.error("Upload initialization error:", error);
@@ -196,8 +312,10 @@ export function FileUploader({
   }, [isAuthenticated]);
 
   const pauseUpload = (upload: FileUploadItem) => {
-    if (upload.tusUpload) {
+    if (upload.uploadMethod === "tus" && upload.tusUpload) {
       upload.tusUpload.abort();
+    } else if (upload.uploadMethod === "xhr" && upload.xhr) {
+      upload.xhr.abort();
     }
 
     setUploads((prev) =>
@@ -206,56 +324,30 @@ export function FileUploader({
   };
 
   const resumeUpload = async (upload: FileUploadItem) => {
-    // If TUS upload exists, resume it
-    if (upload.tusUpload) {
-      try {
-        // Refresh access token (may have expired during pause) and get the new token value
-        const freshToken = await refreshToken();
-
-        if (!freshToken) {
-          throw new Error(
-            "Failed to obtain access token. Please try signing out and back in."
-          );
-        }
-
-        // Update auth token in case it expired
-        upload.tusUpload.options.headers = {
-          Authorization: `Bearer ${freshToken}`,
-        };
-
-        setUploads((prev) =>
-          prev.map((u) =>
-            u.id === upload.id ? { ...u, status: "uploading" } : u
-          )
-        );
-
-        upload.tusUpload.start();
-      } catch (error) {
-        console.error("Resume upload error:", error);
-        setUploads((prev) =>
-          prev.map((u) =>
-            u.id === upload.id
-              ? {
-                  ...u,
-                  status: "error",
-                  error:
-                    error instanceof Error ? error.message : "Resume failed",
-                }
-              : u
-          )
-        );
-      }
+    if (upload.uploadMethod === "tus" && upload.tusUpload) {
+      // TUS supports true resumable uploads
+      console.log("Resuming TUS upload from where it left off");
+      upload.tusUpload.start();
+      setUploads((prev) =>
+        prev.map((u) =>
+          u.id === upload.id ? { ...u, status: "uploading" } : u
+        )
+      );
     } else {
-      // If no TUS upload exists, start a new one
+      // XHR uploads cannot be resumed - need to restart
+      console.warn("XHR upload: Restarting from beginning");
       startUpload(upload);
     }
   };
 
   const removeUpload = (uploadId: string) => {
-    // Abort TUS upload if it exists
     const uploadToRemove = uploads.find((u) => u.id === uploadId);
-    if (uploadToRemove?.tusUpload) {
+
+    // Abort TUS or XHR upload if it exists
+    if (uploadToRemove?.uploadMethod === "tus" && uploadToRemove.tusUpload) {
       uploadToRemove.tusUpload.abort();
+    } else if (uploadToRemove?.uploadMethod === "xhr" && uploadToRemove.xhr) {
+      uploadToRemove.xhr.abort();
     }
 
     setUploads((prev) => prev.filter((u) => u.id !== uploadId));
@@ -292,7 +384,7 @@ export function FileUploader({
   };
 
   const UnauthBanner =
-    !isLoading && !isAuthenticated ? (
+    !authLoading && !isAuthenticated ? (
       <div
         className="rounded-md border border-blue-200 bg-blue-50 p-4 text-center"
         role="alert"
@@ -333,9 +425,9 @@ export function FileUploader({
           getStatusColor(item.status)
         )}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3 flex-1">
-            {getStatusIcon(item.status)}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center space-x-3 flex-1 min-w-0">
+            <div className="flex-shrink-0">{getStatusIcon(item.status)}</div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">
                 {item.file.name}
@@ -345,7 +437,7 @@ export function FileUploader({
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-shrink-0">
             <div
               className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden"
               aria-label="Upload progress"
@@ -429,18 +521,21 @@ export function FileUploader({
         className={cn(
           "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
           isDragActive ? "border-blue-400 bg-blue-50" : "border-gray-300",
-          !isAuthenticated || isLoading
+          !isAuthenticated || authLoading
             ? "opacity-50 cursor-not-allowed"
             : "cursor-pointer hover:border-gray-400"
         )}
       >
-        <input {...getInputProps()} disabled={!isAuthenticated || isLoading} />
+        <input
+          {...getInputProps()}
+          disabled={!isAuthenticated || authLoading}
+        />
         <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
         <p className="text-lg font-medium text-gray-900 mb-2">
           {isDragActive ? "Drop files here" : "Drag & drop files here"}
         </p>
         <p className="text-sm text-gray-500">
-          {isLoading
+          {authLoading
             ? "Checking authentication..."
             : !isAuthenticated
             ? "Please sign in to enable uploads"
@@ -461,7 +556,7 @@ export function FileUploader({
               onResume={resumeUpload}
               onRemove={removeUpload}
               isAuthed={isAuthenticated}
-              loadingAuth={isLoading}
+              loadingAuth={authLoading}
             />
           ))}
         </div>

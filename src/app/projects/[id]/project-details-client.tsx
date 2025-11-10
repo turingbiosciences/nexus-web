@@ -6,11 +6,12 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 // Use projects provider for dynamic state
 import { useProjects } from "@/components/providers/projects-provider";
-import { useLogto } from "@logto/react";
+import { useAccessToken } from "@/components/providers/token-provider";
 import { SignInPrompt } from "@/components/auth/sign-in-prompt";
 import { LoadingCard } from "@/components/ui/loading-card";
 import { Button } from "@/components/ui/button";
-import { DatasetsSection } from "@/components/projects/datasets-section";
+import { ProjectOverviewTab } from "@/components/projects/project-overview-tab";
+import { ProjectSettingsTab } from "@/components/projects/project-settings-tab";
 import {
   ArrowLeft,
   Settings,
@@ -52,15 +53,58 @@ const statusConfig = {
 
 export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useLogto();
+  const { isAuthenticated, authLoading } = useAccessToken();
   const [activeTab, setActiveTab] = useState<"overview" | "settings">(
     "overview"
   );
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const { getProjectById, updateProject } = useProjects();
+  const {
+    getProjectById,
+    updateProject,
+    deleteProject,
+    loading: projectsLoading,
+    projects,
+  } = useProjects();
   const project = getProjectById(projectId);
 
-  if (isLoading) {
+  // Determine if we're in an initial loading state
+  // Show loading if: auth loading, projects loading, OR (no projects data yet AND authenticated)
+  const isInitialLoading =
+    authLoading ||
+    projectsLoading ||
+    (isAuthenticated && projects.length === 0 && !project);
+
+  console.log("[ProjectDetailsClient] Render state:", {
+    authLoading,
+    projectsLoading,
+    isInitialLoading,
+    hasProject: !!project,
+    projectsCount: projects.length,
+    projectId,
+  });
+
+  const handleDeleteProject = async () => {
+    if (!project) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteProject(project.id);
+      // Navigate back to home after successful deletion
+      router.push("/");
+    } catch (err) {
+      console.error("Failed to delete project:", err);
+      alert(
+        `Failed to delete project: ${
+          err instanceof Error ? err.message : "Unknown error"
+        }`
+      );
+      setIsDeleting(false);
+    }
+  };
+
+  // Show loading state while initially loading
+  if (isInitialLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
@@ -84,6 +128,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     );
   }
 
+  // Only show "not found" after loading is complete
   if (!project) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -166,7 +211,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
                 <div>
                   <div className="text-sm text-gray-600">Last Updated</div>
                   <div className="font-medium text-gray-900">
-                    {project.lastActivity}
+                    {project.updatedAt.toLocaleDateString()}
                   </div>
                 </div>
               </div>
@@ -221,89 +266,14 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
 
           {/* Tab Content */}
           {activeTab === "overview" ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <DatasetsSection projectId={project.id} />
-
-              {/* Activity Section */}
-              <div className="card">
-                <h3 className="card-title">Recent Activity</h3>
-                <div className="space-y-4">
-                  {(!project.activities || project.activities.length === 0) && (
-                    <p className="text-sm text-gray-600">No activity yet.</p>
-                  )}
-                  {project.activities && project.activities.length > 0 && (
-                    <ul className="space-y-3">
-                      {[...project.activities]
-                        .sort((a, b) => b.at.getTime() - a.at.getTime())
-                        .slice(0, 20)
-                        .map((act) => (
-                          <li
-                            key={act.id}
-                            className="flex items-start gap-3 text-sm"
-                          >
-                            <div
-                              className={`w-2 h-2 rounded-full mt-1.5 ${
-                                act.type === "upload"
-                                  ? "bg-blue-500"
-                                  : act.type === "status_change"
-                                  ? "bg-yellow-500"
-                                  : act.type === "delete"
-                                  ? "bg-red-500"
-                                  : act.type === "updated"
-                                  ? "bg-gray-400"
-                                  : "bg-green-500"
-                              }`}
-                            />
-                            <div>
-                              <p className="text-gray-900 font-medium">
-                                {act.message}
-                              </p>
-                              <p className="text-gray-600 text-xs">
-                                {act.at.toLocaleString()}
-                              </p>
-                            </div>
-                          </li>
-                        ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            </div>
+            <ProjectOverviewTab projectId={project.id} />
           ) : (
-            <div className="card">
-              <h3 className="card-title">Project Settings</h3>
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Project Name
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue={project.name}
-                    onBlur={(e) =>
-                      updateProject(project.id, { name: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    defaultValue={project.description}
-                    onBlur={(e) =>
-                      updateProject(project.id, { description: e.target.value })
-                    }
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div className="pt-4 border-t">
-                  <Button disabled>All changes auto-saved</Button>
-                </div>
-              </div>
-            </div>
+            <ProjectSettingsTab
+              project={project}
+              onUpdateProject={updateProject}
+              onDeleteProject={handleDeleteProject}
+              isDeleting={isDeleting}
+            />
           )}
         </div>
       </main>

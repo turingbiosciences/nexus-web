@@ -58,7 +58,7 @@ export function DatasetsSection({
       <h3 className="card-title">Datasets</h3>
       <div className="space-y-4">
         <p className="text-sm text-gray-600">
-          {project.datasetCount === 0
+          {(project.datasetCount ?? 0) === 0
             ? "No datasets found."
             : `This project has ${project.datasetCount} dataset(s).`}
         </p>
@@ -160,6 +160,7 @@ export function DatasetsSection({
         )}
         {showUploader && (
           <FileUploader
+            projectId={projectId}
             maxSize={5 * 1024 * 1024 * 1024}
             onUploadComplete={(files) => {
               if (!project) return;
