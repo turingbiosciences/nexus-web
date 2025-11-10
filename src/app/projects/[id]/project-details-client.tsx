@@ -108,7 +108,8 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     );
   }
 
-  const config = statusConfig[project.status];
+  // Default to 'setup' if status is undefined or invalid
+  const config = statusConfig[project.status] || statusConfig.setup;
   const StatusIcon = config.icon;
 
   return (

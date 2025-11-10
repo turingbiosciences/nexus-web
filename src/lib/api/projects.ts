@@ -54,7 +54,7 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
 
   const data = (await response.json()) as ProjectsAPIResponse;
 
-  // Normalize projects to ensure valid status values
+  // Normalize projects to ensure valid status values and convert date strings to Date objects
   const projects = (data.projects || []).map((project) => ({
     ...project,
     // Default to 'setup' if status is missing or invalid
@@ -64,6 +64,10 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
       project.status === "setup"
         ? project.status
         : "setup",
+    // Convert date strings to Date objects
+    createdAt: new Date(project.createdAt),
+    updatedAt: new Date(project.updatedAt),
+    completedAt: project.completedAt ? new Date(project.completedAt) : undefined,
   }));
 
   return projects;
@@ -129,7 +133,7 @@ export async function createProject(
 
   const project = await response.json();
 
-  // Normalize status to ensure it's valid
+  // Normalize status to ensure it's valid and convert date strings to Date objects
   return {
     ...project,
     status:
@@ -138,5 +142,9 @@ export async function createProject(
       project.status === "setup"
         ? project.status
         : "setup",
+    // Convert date strings to Date objects
+    createdAt: new Date(project.createdAt),
+    updatedAt: new Date(project.updatedAt),
+    completedAt: project.completedAt ? new Date(project.completedAt) : undefined,
   };
 }
