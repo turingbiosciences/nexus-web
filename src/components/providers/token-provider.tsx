@@ -26,8 +26,12 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
 
   // Use GlobalAuth for authentication state (server-side, more reliable)
   const { isAuthenticated, isLoading: authLoading } = useGlobalAuth();
-  // Note: useLogto().getAccessToken() not used due to client/server sync issues
-
+  // Note: useLogto().getAccessToken() is NOT used here because in Next.js App Router,
+  // client-side authentication state can become out-of-sync with the server session,
+  // especially during SSR/RSC hydration and navigation. This can result in stale or missing
+  // access tokens, causing API requests to fail. By fetching the token from a server-side
+  // API route, we ensure the token is always up-to-date with the user's session, avoid
+  // hydration mismatches, and support both SSR and client navigation reliably.
   console.log("[TokenProvider] Component render", {
     isAuthenticated,
     authLoading,
