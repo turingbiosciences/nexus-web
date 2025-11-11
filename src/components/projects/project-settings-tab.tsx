@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Project } from "@/types/project";
+import { useAccessToken } from "@/components/providers/token-provider";
+import { authFetch } from "@/lib/auth-fetch";
+import { useToast } from "@/components/ui/toast-provider";
 
 interface ProjectSettingsTabProps {
   project: Project;
@@ -18,6 +21,66 @@ export function ProjectSettingsTab({
   isDeleting,
 }: ProjectSettingsTabProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [name, setName] = useState(project.name || "");
+  const [description, setDescription] = useState(project.description || "");
+  const [isSaving, setIsSaving] = useState(false);
+  const { accessToken, refreshToken } = useAccessToken();
+  const { push: pushToast } = useToast();
+
+  // Check if there are unsaved changes
+  const hasChanges =
+    name !== (project.name || "") ||
+    description !== (project.description || "");
+
+  const handleSave = async () => {
+    if (!accessToken || !hasChanges) return;
+
+    setIsSaving(true);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
+      const response = await authFetch(`${baseUrl}/projects/${project.id}`, {
+        method: "PUT",
+        token: accessToken,
+        onTokenRefresh: refreshToken,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          description,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update project");
+      }
+
+      const updatedProject = await response.json();
+
+      // Update local state via parent callback
+      onUpdateProject(project.id, {
+        name: updatedProject.name,
+        description: updatedProject.description,
+      });
+
+      pushToast({
+        title: "Project Updated",
+        description: "Your changes have been saved successfully.",
+        variant: "default",
+      });
+    } catch (err) {
+      pushToast({
+        title: "Update Failed",
+        description: `Error: ${
+          err instanceof Error ? err.message : "Unknown error"
+        }`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleDelete = async () => {
     await onDeleteProject();
@@ -33,10 +96,8 @@ export function ProjectSettingsTab({
           </label>
           <input
             type="text"
-            defaultValue={project.name}
-            onBlur={(e) =>
-              onUpdateProject(project.id, { name: e.target.value })
-            }
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
@@ -45,16 +106,16 @@ export function ProjectSettingsTab({
             Description
           </label>
           <textarea
-            defaultValue={project.description}
-            onBlur={(e) =>
-              onUpdateProject(project.id, { description: e.target.value })
-            }
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             rows={4}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
         <div className="pt-4 border-t">
-          <Button disabled>All changes auto-saved</Button>
+          <Button onClick={handleSave} disabled={!hasChanges || isSaving}>
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
         </div>
 
         {/* Danger Zone */}
