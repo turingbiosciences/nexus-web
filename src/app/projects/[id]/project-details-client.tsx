@@ -12,6 +12,8 @@ import { LoadingCard } from "@/components/ui/loading-card";
 import { Button } from "@/components/ui/button";
 import { ProjectOverviewTab } from "@/components/projects/project-overview-tab";
 import { ProjectResultsTab } from "@/components/projects/project-results-tab";
+import { ProjectActivityTab } from "@/components/projects/project-activity-tab";
+import { ProjectDatasetsTab } from "@/components/projects/project-datasets-tab";
 import { ProjectSettingsTab } from "@/components/projects/project-settings-tab";
 import {
   ArrowLeft,
@@ -20,7 +22,6 @@ import {
   Settings2,
   Calendar,
   Database,
-  Clock,
 } from "lucide-react";
 import { useToast } from "@/components/ui/toast-provider";
 import { authFetch } from "@/lib/auth-fetch";
@@ -59,7 +60,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     useAccessToken();
   const { push: pushToast } = useToast();
   const [activeTab, setActiveTab] = useState<
-    "overview" | "results" | "settings"
+    "overview" | "results" | "activity" | "datasets" | "settings"
   >("overview");
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
@@ -208,7 +209,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
       <Header />
 
       <main className="container-page py-8">
-        <div className="space-y-6">
+        <div className="w-full max-w-[60%] min-w-fit mx-auto space-y-6">
           {/* Back Button */}
           <Button variant="outline" onClick={() => router.push("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -219,22 +220,14 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
           <div className="card">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    {project.name}
-                  </h1>
-                  <div
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${config.bg} ${config.color} ${config.border} border`}
-                  >
-                    <StatusIcon className="h-4 w-4" />
-                    <span>{config.label}</span>
-                  </div>
-                </div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  {project.name}
+                </h1>
                 <p className="text-gray-600">{project.description}</p>
               </div>
               <Button
                 onClick={handleRun}
-                disabled={isRunning}
+                disabled={isRunning || !project.datasetCount}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 <Play className="h-4 w-4 mr-2" />
@@ -245,20 +238,26 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
             {/* Project Metadata */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 pt-6 border-t">
               <div className="flex items-center gap-3">
-                <Calendar className="h-5 w-5 text-gray-400" />
+                <StatusIcon className={`h-5 w-5 ${config.color}`} />
                 <div>
-                  <div className="text-sm text-gray-600">Created</div>
+                  <div className="text-sm text-gray-600">Status</div>
                   <div className="font-medium text-gray-900">
-                    {project.createdAt.toLocaleDateString()}
+                    {config.label}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Clock className="h-5 w-5 text-gray-400" />
+                <Calendar className="h-5 w-5 text-gray-400" />
                 <div>
-                  <div className="text-sm text-gray-600">Last Updated</div>
+                  <div className="text-sm text-gray-600">Last Run</div>
                   <div className="font-medium text-gray-900">
-                    {project.updatedAt.toLocaleDateString()}
+                    {project.completedAt
+                      ? project.completedAt.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : "Never"}
                   </div>
                 </div>
               </div>
@@ -298,6 +297,26 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
                 Results
               </button>
               <button
+                onClick={() => setActiveTab("activity")}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === "activity"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Activity
+              </button>
+              <button
+                onClick={() => setActiveTab("datasets")}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === "datasets"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Datasets
+              </button>
+              <button
                 onClick={() => setActiveTab("settings")}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === "settings"
@@ -315,6 +334,10 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
             <ProjectOverviewTab projectId={project.id} />
           ) : activeTab === "results" ? (
             <ProjectResultsTab projectId={project.id} />
+          ) : activeTab === "activity" ? (
+            <ProjectActivityTab projectId={project.id} />
+          ) : activeTab === "datasets" ? (
+            <ProjectDatasetsTab projectId={project.id} />
           ) : (
             <ProjectSettingsTab
               project={project}
