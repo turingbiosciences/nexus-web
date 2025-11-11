@@ -5,18 +5,11 @@ import {
   useAccessToken,
 } from "@/components/providers/token-provider";
 
-// Mock GlobalAuthProvider
-jest.mock("@/components/providers/global-auth-provider", () => ({
-  useGlobalAuth: jest.fn(),
-}));
-
-import { useGlobalAuth } from "@/components/providers/global-auth-provider";
-const mockedUseGlobalAuth = useGlobalAuth as jest.Mock;
-
 // Test component that uses the token hook
 function TestComponent() {
-  const { accessToken, isLoading, error } = useAccessToken();
+  const { accessToken, isLoading, authLoading, error } = useAccessToken();
 
+  if (authLoading) return <div>Checking authentication...</div>;
   if (isLoading) return <div>Loading token...</div>;
   if (error) return <div>Error: {error.message}</div>;
   if (accessToken) return <div>Token: {accessToken}</div>;
@@ -24,30 +17,46 @@ function TestComponent() {
 }
 
 describe("TokenProvider", () => {
+  let originalConsoleLog: typeof console.log;
+  let originalConsoleError: typeof console.error;
+
   beforeEach(() => {
     jest.clearAllMocks();
     global.fetch = jest.fn();
+    // Suppress console logs and errors during tests
+    originalConsoleLog = console.log;
+    originalConsoleError = console.error;
+    console.log = jest.fn();
+    console.error = jest.fn();
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
+    console.log = originalConsoleLog;
+    console.error = originalConsoleError;
   });
 
   it("throws error when useAccessToken is used outside TokenProvider", () => {
-    // Suppress console.error for this test
-    const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+    // Suppress React error boundary logs
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
 
     expect(() => {
       render(<TestComponent />);
     }).toThrow("useAccessToken must be used within a TokenProvider");
 
-    consoleSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
   });
 
-  it("shows loading state initially when auth is loading", () => {
-    mockedUseGlobalAuth.mockReturnValue({
-      isAuthenticated: false,
-      isLoading: true,
+  it("shows loading state initially when checking authentication", async () => {
+    // Mock the /api/logto/user endpoint to simulate checking auth
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url === "/api/logto/user") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ isAuthenticated: false }),
+        });
+      }
+      return Promise.reject(new Error("Unexpected fetch call"));
     });
 
     render(
@@ -56,13 +65,24 @@ describe("TokenProvider", () => {
       </TokenProvider>
     );
 
-    expect(screen.getByText("Loading token...")).toBeInTheDocument();
+    // Initially should show checking authentication
+    expect(screen.getByText("Checking authentication...")).toBeInTheDocument();
+
+    // Wait for auth check to complete
+    await waitFor(() => {
+      expect(screen.getByText("No token")).toBeInTheDocument();
+    });
   });
 
   it("shows no token when user is not authenticated", async () => {
-    mockedUseGlobalAuth.mockReturnValue({
-      isAuthenticated: false,
-      isLoading: false,
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url === "/api/logto/user") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ isAuthenticated: false }),
+        });
+      }
+      return Promise.reject(new Error("Unexpected fetch call"));
     });
 
     render(
@@ -77,18 +97,22 @@ describe("TokenProvider", () => {
   });
 
   it("fetches and displays M2M token when authenticated", async () => {
-    mockedUseGlobalAuth.mockReturnValue({
-      isAuthenticated: true,
-      isLoading: false,
-    });
-
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        accessToken: "mock-m2m-token-123",
-        expiresIn: 3600,
-        tokenType: "Bearer",
-      }),
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url === "/api/logto/user") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ isAuthenticated: true }),
+        });
+      }
+      if (url === "/api/logto/token") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            accessToken: "mock-m2m-token-123",
+          }),
+        });
+      }
+      return Promise.reject(new Error("Unexpected fetch call"));
     });
 
     render(
@@ -105,17 +129,24 @@ describe("TokenProvider", () => {
   });
 
   it("handles token fetch error", async () => {
-    mockedUseGlobalAuth.mockReturnValue({
-      isAuthenticated: true,
-      isLoading: false,
-    });
-
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: false,
-      status: 500,
-      json: async () => ({
-        error: "Internal server error",
-      }),
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url === "/api/logto/user") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ isAuthenticated: true }),
+        });
+      }
+      if (url === "/api/logto/token") {
+        return Promise.resolve({
+          ok: false,
+          status: 500,
+          statusText: "Internal Server Error",
+          json: async () => ({
+            error: "Internal server error",
+          }),
+        });
+      }
+      return Promise.reject(new Error("Unexpected fetch call"));
     });
 
     render(
@@ -130,14 +161,18 @@ describe("TokenProvider", () => {
   });
 
   it("handles network error during token fetch", async () => {
-    mockedUseGlobalAuth.mockReturnValue({
-      isAuthenticated: true,
-      isLoading: false,
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url === "/api/logto/user") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ isAuthenticated: true }),
+        });
+      }
+      if (url === "/api/logto/token") {
+        return Promise.reject(new Error("Network error"));
+      }
+      return Promise.reject(new Error("Unexpected fetch call"));
     });
-
-    (global.fetch as jest.Mock).mockRejectedValueOnce(
-      new Error("Network error")
-    );
 
     render(
       <TokenProvider>
@@ -152,21 +187,25 @@ describe("TokenProvider", () => {
 
   it("clears token when user signs out", async () => {
     // Start authenticated
-    mockedUseGlobalAuth.mockReturnValue({
-      isAuthenticated: true,
-      isLoading: false,
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url === "/api/logto/user") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ isAuthenticated: true }),
+        });
+      }
+      if (url === "/api/logto/token") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            accessToken: "mock-token",
+          }),
+        });
+      }
+      return Promise.reject(new Error("Unexpected fetch call"));
     });
 
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        accessToken: "mock-token",
-        expiresIn: 3600,
-        tokenType: "Bearer",
-      }),
-    });
-
-    const { rerender, unmount } = render(
+    const { unmount } = render(
       <TokenProvider>
         <TestComponent />
       </TokenProvider>
@@ -179,10 +218,15 @@ describe("TokenProvider", () => {
     // Clean up and start fresh for sign-out test
     unmount();
 
-    // Now test sign-out scenario
-    mockedUseGlobalAuth.mockReturnValue({
-      isAuthenticated: false,
-      isLoading: false,
+    // Now test sign-out scenario - user is not authenticated
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url === "/api/logto/user") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ isAuthenticated: false }),
+        });
+      }
+      return Promise.reject(new Error("Unexpected fetch call"));
     });
 
     render(
@@ -197,28 +241,26 @@ describe("TokenProvider", () => {
   });
 
   it("provides refreshToken function", async () => {
-    mockedUseGlobalAuth.mockReturnValue({
-      isAuthenticated: true,
-      isLoading: false,
-    });
+    let tokenCallCount = 0;
 
-    (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          accessToken: "initial-token",
-          expiresIn: 3600,
-          tokenType: "Bearer",
-        }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          accessToken: "refreshed-token",
-          expiresIn: 3600,
-          tokenType: "Bearer",
-        }),
-      });
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url === "/api/logto/user") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ isAuthenticated: true }),
+        });
+      }
+      if (url === "/api/logto/token") {
+        tokenCallCount++;
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            accessToken: tokenCallCount === 1 ? "initial-token" : "refreshed-token",
+          }),
+        });
+      }
+      return Promise.reject(new Error("Unexpected fetch call"));
+    });
 
     function RefreshTestComponent() {
       const { accessToken, refreshToken } = useAccessToken();
@@ -248,6 +290,7 @@ describe("TokenProvider", () => {
       expect(screen.getByText("Token: refreshed-token")).toBeInTheDocument();
     });
 
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    // Should have called /api/logto/user once and /api/logto/token twice
+    expect(tokenCallCount).toBe(2);
   });
 });

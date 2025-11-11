@@ -52,10 +52,9 @@ describe("useUploadDatasetMutation", () => {
   });
 
   it("transitions through states during upload", async () => {
-    const { result } = renderHook(
-      () => useUploadDatasetMutation("project-1"),
-      { wrapper: createWrapper() }
-    );
+    const { result } = renderHook(() => useUploadDatasetMutation("project-1"), {
+      wrapper: createWrapper(),
+    });
 
     const file = new File(["test content"], "test.csv", { type: "text/csv" });
 
@@ -68,10 +67,9 @@ describe("useUploadDatasetMutation", () => {
   });
 
   it("handles multiple sequential uploads", async () => {
-    const { result } = renderHook(
-      () => useUploadDatasetMutation("project-1"),
-      { wrapper: createWrapper() }
-    );
+    const { result } = renderHook(() => useUploadDatasetMutation("project-1"), {
+      wrapper: createWrapper(),
+    });
 
     const file1 = new File(["test 1"], "test1.csv", { type: "text/csv" });
 
@@ -180,10 +178,9 @@ describe("useDeleteDatasetMutation", () => {
   });
 
   it("transitions through states during deletion", async () => {
-    const { result } = renderHook(
-      () => useDeleteDatasetMutation("project-1"),
-      { wrapper: createWrapper() }
-    );
+    const { result } = renderHook(() => useDeleteDatasetMutation("project-1"), {
+      wrapper: createWrapper(),
+    });
 
     result.current.mutate("dataset-1");
 
