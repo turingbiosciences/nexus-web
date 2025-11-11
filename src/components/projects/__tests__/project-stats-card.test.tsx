@@ -59,7 +59,9 @@ describe("ProjectStatsCard", () => {
         getProjectById: jest.fn().mockReturnValue(null),
       });
 
-      const { container } = render(<ProjectStatsCard projectId="non-existent" />);
+      const { container } = render(
+        <ProjectStatsCard projectId="non-existent" />
+      );
 
       expect(container.firstChild).toBeNull();
     });
@@ -143,8 +145,7 @@ describe("ProjectStatsCard", () => {
       // Find the Number of Runs row and verify it shows 0
       const runCountRow = screen
         .getByText("Number of Runs")
-        .closest("div")!
-        .parentElement;
+        .closest("div")!.parentElement;
       expect(runCountRow).toHaveTextContent("0");
     });
   });
@@ -159,8 +160,7 @@ describe("ProjectStatsCard", () => {
 
       const datasetRow = screen
         .getByText("Number of Datasets")
-        .closest("div")!
-        .parentElement;
+        .closest("div")!.parentElement;
       expect(datasetRow).toHaveTextContent("3");
     });
 
@@ -177,8 +177,7 @@ describe("ProjectStatsCard", () => {
 
       const datasetRow = screen
         .getByText("Number of Datasets")
-        .closest("div")!
-        .parentElement;
+        .closest("div")!.parentElement;
       expect(datasetRow).toHaveTextContent("0");
     });
 
@@ -195,8 +194,7 @@ describe("ProjectStatsCard", () => {
 
       const datasetRow = screen
         .getByText("Number of Datasets")
-        .closest("div")!
-        .parentElement;
+        .closest("div")!.parentElement;
       expect(datasetRow).toHaveTextContent("0");
     });
   });
@@ -262,8 +260,7 @@ describe("ProjectStatsCard", () => {
 
       const datasetRow = screen
         .getByText("Number of Datasets")
-        .closest("div")!
-        .parentElement;
+        .closest("div")!.parentElement;
       expect(datasetRow).toHaveTextContent("9999");
     });
 

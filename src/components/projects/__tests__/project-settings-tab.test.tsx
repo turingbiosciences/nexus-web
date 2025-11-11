@@ -77,7 +77,9 @@ describe("ProjectSettingsTab", () => {
 
     expect(screen.getByDisplayValue("Test Project")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Test Description")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /save changes/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /save changes/i })
+    ).toBeInTheDocument();
   });
 
   it("disables save button when no changes are made", () => {
@@ -122,7 +124,9 @@ describe("ProjectSettingsTab", () => {
     );
 
     const descriptionInput = screen.getByDisplayValue("Test Description");
-    fireEvent.change(descriptionInput, { target: { value: "New Description" } });
+    fireEvent.change(descriptionInput, {
+      target: { value: "New Description" },
+    });
 
     const saveButton = screen.getByRole("button", { name: /save changes/i });
     expect(saveButton).not.toBeDisabled();
@@ -257,7 +261,10 @@ describe("ProjectSettingsTab", () => {
   it("shows 'Saving...' text while saving", async () => {
     // Make authFetch take some time
     mockedAuthFetch.mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({ ok: true, json: async () => ({}) }), 100))
+      () =>
+        new Promise((resolve) =>
+          setTimeout(() => resolve({ ok: true, json: async () => ({}) }), 100)
+        )
     );
 
     render(
@@ -291,7 +298,9 @@ describe("ProjectSettingsTab", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /delete this project/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /delete this project/i })
+    ).toBeInTheDocument();
   });
 
   it("shows confirmation dialog when delete is clicked", () => {
@@ -304,7 +313,9 @@ describe("ProjectSettingsTab", () => {
       />
     );
 
-    const deleteButton = screen.getByRole("button", { name: /delete this project/i });
+    const deleteButton = screen.getByRole("button", {
+      name: /delete this project/i,
+    });
     fireEvent.click(deleteButton);
 
     expect(screen.getByText(/are you absolutely sure/i)).toBeInTheDocument();
@@ -322,11 +333,15 @@ describe("ProjectSettingsTab", () => {
     );
 
     // Click delete button
-    const deleteButton = screen.getByRole("button", { name: /delete this project/i });
+    const deleteButton = screen.getByRole("button", {
+      name: /delete this project/i,
+    });
     fireEvent.click(deleteButton);
 
     // Confirm deletion
-    const confirmButton = screen.getByRole("button", { name: /yes, delete project/i });
+    const confirmButton = screen.getByRole("button", {
+      name: /yes, delete project/i,
+    });
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
@@ -345,7 +360,9 @@ describe("ProjectSettingsTab", () => {
     );
 
     // Click delete button
-    const deleteButton = screen.getByRole("button", { name: /delete this project/i });
+    const deleteButton = screen.getByRole("button", {
+      name: /delete this project/i,
+    });
     fireEvent.click(deleteButton);
 
     // Cancel deletion
@@ -353,7 +370,9 @@ describe("ProjectSettingsTab", () => {
     fireEvent.click(cancelButton);
 
     // Confirmation should be hidden
-    expect(screen.queryByText(/are you absolutely sure/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/are you absolutely sure/i)
+    ).not.toBeInTheDocument();
     expect(mockOnDeleteProject).not.toHaveBeenCalled();
   });
 
@@ -368,7 +387,9 @@ describe("ProjectSettingsTab", () => {
     );
 
     // Click delete button to show confirmation
-    const deleteButton = screen.getByRole("button", { name: /delete this project/i });
+    const deleteButton = screen.getByRole("button", {
+      name: /delete this project/i,
+    });
     fireEvent.click(deleteButton);
 
     // Both cancel and confirm should be disabled
@@ -396,6 +417,8 @@ describe("ProjectSettingsTab", () => {
 
     // Should render without crashing with empty description
     expect(screen.getByDisplayValue("Test Project")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /save changes/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /save changes/i })
+    ).toBeInTheDocument();
   });
 });

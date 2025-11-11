@@ -335,13 +335,16 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(screen.getByText(/This is a very long project name/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/This is a very long project name/)
+      ).toBeInTheDocument();
     });
 
     it("handles very long descriptions gracefully", () => {
       const projectWithLongDesc = {
         ...baseProject,
-        description: "This is a very long description that contains a lot of text and should wrap properly without breaking the layout or causing any visual issues in the component rendering",
+        description:
+          "This is a very long description that contains a lot of text and should wrap properly without breaking the layout or causing any visual issues in the component rendering",
       };
 
       render(
@@ -352,7 +355,9 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(screen.getByText(/This is a very long description/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/This is a very long description/)
+      ).toBeInTheDocument();
     });
 
     it("renders correctly with maximum dataset count", () => {
