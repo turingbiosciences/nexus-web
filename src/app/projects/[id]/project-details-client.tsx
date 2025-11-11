@@ -11,10 +11,10 @@ import { SignInPrompt } from "@/components/auth/sign-in-prompt";
 import { LoadingCard } from "@/components/ui/loading-card";
 import { Button } from "@/components/ui/button";
 import { ProjectOverviewTab } from "@/components/projects/project-overview-tab";
+import { ProjectResultsTab } from "@/components/projects/project-results-tab";
 import { ProjectSettingsTab } from "@/components/projects/project-settings-tab";
 import {
   ArrowLeft,
-  Settings,
   CheckCircle,
   Play,
   Settings2,
@@ -22,6 +22,8 @@ import {
   Database,
   Clock,
 } from "lucide-react";
+import { useToast } from "@/components/ui/toast-provider";
+import { authFetch } from "@/lib/auth-fetch";
 
 interface ProjectDetailsClientProps {
   projectId: string;
@@ -53,11 +55,14 @@ const statusConfig = {
 
 export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
   const router = useRouter();
-  const { isAuthenticated, authLoading } = useAccessToken();
-  const [activeTab, setActiveTab] = useState<"overview" | "settings">(
-    "overview"
-  );
+  const { isAuthenticated, authLoading, accessToken, refreshToken } =
+    useAccessToken();
+  const { push: pushToast } = useToast();
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "results" | "settings"
+  >("overview");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
 
   const {
     getProjectById,
@@ -100,6 +105,47 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
         }`
       );
       setIsDeleting(false);
+    }
+  };
+
+  const handleRun = async () => {
+    if (!project || !accessToken) return;
+
+    setIsRunning(true);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
+      const response = await authFetch(
+        `${baseUrl}/projects/${project.id}/train`,
+        {
+          method: "GET",
+          token: accessToken,
+          onTokenRefresh: refreshToken,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      // Display response in toast that must be manually closed (duration: 0)
+      pushToast({
+        title: response.ok ? "Training Started" : "Training Error",
+        description: JSON.stringify(data, null, 2),
+        variant: response.ok ? "default" : "destructive",
+        duration: 0, // Must be manually closed
+      });
+    } catch (err) {
+      pushToast({
+        title: "Request Failed",
+        description: `Error: ${
+          err instanceof Error ? err.message : "Unknown error"
+        }`,
+        variant: "destructive",
+        duration: 0,
+      });
+    } finally {
+      setIsRunning(false);
     }
   };
 
@@ -187,16 +233,17 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
                 <p className="text-gray-600">{project.description}</p>
               </div>
               <Button
-                variant="outline"
-                onClick={() => setActiveTab("settings")}
+                onClick={handleRun}
+                disabled={isRunning}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
+                <Play className="h-4 w-4 mr-2" />
+                {isRunning ? "Running..." : "Run"}
               </Button>
             </div>
 
             {/* Project Metadata */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6 pt-6 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 pt-6 border-t">
               <div className="flex items-center gap-3">
                 <Calendar className="h-5 w-5 text-gray-400" />
                 <div>
@@ -224,17 +271,6 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
                   </div>
                 </div>
               </div>
-              {project.completedAt && (
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <div className="text-sm text-gray-600">Completed</div>
-                    <div className="font-medium text-gray-900">
-                      {project.completedAt.toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -252,6 +288,16 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
                 Overview
               </button>
               <button
+                onClick={() => setActiveTab("results")}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === "results"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Results
+              </button>
+              <button
                 onClick={() => setActiveTab("settings")}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === "settings"
@@ -267,6 +313,8 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
           {/* Tab Content */}
           {activeTab === "overview" ? (
             <ProjectOverviewTab projectId={project.id} />
+          ) : activeTab === "results" ? (
+            <ProjectResultsTab projectId={project.id} />
           ) : (
             <ProjectSettingsTab
               project={project}

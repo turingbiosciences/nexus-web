@@ -3,6 +3,7 @@ import { ProjectActivity } from "@/types/project";
 import { IS_MOCK } from "@/config/flags";
 import { projectsRepository } from "@/data";
 import { useAccessToken } from "@/components/providers/token-provider";
+import { authFetch } from "@/lib/auth-fetch";
 
 interface UseActivitiesOptions {
   enabled?: boolean;
@@ -20,6 +21,7 @@ interface ApiActivity {
 async function fetchActivitiesViaApi(
   projectId: string,
   accessToken: string,
+  onTokenRefresh: () => Promise<string | null>,
   opts?: { limit?: number }
 ) {
   const base = process.env.NEXT_PUBLIC_TURING_API;
@@ -34,9 +36,11 @@ async function fetchActivitiesViaApi(
 
   console.log("🔔 Fetching activities from:", url);
 
-  const res = await fetch(url, {
+  const res = await authFetch(url, {
+    method: "GET",
+    token: accessToken,
+    onTokenRefresh,
     headers: {
-      Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
   });
@@ -74,6 +78,7 @@ async function fetchActivitiesViaApi(
 async function fetchActivities(
   projectId: string,
   accessToken: string,
+  onTokenRefresh: () => Promise<string | null>,
   opts?: { limit?: number }
 ) {
   if (IS_MOCK) {
@@ -81,14 +86,14 @@ async function fetchActivities(
     const project = projects.find((p) => p.id === projectId);
     return project?.activities || [];
   }
-  return fetchActivitiesViaApi(projectId, accessToken, opts);
+  return fetchActivitiesViaApi(projectId, accessToken, onTokenRefresh, opts);
 }
 
 export function useActivities(
   projectId: string,
   options: UseActivitiesOptions = {}
 ) {
-  const { accessToken, isAuthenticated } = useAccessToken();
+  const { accessToken, isAuthenticated, refreshToken } = useAccessToken();
   const { enabled = true, limit = 20 } = options;
 
   return useQuery({
@@ -97,7 +102,7 @@ export function useActivities(
       if (!accessToken) {
         throw new Error("Access token not available");
       }
-      return fetchActivities(projectId, accessToken, { limit });
+      return fetchActivities(projectId, accessToken, refreshToken, { limit });
     },
     enabled: enabled && !!projectId && isAuthenticated && !!accessToken,
     staleTime: 30_000,

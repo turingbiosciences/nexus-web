@@ -94,6 +94,35 @@ export function FileUploader({
           )
         );
         onUploadComplete?.([upload.file]);
+      } else if (xhr.status === 401) {
+        // Check if token expired
+        const errorText = xhr.responseText;
+        const isTokenExpired =
+          errorText.includes("Signature has expired") ||
+          errorText.includes("token expired") ||
+          errorText.includes("Invalid token");
+
+        if (isTokenExpired) {
+          console.error(
+            "Upload failed: Token expired, redirecting to sign out"
+          );
+          window.location.href = "/api/logto/sign-out";
+          return;
+        }
+
+        const errorMsg = errorText || `Upload failed with status ${xhr.status}`;
+        console.error("XHR upload error:", errorMsg);
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.id === upload.id
+              ? {
+                  ...u,
+                  status: "error",
+                  error: "Authentication expired. Please sign in again.",
+                }
+              : u
+          )
+        );
       } else {
         const errorMsg =
           xhr.responseText || `Upload failed with status ${xhr.status}`;
@@ -205,6 +234,22 @@ export function FileUploader({
         },
         onError: (error) => {
           console.error("TUS upload error:", error);
+
+          // Check if it's a 401 error (token expired)
+          const is401Error =
+            error.message?.includes("401") ||
+            error.message?.includes("Unauthorized") ||
+            error.message?.includes("Signature has expired") ||
+            error.message?.includes("token expired") ||
+            error.message?.includes("Invalid token");
+
+          if (is401Error) {
+            console.error(
+              "Upload failed: Token expired, redirecting to sign out"
+            );
+            window.location.href = "/api/logto/sign-out";
+            return;
+          }
 
           // Check if it's a 422 error (TUS not supported) or other client error
           const is422Error =

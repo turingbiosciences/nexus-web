@@ -4,6 +4,7 @@ import { ProjectDataset } from "@/types/project";
 import { IS_MOCK } from "@/config/flags";
 import { projectsRepository } from "@/data";
 import { useAccessToken } from "@/components/providers/token-provider";
+import { authFetch } from "@/lib/auth-fetch";
 
 interface UseDatasetsOptions {
   enabled?: boolean;
@@ -23,6 +24,7 @@ interface ApiDataset {
 async function fetchDatasetsViaApi(
   projectId: string,
   accessToken: string,
+  onTokenRefresh: () => Promise<string | null>,
   opts?: { cursor?: string; limit?: number }
 ) {
   const base = process.env.NEXT_PUBLIC_TURING_API;
@@ -37,9 +39,11 @@ async function fetchDatasetsViaApi(
 
   console.log("📁 Fetching datasets from:", url);
 
-  const res = await fetch(url, {
+  const res = await authFetch(url, {
+    method: "GET",
+    token: accessToken,
+    onTokenRefresh,
     headers: {
-      Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
   });
@@ -74,19 +78,20 @@ async function fetchDatasetsViaApi(
 async function fetchDatasets(
   projectId: string,
   accessToken: string,
+  onTokenRefresh: () => Promise<string | null>,
   opts?: { cursor?: string; limit?: number }
 ) {
   if (IS_MOCK) {
     return projectsRepository.listDatasets(projectId, opts);
   }
-  return fetchDatasetsViaApi(projectId, accessToken, opts);
+  return fetchDatasetsViaApi(projectId, accessToken, onTokenRefresh, opts);
 }
 
 export function useDatasets(
   projectId: string,
   enabledOrOptions: boolean | UseDatasetsOptions = true
 ) {
-  const { accessToken, isAuthenticated } = useAccessToken();
+  const { accessToken, isAuthenticated, refreshToken } = useAccessToken();
   const options: UseDatasetsOptions =
     typeof enabledOrOptions === "boolean"
       ? { enabled: enabledOrOptions }
@@ -98,7 +103,10 @@ export function useDatasets(
       if (!accessToken) {
         throw new Error("Access token not available");
       }
-      return fetchDatasets(projectId, accessToken, { cursor, limit });
+      return fetchDatasets(projectId, accessToken, refreshToken, {
+        cursor,
+        limit,
+      });
     },
     enabled: enabled && !!projectId && isAuthenticated && !!accessToken,
     staleTime: 30_000,

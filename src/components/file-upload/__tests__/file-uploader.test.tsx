@@ -320,4 +320,205 @@ describe("FileUploader", () => {
       screen.getByText(/please sign in to enable uploads/i)
     ).toBeInTheDocument();
   });
+
+  describe("Token Expiration Handling", () => {
+    let originalLocation: Location;
+
+    beforeAll(() => {
+      originalLocation = window.location;
+    });
+
+    beforeEach(() => {
+      // Mock window.location.href fresh for each test
+      delete (window as { location?: Location }).location;
+      Object.defineProperty(window, "location", {
+        value: { href: "" },
+        writable: true,
+        configurable: true,
+      });
+    });
+
+    afterEach(() => {
+      // Reset location
+      (window as { location?: Location }).location = originalLocation;
+    });
+
+    it("should redirect to sign-out on XHR 401 with expired token", async () => {
+      mockUseGlobalAuth.mockReturnValue({
+        isAuthenticated: true,
+        isLoading: false,
+      });
+      mockUseAccessToken.mockReturnValue({
+        accessToken: "expired-token",
+        isLoading: false,
+        error: null,
+        refreshToken: jest.fn(),
+        isAuthenticated: true,
+        authLoading: false,
+      });
+
+      // Mock XMLHttpRequest
+      const mockXHR = {
+        open: jest.fn(),
+        setRequestHeader: jest.fn(),
+        send: jest.fn(),
+        addEventListener: jest.fn((event, handler) => {
+          if (event === "load") {
+            // Simulate 401 with expired token message
+            Object.defineProperty(mockXHR, "status", { value: 401 });
+            Object.defineProperty(mockXHR, "responseText", {
+              value: '{"detail":"Invalid token: Signature has expired."}',
+            });
+            setTimeout(() => handler(), 0);
+          }
+        }),
+        upload: {
+          addEventListener: jest.fn(),
+        },
+      };
+
+      global.XMLHttpRequest = jest.fn(
+        () => mockXHR
+      ) as unknown as typeof XMLHttpRequest;
+
+      let capturedOnDrop: ((files: File[]) => void) | undefined;
+      mockUseDropzone.mockImplementation((config) => {
+        capturedOnDrop = config.onDrop;
+        return {
+          getRootProps: () => ({ "data-testid": "dropzone" }),
+          getInputProps: () => ({ type: "file" }),
+          isDragActive: false,
+        };
+      });
+
+      render(<FileUploader projectId="test-project" />);
+
+      capturedOnDrop?.([new File(["content"], "test.txt")]);
+
+      const startBtn = await screen.findByRole("button", {
+        name: /start upload/i,
+      });
+      startBtn.click();
+
+      await waitFor(() => {
+        expect(window.location.href).toBe("/api/logto/sign-out");
+      });
+    });
+
+    it("should redirect to sign-out on TUS 401 with expired token", async () => {
+      mockUseGlobalAuth.mockReturnValue({
+        isAuthenticated: true,
+        isLoading: false,
+      });
+      mockUseAccessToken.mockReturnValue({
+        accessToken: "expired-token",
+        isLoading: false,
+        error: null,
+        refreshToken: jest.fn(),
+        isAuthenticated: true,
+        authLoading: false,
+      });
+
+      let capturedOnError: ((error: Error) => void) | undefined;
+
+      (TusUpload as unknown as jest.Mock).mockImplementation(function (
+        file,
+        options
+      ) {
+        capturedOnError = options.onError;
+        return {
+          start: jest.fn(() => {
+            // Simulate TUS 401 error
+            capturedOnError?.(new Error("401 - Unauthorized: token expired"));
+          }),
+          abort: jest.fn(),
+          options: { headers: {} },
+        };
+      });
+
+      let capturedOnDrop: ((files: File[]) => void) | undefined;
+      mockUseDropzone.mockImplementation((config) => {
+        capturedOnDrop = config.onDrop;
+        return {
+          getRootProps: () => ({ "data-testid": "dropzone" }),
+          getInputProps: () => ({ type: "file" }),
+          isDragActive: false,
+        };
+      });
+
+      render(<FileUploader projectId="test-project" />);
+
+      capturedOnDrop?.([new File(["content"], "test.txt")]);
+
+      const startBtn = await screen.findByRole("button", {
+        name: /start upload/i,
+      });
+      startBtn.click();
+
+      await waitFor(() => {
+        expect(window.location.href).toBe("/api/logto/sign-out");
+      });
+    });
+
+    it("should not redirect on XHR 401 without expired token message", async () => {
+      mockUseGlobalAuth.mockReturnValue({
+        isAuthenticated: true,
+        isLoading: false,
+      });
+      mockUseAccessToken.mockReturnValue({
+        accessToken: "test-token",
+        isLoading: false,
+        error: null,
+        refreshToken: jest.fn(),
+        isAuthenticated: true,
+        authLoading: false,
+      });
+
+      const mockXHR = {
+        open: jest.fn(),
+        setRequestHeader: jest.fn(),
+        send: jest.fn(),
+        addEventListener: jest.fn((event, handler) => {
+          if (event === "load") {
+            Object.defineProperty(mockXHR, "status", { value: 401 });
+            Object.defineProperty(mockXHR, "responseText", {
+              value: '{"detail":"Invalid credentials"}',
+            });
+            setTimeout(() => handler(), 0);
+          }
+        }),
+        upload: {
+          addEventListener: jest.fn(),
+        },
+      };
+
+      global.XMLHttpRequest = jest.fn(
+        () => mockXHR
+      ) as unknown as typeof XMLHttpRequest;
+
+      let capturedOnDrop: ((files: File[]) => void) | undefined;
+      mockUseDropzone.mockImplementation((config) => {
+        capturedOnDrop = config.onDrop;
+        return {
+          getRootProps: () => ({ "data-testid": "dropzone" }),
+          getInputProps: () => ({ type: "file" }),
+          isDragActive: false,
+        };
+      });
+
+      render(<FileUploader projectId="test-project" />);
+
+      capturedOnDrop?.([new File(["content"], "test.txt")]);
+
+      const startBtn = await screen.findByRole("button", {
+        name: /start upload/i,
+      });
+      startBtn.click();
+
+      await waitFor(() => {
+        // Should show error but not redirect
+        expect(window.location.href).toBe("");
+      });
+    });
+  });
 });
