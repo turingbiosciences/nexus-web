@@ -2,10 +2,10 @@
 
 import { LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLogto } from "@logto/react";
+import { useAccessToken } from "@/components/providers/token-provider";
 
 export function AuthButton() {
-  const { isAuthenticated, isLoading } = useLogto();
+  const { isAuthenticated, authLoading: isLoading } = useAccessToken();
 
   const handleSignIn = () => {
     // Use API route directly (same as home page link)
