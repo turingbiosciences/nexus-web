@@ -88,7 +88,9 @@ describe("ProjectDatasetsTab", () => {
   });
 
   it("passes projectId prop to DatasetsSection", () => {
-    renderWithQueryClient(<ProjectDatasetsTab projectId="another-project-456" />);
+    renderWithQueryClient(
+      <ProjectDatasetsTab projectId="another-project-456" />
+    );
 
     expect(mockUseDatasets).toHaveBeenCalledWith(
       "another-project-456",

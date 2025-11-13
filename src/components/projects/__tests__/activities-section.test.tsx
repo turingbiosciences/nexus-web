@@ -75,7 +75,9 @@ describe("ActivitiesSection", () => {
     render(<ActivitiesSection projectId="test-project-id" />);
 
     expect(screen.getByText("Dataset uploaded")).toBeInTheDocument();
-    expect(screen.getByText("Status changed to processing")).toBeInTheDocument();
+    expect(
+      screen.getByText("Status changed to processing")
+    ).toBeInTheDocument();
     expect(screen.getByText("Analysis completed")).toBeInTheDocument();
   });
 
