@@ -16,19 +16,32 @@ import * as Sentry from "@sentry/nextjs";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 const isServer = typeof window === "undefined";
+const isBrowser = !isServer;
 
 // Pino configuration
 const pinoConfig: pino.LoggerOptions = {
   level: process.env.LOG_LEVEL || (isDevelopment ? "debug" : "info"),
 
-  // Browser configuration
+  // Browser configuration - required for client-side usage
   browser: {
     asObject: true,
     serialize: true,
+    // Use console methods in browser instead of worker threads
+    write: isBrowser
+      ? {
+          debug: console.debug,
+          error: console.error,
+          fatal: console.error,
+          info: console.info,
+          trace: console.trace,
+          warn: console.warn,
+        }
+      : undefined,
   },
 
-  // Pretty print in development
-  ...(isDevelopment && isServer
+  // Pretty print ONLY in Node.js server environment (API routes)
+  // Never use transport in browser - it requires worker threads
+  ...(isDevelopment && isServer && !isBrowser
     ? {
         transport: {
           target: "pino-pretty",
