@@ -62,7 +62,11 @@ export function FileUploader({
     },
   });
 
-  const startUploadWithXHR = async (upload: FileUploadItem) => {
+  const startUploadWithXHR = async (
+    upload: FileUploadItem,
+    currentAccessToken: string,
+    currentProjectId: string
+  ) => {
     const apiEndpoint = resource!;
 
     // Use standard FormData upload (fallback method)
@@ -180,8 +184,8 @@ export function FileUploader({
     );
 
     // Start the upload
-    xhr.open("POST", `${apiEndpoint}/projects/${projectId}/files`);
-    xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+    xhr.open("POST", `${apiEndpoint}/projects/${currentProjectId}/files`);
+    xhr.setRequestHeader("Authorization", `Bearer ${currentAccessToken}`);
     xhr.send(formData);
   };
 
@@ -277,8 +281,8 @@ export function FileUploader({
               { uploadId: upload.id },
               "TUS not supported (422 error), falling back to XHR upload"
             );
-            // Fallback to standard XHR upload
-            startUploadWithXHR(upload);
+            // Fallback to standard XHR upload - pass current values to avoid stale closure
+            startUploadWithXHR(upload, accessToken, projectId!);
           } else {
             // Other errors - mark as failed
             setUploads((prev) =>
