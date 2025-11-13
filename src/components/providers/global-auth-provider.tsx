@@ -9,6 +9,7 @@ import React, {
   type ReactNode,
 } from "react";
 import { useLogto } from "@logto/react";
+import { logger } from "@/lib/logger";
 
 export type GlobalAuthContextType = {
   isAuthenticated: boolean;
@@ -34,7 +35,81 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
   const [claims, setClaims] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
+  logger.debug(
+    {
+      isAuthenticated,
+      isLoading,
+      logtoIsAuthenticated: logto.isAuthenticated,
+      logtoIsLoading: logto.isLoading,
+      hasClaims: !!claims,
+    },
+    "GlobalAuthProvider component render"
+  );
+
+  // Initial auth check - moved before refreshAuth to avoid circular dependency
+  useEffect(() => {
+    logger.debug(
+      {
+        logtoIsAuthenticated: logto.isAuthenticated,
+        logtoIsLoading: logto.isLoading,
+      },
+      "GlobalAuthProvider useEffect triggered"
+    );
+
+    async function checkAuth() {
+      logger.debug("GlobalAuthProvider checkAuth called");
+      setIsLoading(true);
+      setError(null);
+      try {
+        // Fetch from server-side /api/logto/user to check real auth state
+        const response = await fetch("/api/logto/user", {
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const authenticated = Boolean(data?.isAuthenticated);
+          logger.debug(
+            {
+              authenticated,
+              hasClaims: !!data?.claims,
+            },
+            "GlobalAuthProvider API response"
+          );
+          setIsAuthenticated(authenticated);
+
+          if (authenticated && data?.claims) {
+            setClaims(data.claims);
+          } else {
+            setClaims(null);
+          }
+        } else {
+          logger.warn(
+            { status: response.status },
+            "GlobalAuthProvider API response not OK"
+          );
+          setIsAuthenticated(false);
+          setClaims(null);
+        }
+      } catch (err) {
+        logger.error(
+          { error: err },
+          "GlobalAuthProvider failed to fetch auth state"
+        );
+        setError(err instanceof Error ? err : new Error(String(err)));
+        setIsAuthenticated(false);
+        setClaims(null);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    checkAuth();
+  }, [logto.isAuthenticated, logto.isLoading]);
+
   const refreshAuth = useCallback(async () => {
+    logger.debug("GlobalAuthProvider refreshAuth called manually");
+
     setIsLoading(true);
     setError(null);
     try {
@@ -46,6 +121,13 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         const authenticated = Boolean(data?.isAuthenticated);
+        logger.debug(
+          {
+            authenticated,
+            hasClaims: !!data?.claims,
+          },
+          "GlobalAuthProvider API response"
+        );
         setIsAuthenticated(authenticated);
 
         if (authenticated && data?.claims) {
@@ -54,11 +136,18 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
           setClaims(null);
         }
       } else {
+        logger.warn(
+          { status: response.status },
+          "GlobalAuthProvider API response not OK"
+        );
         setIsAuthenticated(false);
         setClaims(null);
       }
     } catch (err) {
-      console.error("[GlobalAuthProvider] Failed to fetch auth state:", err);
+      logger.error(
+        { error: err },
+        "GlobalAuthProvider failed to fetch auth state"
+      );
       setError(err instanceof Error ? err : new Error(String(err)));
       setIsAuthenticated(false);
       setClaims(null);
@@ -66,16 +155,6 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
   }, []);
-
-  // Initial auth check and periodic refresh
-  useEffect(() => {
-    refreshAuth();
-
-    // Also refresh when Logto SDK detects changes
-    if (logto.isAuthenticated !== isAuthenticated) {
-      refreshAuth();
-    }
-  }, [logto.isAuthenticated, refreshAuth, isAuthenticated]);
 
   const value: GlobalAuthContextType = {
     isAuthenticated,

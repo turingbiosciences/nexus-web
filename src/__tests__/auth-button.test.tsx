@@ -2,17 +2,17 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { AuthButton } from "@/components/auth/auth-button";
 
-// Mock the global auth provider hook used by AuthButton
-jest.mock("@/components/providers/global-auth-provider", () => ({
-  useGlobalAuth: jest.fn(),
+// Mock the token provider hook used by AuthButton
+jest.mock("@/components/providers/token-provider", () => ({
+  useAccessToken: jest.fn(),
 }));
 
-import { useGlobalAuth } from "@/components/providers/global-auth-provider";
-const mockedUseGlobalAuth = useGlobalAuth as jest.Mock;
+import { useAccessToken } from "@/components/providers/token-provider";
+const mockedUseAccessToken = useAccessToken as jest.Mock;
 
 describe("AuthButton", () => {
   beforeEach(() => {
-    mockedUseGlobalAuth.mockReset();
+    mockedUseAccessToken.mockReset();
     // Make window.location.href writable for redirect tests
     Object.defineProperty(window, "location", {
       value: { href: "http://localhost/", reload: jest.fn() },
@@ -21,18 +21,22 @@ describe("AuthButton", () => {
   });
 
   it("renders loading state when isLoading", () => {
-    mockedUseGlobalAuth.mockReturnValue({
-      isLoading: true,
+    mockedUseAccessToken.mockReturnValue({
+      authLoading: true,
       isAuthenticated: false,
+      accessToken: null,
+      refreshToken: jest.fn(),
     });
     render(<AuthButton />);
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
   it("renders sign in when unauthenticated", () => {
-    mockedUseGlobalAuth.mockReturnValue({
-      isLoading: false,
+    mockedUseAccessToken.mockReturnValue({
+      authLoading: false,
       isAuthenticated: false,
+      accessToken: null,
+      refreshToken: jest.fn(),
     });
     render(<AuthButton />);
     expect(
@@ -41,9 +45,11 @@ describe("AuthButton", () => {
   });
 
   it("redirects to sign-in route on click when unauthenticated", () => {
-    mockedUseGlobalAuth.mockReturnValue({
-      isLoading: false,
+    mockedUseAccessToken.mockReturnValue({
+      authLoading: false,
       isAuthenticated: false,
+      accessToken: null,
+      refreshToken: jest.fn(),
     });
     render(<AuthButton />);
     const btn = screen.getByRole("button", { name: /sign in/i });
@@ -52,9 +58,11 @@ describe("AuthButton", () => {
   });
 
   it("renders sign out when authenticated", () => {
-    mockedUseGlobalAuth.mockReturnValue({
-      isLoading: false,
+    mockedUseAccessToken.mockReturnValue({
+      authLoading: false,
       isAuthenticated: true,
+      accessToken: "mock-token",
+      refreshToken: jest.fn(),
     });
     render(<AuthButton />);
     expect(
@@ -63,9 +71,11 @@ describe("AuthButton", () => {
   });
 
   it("redirects to sign-out route on click when authenticated", () => {
-    mockedUseGlobalAuth.mockReturnValue({
-      isLoading: false,
+    mockedUseAccessToken.mockReturnValue({
+      authLoading: false,
       isAuthenticated: true,
+      accessToken: "mock-token",
+      refreshToken: jest.fn(),
     });
     render(<AuthButton />);
     const btn = screen.getByRole("button", { name: /sign out/i });

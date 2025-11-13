@@ -4,7 +4,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { DebugPanel } from "@/components/debug/debug-panel";
 import { useSearchParams } from "next/navigation";
-import { useGlobalAuth } from "@/components/providers/global-auth-provider";
+import { useAccessToken } from "@/components/providers/token-provider";
 import { LoadingCard } from "@/components/ui/loading-card";
 import { SignInPrompt } from "@/components/auth/sign-in-prompt";
 import { ProjectList } from "@/components/projects/project-list";
@@ -13,6 +13,7 @@ import { ProjectStatusChart } from "@/components/projects/project-status-chart";
 import { useProjects } from "@/components/providers/projects-provider";
 import { useState } from "react";
 import { NewProjectDialog } from "@/components/projects/new-project-dialog";
+import { logger } from "@/lib/logger";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -20,7 +21,7 @@ export function HomePageClient() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const searchParams = useSearchParams();
   const authError = searchParams.get("error");
-  const { isAuthenticated, isLoading: authLoading } = useGlobalAuth();
+  const { isAuthenticated, authLoading } = useAccessToken();
 
   const {
     projects,
@@ -31,6 +32,17 @@ export function HomePageClient() {
   const statusCount = getStatusCounts();
 
   const isLoading = authLoading || projectsLoading;
+
+  logger.debug(
+    {
+      isAuthenticated,
+      authLoading,
+      projectsLoading,
+      isLoading,
+      projectsCount: projects.length,
+    },
+    "HomePageClient render state"
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -132,7 +144,7 @@ export function HomePageClient() {
                 onClose={() => setDialogOpen(false)}
                 onCreated={(id) => {
                   // Optional: navigate to new project detail page
-                  console.log("Project created", id);
+                  logger.info({ projectId: id }, "Project created via dialog");
                 }}
               />
             </>
