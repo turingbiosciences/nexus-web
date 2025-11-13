@@ -9,6 +9,7 @@ import React, {
   type ReactNode,
 } from "react";
 import { useLogto } from "@logto/react";
+import { logger } from "@/lib/logger";
 
 export type GlobalAuthContextType = {
   isAuthenticated: boolean;
@@ -34,23 +35,29 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
   const [claims, setClaims] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
-  console.log("[GlobalAuthProvider] Component render", {
-    isAuthenticated,
-    isLoading,
-    logtoIsAuthenticated: logto.isAuthenticated,
-    logtoIsLoading: logto.isLoading,
-    hasClaims: !!claims,
-  });
+  logger.debug(
+    {
+      isAuthenticated,
+      isLoading,
+      logtoIsAuthenticated: logto.isAuthenticated,
+      logtoIsLoading: logto.isLoading,
+      hasClaims: !!claims,
+    },
+    "GlobalAuthProvider component render"
+  );
 
   // Initial auth check - moved before refreshAuth to avoid circular dependency
   useEffect(() => {
-    console.log("[GlobalAuthProvider] useEffect triggered", {
-      logtoIsAuthenticated: logto.isAuthenticated,
-      logtoIsLoading: logto.isLoading,
-    });
+    logger.debug(
+      {
+        logtoIsAuthenticated: logto.isAuthenticated,
+        logtoIsLoading: logto.isLoading,
+      },
+      "GlobalAuthProvider useEffect triggered"
+    );
 
     async function checkAuth() {
-      console.log("[GlobalAuthProvider] checkAuth called");
+      logger.debug("GlobalAuthProvider checkAuth called");
       setIsLoading(true);
       setError(null);
       try {
@@ -62,10 +69,13 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
         if (response.ok) {
           const data = await response.json();
           const authenticated = Boolean(data?.isAuthenticated);
-          console.log("[GlobalAuthProvider] API response", {
-            authenticated,
-            hasClaims: !!data?.claims,
-          });
+          logger.debug(
+            {
+              authenticated,
+              hasClaims: !!data?.claims,
+            },
+            "GlobalAuthProvider API response"
+          );
           setIsAuthenticated(authenticated);
 
           if (authenticated && data?.claims) {
@@ -74,14 +84,18 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
             setClaims(null);
           }
         } else {
-          console.log("[GlobalAuthProvider] API response not OK", {
-            status: response.status,
-          });
+          logger.warn(
+            { status: response.status },
+            "GlobalAuthProvider API response not OK"
+          );
           setIsAuthenticated(false);
           setClaims(null);
         }
       } catch (err) {
-        console.error("[GlobalAuthProvider] Failed to fetch auth state:", err);
+        logger.error(
+          { error: err },
+          "GlobalAuthProvider failed to fetch auth state"
+        );
         setError(err instanceof Error ? err : new Error(String(err)));
         setIsAuthenticated(false);
         setClaims(null);
@@ -94,7 +108,7 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
   }, [logto.isAuthenticated, logto.isLoading]);
 
   const refreshAuth = useCallback(async () => {
-    console.log("[GlobalAuthProvider] refreshAuth called manually");
+    logger.debug("GlobalAuthProvider refreshAuth called manually");
 
     setIsLoading(true);
     setError(null);
@@ -107,10 +121,13 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         const authenticated = Boolean(data?.isAuthenticated);
-        console.log("[GlobalAuthProvider] API response", {
-          authenticated,
-          hasClaims: !!data?.claims,
-        });
+        logger.debug(
+          {
+            authenticated,
+            hasClaims: !!data?.claims,
+          },
+          "GlobalAuthProvider API response"
+        );
         setIsAuthenticated(authenticated);
 
         if (authenticated && data?.claims) {
@@ -119,14 +136,18 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
           setClaims(null);
         }
       } else {
-        console.log("[GlobalAuthProvider] API response not OK", {
-          status: response.status,
-        });
+        logger.warn(
+          { status: response.status },
+          "GlobalAuthProvider API response not OK"
+        );
         setIsAuthenticated(false);
         setClaims(null);
       }
     } catch (err) {
-      console.error("[GlobalAuthProvider] Failed to fetch auth state:", err);
+      logger.error(
+        { error: err },
+        "GlobalAuthProvider failed to fetch auth state"
+      );
       setError(err instanceof Error ? err : new Error(String(err)));
       setIsAuthenticated(false);
       setClaims(null);

@@ -13,6 +13,7 @@ import { ProjectStatusChart } from "@/components/projects/project-status-chart";
 import { useProjects } from "@/components/providers/projects-provider";
 import { useState } from "react";
 import { NewProjectDialog } from "@/components/projects/new-project-dialog";
+import { logger } from "@/lib/logger";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -32,13 +33,13 @@ export function HomePageClient() {
 
   const isLoading = authLoading || projectsLoading;
 
-  console.log("[HomePageClient] Render state:", {
+  logger.debug({
     isAuthenticated,
     authLoading,
     projectsLoading,
     isLoading,
     projectsCount: projects.length,
-  });
+  }, "HomePageClient render state");
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -140,7 +141,7 @@ export function HomePageClient() {
                 onClose={() => setDialogOpen(false)}
                 onCreated={(id) => {
                   // Optional: navigate to new project detail page
-                  console.log("Project created", id);
+                  logger.info({ projectId: id }, "Project created via dialog");
                 }}
               />
             </>

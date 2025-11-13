@@ -104,13 +104,19 @@ export function FileUploader({
           errorText.includes("Invalid token");
 
         if (isTokenExpired) {
-          logger.error({ uploadId: upload.id }, "Upload failed: Token expired, redirecting to sign out");
+          logger.error(
+            { uploadId: upload.id },
+            "Upload failed: Token expired, redirecting to sign out"
+          );
           window.location.href = "/api/logto/sign-out";
           return;
         }
 
         const errorMsg = errorText || `Upload failed with status ${xhr.status}`;
-        logger.error({ uploadId: upload.id, status: xhr.status, errorMsg }, "XHR upload error");
+        logger.error(
+          { uploadId: upload.id, status: xhr.status, errorMsg },
+          "XHR upload error"
+        );
         setUploads((prev) =>
           prev.map((u) =>
             u.id === upload.id
@@ -125,7 +131,10 @@ export function FileUploader({
       } else {
         const errorMsg =
           xhr.responseText || `Upload failed with status ${xhr.status}`;
-        logger.error({ uploadId: upload.id, status: xhr.status, errorMsg }, "XHR upload error");
+        logger.error(
+          { uploadId: upload.id, status: xhr.status, errorMsg },
+          "XHR upload error"
+        );
         setUploads((prev) =>
           prev.map((u) =>
             u.id === upload.id
@@ -220,7 +229,10 @@ export function FileUploader({
       );
 
       // Try TUS protocol first
-      console.log("Attempting TUS upload...");
+      logger.debug(
+        { uploadId: upload.id, filename: upload.file.name },
+        "Attempting TUS upload"
+      );
       const tusUpload = new tus.Upload(upload.file, {
         endpoint: `${apiEndpoint}/projects/${projectId}/files`,
         retryDelays: [0, 1000, 3000], // Shorter delays for fallback
@@ -232,7 +244,10 @@ export function FileUploader({
           Authorization: `Bearer ${accessToken}`,
         },
         onError: (error) => {
-          console.error("TUS upload error:", error);
+          logger.error(
+            { uploadId: upload.id, error: error.message },
+            "TUS upload error"
+          );
 
           // Check if it's a 401 error (token expired)
           const is401Error =
@@ -243,8 +258,9 @@ export function FileUploader({
             error.message?.includes("Invalid token");
 
           if (is401Error) {
-            console.error(
-              "Upload failed: Token expired, redirecting to sign out"
+            logger.error(
+              { uploadId: upload.id },
+              "TUS upload failed: Token expired, redirecting to sign out"
             );
             window.location.href = "/api/logto/sign-out";
             return;
@@ -257,7 +273,8 @@ export function FileUploader({
             error.message?.includes("Field required");
 
           if (is422Error) {
-            console.log(
+            logger.info(
+              { uploadId: upload.id },
               "TUS not supported (422 error), falling back to XHR upload"
             );
             // Fallback to standard XHR upload
@@ -287,7 +304,10 @@ export function FileUploader({
           onUploadProgress?.(upload.id, percentage);
         },
         onSuccess: () => {
-          console.log("TUS upload completed successfully");
+          logger.info(
+            { uploadId: upload.id, filename: upload.file.name },
+            "TUS upload completed successfully"
+          );
           setUploads((prev) =>
             prev.map((u) =>
               u.id === upload.id
@@ -309,7 +329,10 @@ export function FileUploader({
       // Start the TUS upload
       tusUpload.start();
     } catch (error) {
-      logger.error({ uploadId: upload.id, error }, "Upload initialization error");
+      logger.error(
+        { uploadId: upload.id, error },
+        "Upload initialization error"
+      );
       if (!isAuthenticated) {
         setAuthError("Not authenticated. Please sign in.");
       } else if (
@@ -370,7 +393,10 @@ export function FileUploader({
   const resumeUpload = async (upload: FileUploadItem) => {
     if (upload.uploadMethod === "tus" && upload.tusUpload) {
       // TUS supports true resumable uploads
-      console.log("Resuming TUS upload from where it left off");
+      logger.debug(
+        { uploadId: upload.id },
+        "Resuming TUS upload from where it left off"
+      );
       upload.tusUpload.start();
       setUploads((prev) =>
         prev.map((u) =>
@@ -379,7 +405,10 @@ export function FileUploader({
       );
     } else {
       // XHR uploads cannot be resumed - need to restart
-      console.warn("XHR upload: Restarting from beginning");
+      logger.warn(
+        { uploadId: upload.id, method: "xhr" },
+        "XHR upload cannot be resumed, restarting from beginning"
+      );
       startUpload(upload);
     }
   };

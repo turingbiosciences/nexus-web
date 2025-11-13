@@ -8,6 +8,7 @@ import {
   ReactNode,
   useCallback,
 } from "react";
+import { logger } from "@/lib/logger";
 
 interface TokenContextValue {
   accessToken: string | null;
@@ -22,9 +23,9 @@ interface TokenContextValue {
 const TokenContext = createContext<TokenContextValue | undefined>(undefined);
 
 export const TokenProvider = ({ children }: { children: ReactNode }) => {
-  console.log(
-    "[TokenProvider] 🔥 FUNCTION BODY EXECUTING - typeof window:",
-    typeof window
+  logger.debug(
+    { windowType: typeof window },
+    "TokenProvider function body executing"
   );
 
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -33,12 +34,15 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
 
-  console.log("[TokenProvider] Component render", {
-    window: typeof window,
-    isAuthenticated,
-    authLoading,
-    accessToken: accessToken ? "present" : "null",
-  });
+  logger.debug(
+    {
+      windowType: typeof window,
+      isAuthenticated,
+      authLoading,
+      hasAccessToken: !!accessToken,
+    },
+    "TokenProvider component render"
+  );
 
   // Check authentication by calling the server-side API
   // This ensures client state syncs with server session after callback
@@ -46,9 +50,7 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
     let cancelled = false;
 
     async function checkAuthStatus() {
-      console.log(
-        "[TokenProvider] 🌐 CLIENT: useEffect running, checking auth status..."
-      );
+      logger.debug("CLIENT: Checking auth status");
 
       try {
         const res = await fetch("/api/logto/user", { credentials: "include" });
@@ -57,26 +59,19 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
         if (res.ok) {
           const data = await res.json();
           const authenticated = Boolean(data?.isAuthenticated);
-          console.log("[TokenProvider] 🌐 CLIENT: Auth status received:", {
-            authenticated,
-          });
+          logger.debug({ authenticated }, "CLIENT: Auth status received");
           setIsAuthenticated(authenticated);
         } else {
-          console.log(
-            "[TokenProvider] 🌐 CLIENT: Auth check failed, status:",
-            res.status
-          );
+          logger.warn({ status: res.status }, "CLIENT: Auth check failed");
           setIsAuthenticated(false);
         }
       } catch (err) {
         if (cancelled) return;
-        console.error("[TokenProvider] 🌐 CLIENT: Auth check error:", err);
+        logger.error({ error: err }, "CLIENT: Auth check error");
         setIsAuthenticated(false);
       } finally {
         if (!cancelled) {
-          console.log(
-            "[TokenProvider] 🌐 CLIENT: Setting authLoading to false"
-          );
+          logger.debug("CLIENT: Setting authLoading to false");
           setAuthLoading(false);
         }
       }
@@ -90,20 +85,17 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
   }, []); // Run once on mount
 
   const fetchToken = useCallback(async (): Promise<string | null> => {
-    console.log("[TokenProvider] fetchToken called", {
-      isAuthenticated,
-      authLoading,
-    });
+    logger.debug({ isAuthenticated, authLoading }, "fetchToken called");
 
     // Wait for auth to finish loading
     if (authLoading) {
-      console.log("[TokenProvider] Auth still loading, skipping token fetch");
+      logger.debug("Auth still loading, skipping token fetch");
       return null;
     }
 
     // Clear token if not authenticated
     if (!isAuthenticated) {
-      console.log("[TokenProvider] Not authenticated, clearing token");
+      logger.debug("Not authenticated, clearing token");
       setAccessToken(null);
       setError(null);
       setIsLoading(false);
@@ -114,7 +106,7 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
 
     try {
-      console.log("[TokenProvider] Fetching access token from server...");
+      logger.debug("Fetching access token from server");
 
       // Fetch token from server-side API route
       // This route will use @logto/next to get the token from the server session
@@ -136,11 +128,11 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
         );
       }
 
-      console.log("[TokenProvider] ✅ Access token obtained from server");
+      logger.info("Access token obtained from server");
       setAccessToken(data.accessToken);
       return data.accessToken;
     } catch (err) {
-      console.error("[TokenProvider] ❌ Token fetch failed:", err);
+      logger.error({ error: err }, "Token fetch failed");
       setError(err instanceof Error ? err : new Error(String(err)));
       setAccessToken(null);
       return null;
@@ -151,7 +143,7 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
 
   // Fetch token when authentication state changes
   useEffect(() => {
-    console.log("[TokenProvider] useEffect triggered - calling fetchToken");
+    logger.debug("useEffect triggered - calling fetchToken");
     fetchToken();
   }, [fetchToken]);
 

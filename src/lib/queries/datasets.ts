@@ -51,13 +51,19 @@ async function fetchDatasetsViaApi(
 
   if (!res.ok) {
     const errorText = await res.text();
-    logger.error({ projectId, status: res.status, errorText }, "Failed to fetch datasets");
+    logger.error(
+      { projectId, status: res.status, errorText },
+      "Failed to fetch datasets"
+    );
     throw new Error(`Failed to fetch datasets (${res.status})`);
   }
 
   // Support both array (legacy) and paginated shape { items, nextCursor, total }
   const json = await res.json();
-  logger.debug({ projectId, isArray: Array.isArray(json) }, "Datasets response received");
+  logger.debug(
+    { projectId, isArray: Array.isArray(json) },
+    "Datasets response received"
+  );
 
   const items: ApiDataset[] = Array.isArray(json) ? json : json.items;
   const mapped: ProjectDataset[] = items.map((d) => ({
@@ -67,7 +73,10 @@ async function fetchDatasetsViaApi(
     uploadedAt: d.uploadedAt ? new Date(d.uploadedAt) : new Date(),
   }));
 
-  logger.debug({ projectId, count: mapped.length }, "Datasets mapped successfully");
+  logger.debug(
+    { projectId, count: mapped.length },
+    "Datasets mapped successfully"
+  );
 
   return {
     items: mapped,

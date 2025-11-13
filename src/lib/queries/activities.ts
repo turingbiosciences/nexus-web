@@ -48,12 +48,18 @@ async function fetchActivitiesViaApi(
 
   if (!res.ok) {
     const errorText = await res.text();
-    logger.error({ projectId, status: res.status, errorText }, "Failed to fetch activities");
+    logger.error(
+      { projectId, status: res.status, errorText },
+      "Failed to fetch activities"
+    );
     throw new Error(`Failed to fetch activities (${res.status})`);
   }
 
   const json = await res.json();
-  logger.debug({ projectId, isArray: Array.isArray(json) }, "Activities response received");
+  logger.debug(
+    { projectId, isArray: Array.isArray(json) },
+    "Activities response received"
+  );
 
   // Support both array and object with items property
   const items: ApiActivity[] = Array.isArray(json)
@@ -71,7 +77,10 @@ async function fetchActivitiesViaApi(
       : new Date(),
   }));
 
-  logger.debug({ projectId, count: mapped.length }, "Activities mapped successfully");
+  logger.debug(
+    { projectId, count: mapped.length },
+    "Activities mapped successfully"
+  );
 
   return mapped;
 }

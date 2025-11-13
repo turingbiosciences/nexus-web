@@ -59,11 +59,14 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
   const data = await response.json();
 
   // Debug: Log full API response
-  logger.debug({
-    responseType: typeof data,
-    isArray: Array.isArray(data),
-    hasProjectsProperty: "projects" in (data || {})
-  }, "Projects API response received");
+  logger.debug(
+    {
+      responseType: typeof data,
+      isArray: Array.isArray(data),
+      hasProjectsProperty: "projects" in (data || {}),
+    },
+    "Projects API response received"
+  );
 
   // Handle both array response and object with projects property
   const projectsArray: RawProject[] = Array.isArray(data)
@@ -74,14 +77,17 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
   // Normalize projects to ensure valid status values and convert date strings to Date objects
   const projects = projectsArray.map((project: RawProject) => {
     // Debug: Log individual project data before transformation
-    logger.debug({
-      projectId: project.id,
-      name: project.name,
-      status: project.status,
-      createdAt: project.createdAt,
-      updatedAt: project.updatedAt,
-      completedAt: project.completedAt,
-    }, "Processing raw project data");
+    logger.debug(
+      {
+        projectId: project.id,
+        name: project.name,
+        status: project.status,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt,
+        completedAt: project.completedAt,
+      },
+      "Processing raw project data"
+    );
 
     // Helper to safely parse dates, fallback to current date if invalid
     const parseDate = (dateValue: string | Date | null | undefined): Date => {
@@ -140,7 +146,10 @@ export async function deleteProject(
 
   const apiUrl = baseUrl.replace(/\/$/, "");
 
-  logger.info({ projectId, url: `${apiUrl}/projects/${projectId}` }, "Deleting project via API");
+  logger.info(
+    { projectId, url: `${apiUrl}/projects/${projectId}` },
+    "Deleting project via API"
+  );
 
   const response = await fetch(`${apiUrl}/projects/${projectId}`, {
     method: "DELETE",
@@ -174,7 +183,10 @@ export async function createProject(
   const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
 
   if (dataMode === "mock") {
-    logger.debug({ name: data.name }, "Using mock data (NEXT_PUBLIC_DATA_MODE=mock)");
+    logger.debug(
+      { name: data.name },
+      "Using mock data (NEXT_PUBLIC_DATA_MODE=mock)"
+    );
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 500));
     // Return mock project
@@ -200,7 +212,10 @@ export async function createProject(
 
   const apiUrl = baseUrl.replace(/\/$/, "");
 
-  logger.info({ name: data.name, url: `${apiUrl}/projects` }, "Creating project via API");
+  logger.info(
+    { name: data.name, url: `${apiUrl}/projects` },
+    "Creating project via API"
+  );
 
   const response = await fetch(`${apiUrl}/projects`, {
     method: "POST",
@@ -221,7 +236,10 @@ export async function createProject(
   const project = await response.json();
 
   // Debug: Log full API response for created project
-  logger.debug({ projectId: project.id, name: project.name }, "Project created via API");
+  logger.debug(
+    { projectId: project.id, name: project.name },
+    "Project created via API"
+  );
 
   // Helper to safely parse dates, fallback to current date if invalid
   const parseDate = (dateValue: string | Date | null | undefined): Date => {

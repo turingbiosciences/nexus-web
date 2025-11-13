@@ -39,12 +39,21 @@ async function fetchResults(
 
   if (!res.ok) {
     const errorText = await res.text();
-    logger.error({ projectId, status: res.status, errorText }, "Failed to fetch results");
+    logger.error(
+      { projectId, status: res.status, errorText },
+      "Failed to fetch results"
+    );
     throw new Error(`Failed to fetch results (${res.status})`);
   }
 
   const json = await res.json();
-  logger.debug({ projectId, count: json.items?.length || json.results?.length || json.length || 0 }, "Results response received");
+  logger.debug(
+    {
+      projectId,
+      count: json.items?.length || json.results?.length || json.length || 0,
+    },
+    "Results response received"
+  );
 
   // Support both array and object with items/results property
   const items: ProjectResult[] = Array.isArray(json)

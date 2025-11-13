@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useState } from "react";
+import { logger } from "@/lib/logger";
 
 interface ReactQueryProviderProps {
   children: ReactNode;
@@ -21,7 +22,10 @@ function handleQueryError(error: unknown) {
       error.message.includes("Invalid token");
 
     if (is401Error) {
-      console.error("[ReactQuery] Token expired, redirecting to sign out");
+      logger.error(
+        { error: error.message },
+        "ReactQuery: Token expired, redirecting to sign out"
+      );
       window.location.href = "/api/logto/sign-out";
     }
   }
