@@ -4,6 +4,7 @@ import { IS_MOCK } from "@/config/flags";
 import { projectsRepository } from "@/data";
 import { useAccessToken } from "@/components/providers/token-provider";
 import { authFetch } from "@/lib/auth-fetch";
+import { logger } from "@/lib/logger";
 
 interface UseActivitiesOptions {
   enabled?: boolean;
@@ -34,7 +35,7 @@ async function fetchActivitiesViaApi(
     params.size ? `?${params.toString()}` : ""
   }`;
 
-  console.log("🔔 Fetching activities from:", url);
+  logger.debug({ projectId, url }, "Fetching activities");
 
   const res = await authFetch(url, {
     method: "GET",
@@ -47,12 +48,12 @@ async function fetchActivitiesViaApi(
 
   if (!res.ok) {
     const errorText = await res.text();
-    console.error("Failed to fetch activities:", res.status, errorText);
+    logger.error({ projectId, status: res.status, errorText }, "Failed to fetch activities");
     throw new Error(`Failed to fetch activities (${res.status})`);
   }
 
   const json = await res.json();
-  console.log("🔔 Activities response:", json);
+  logger.debug({ projectId, isArray: Array.isArray(json) }, "Activities response received");
 
   // Support both array and object with items property
   const items: ApiActivity[] = Array.isArray(json)
@@ -70,7 +71,7 @@ async function fetchActivitiesViaApi(
       : new Date(),
   }));
 
-  console.log("🔔 Mapped activities:", mapped);
+  logger.debug({ projectId, count: mapped.length }, "Activities mapped successfully");
 
   return mapped;
 }

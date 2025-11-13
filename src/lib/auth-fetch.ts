@@ -82,9 +82,7 @@ export async function authFetch(
 
             // If still 401 after refresh, give up and redirect
             if (response.status === 401) {
-              logger.error(
-                "Still unauthorized after token refresh"
-              );
+              logger.error("Still unauthorized after token refresh");
               window.location.href = "/api/logto/sign-out";
               throw new TokenExpiredError(
                 "Session expired. Please sign in again."
@@ -101,9 +99,7 @@ export async function authFetch(
       }
 
       // If no refresh handler or refresh failed, redirect to sign out
-      logger.error(
-        "Token expired and no refresh available, signing out"
-      );
+      logger.error("Token expired and no refresh available, signing out");
       window.location.href = "/api/logto/sign-out";
       throw new TokenExpiredError("Session expired. Please sign in again.");
     }

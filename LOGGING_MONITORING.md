@@ -3,6 +3,7 @@
 ## Overview
 
 This project uses a dual approach for logging and error tracking:
+
 - **Pino** for structured application logging
 - **Sentry** for error tracking, performance monitoring, and session replay
 
@@ -32,9 +33,9 @@ logger.debug({ data }, "Processing intermediate results");
 import { logApiRequest, logComponentError } from "@/lib/logger";
 
 // Log API calls with timing
-logApiRequest("POST", "/api/datasets", { 
-  status: 200, 
-  duration: 1250 
+logApiRequest("POST", "/api/datasets", {
+  status: 200,
+  duration: 1250,
 });
 
 // Log React component errors
@@ -61,6 +62,7 @@ LOG_LEVEL=debug
 ### Automatic Error Tracking
 
 Sentry automatically captures:
+
 - Uncaught exceptions
 - Unhandled promise rejections
 - React component errors (via Error Boundaries)
@@ -78,8 +80,8 @@ try {
   Sentry.captureException(error, {
     tags: { component: "dataset-processor" },
     contexts: {
-      dataset: { id: datasetId, size: data.length }
-    }
+      dataset: { id: datasetId, size: data.length },
+    },
   });
   throw error;
 }
@@ -92,7 +94,7 @@ Sentry.addBreadcrumb({
   category: "upload",
   message: "Started file upload",
   level: "info",
-  data: { fileSize: file.size }
+  data: { fileSize: file.size },
 });
 ```
 
@@ -104,7 +106,7 @@ import * as Sentry from "@sentry/nextjs";
 // Trace a long-running operation
 const transaction = Sentry.startTransaction({
   op: "process-dataset",
-  name: "Dataset Processing Pipeline"
+  name: "Dataset Processing Pipeline",
 });
 
 try {
@@ -127,7 +129,7 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.setUser({
   id: userId,
   email: userEmail,
-  username: userName
+  username: userName,
 });
 
 // Clear user context on sign-out
@@ -137,11 +139,13 @@ Sentry.setUser(null);
 ## Testing Sentry Setup
 
 After deployment, visit `/sentry-example-page` to test:
+
 1. Client-side error capture
 2. Server-side error capture
 3. API route error capture
 
 Delete this page in production:
+
 - `src/app/sentry-example-page/page.tsx`
 - `src/app/api/sentry-example-api/route.ts`
 
@@ -172,23 +176,29 @@ SENTRY_PROJECT=javascript-nextjs
 ### 1. Use Structured Logging
 
 ❌ **Bad:**
+
 ```typescript
 console.log("User uploaded file with size:", fileSize);
 ```
 
 ✅ **Good:**
+
 ```typescript
-logger.info({ 
-  userId, 
-  projectId, 
-  fileName: file.name, 
-  fileSize: file.size 
-}, "User uploaded file");
+logger.info(
+  {
+    userId,
+    projectId,
+    fileName: file.name,
+    fileSize: file.size,
+  },
+  "User uploaded file"
+);
 ```
 
 ### 2. Add Context to Errors
 
 ❌ **Bad:**
+
 ```typescript
 catch (error) {
   logger.error(error);
@@ -196,13 +206,14 @@ catch (error) {
 ```
 
 ✅ **Good:**
+
 ```typescript
 catch (error) {
-  logger.error({ 
-    error, 
-    userId, 
-    projectId, 
-    operation: "dataset-upload" 
+  logger.error({
+    error,
+    userId,
+    projectId,
+    operation: "dataset-upload"
   }, "Failed to upload dataset");
 }
 ```
@@ -217,6 +228,7 @@ catch (error) {
 ### 4. Never Log Sensitive Data
 
 ❌ **Never log:**
+
 - Passwords
 - API keys
 - Auth tokens
@@ -257,7 +269,7 @@ Sentry.init({
     }
     return event;
   },
-  
+
   // Sample 10% of transactions
   tracesSampleRate: 0.1,
 });
@@ -304,6 +316,7 @@ In production, logs are structured JSON:
 ```
 
 For production log aggregation, consider:
+
 - **Vercel Logs** (if hosting on Vercel)
 - **Better Stack** (Logtail)
 - **Axiom**

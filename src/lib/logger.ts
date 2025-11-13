@@ -20,7 +20,7 @@ const isServer = typeof window === "undefined";
 // Pino configuration
 const pinoConfig: pino.LoggerOptions = {
   level: process.env.LOG_LEVEL || (isDevelopment ? "debug" : "info"),
-  
+
   // Browser configuration
   browser: {
     asObject: true,
@@ -85,7 +85,9 @@ const createLogger = () => {
       } else {
         baseLogger.error(obj, msg);
         // Send to Sentry with context
-        const error = (obj as Record<string, unknown>).error || (obj as Record<string, unknown>).err;
+        const error =
+          (obj as Record<string, unknown>).error ||
+          (obj as Record<string, unknown>).err;
         if (error instanceof Error) {
           Sentry.captureException(error, {
             contexts: { extra: obj },
@@ -104,7 +106,7 @@ const createLogger = () => {
      */
     debug: (obj: object | string, msg?: string) => {
       if (!isDevelopment) return;
-      
+
       if (typeof obj === "string") {
         baseLogger.debug(obj);
       } else {
@@ -117,7 +119,7 @@ const createLogger = () => {
      */
     trace: (obj: object | string, msg?: string) => {
       if (!isDevelopment) return;
-      
+
       if (typeof obj === "string") {
         baseLogger.trace(obj);
       } else {

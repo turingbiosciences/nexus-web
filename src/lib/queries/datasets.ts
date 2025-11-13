@@ -5,6 +5,7 @@ import { IS_MOCK } from "@/config/flags";
 import { projectsRepository } from "@/data";
 import { useAccessToken } from "@/components/providers/token-provider";
 import { authFetch } from "@/lib/auth-fetch";
+import { logger } from "@/lib/logger";
 
 interface UseDatasetsOptions {
   enabled?: boolean;
@@ -37,7 +38,7 @@ async function fetchDatasetsViaApi(
     params.size ? `?${params.toString()}` : ""
   }`;
 
-  console.log("📁 Fetching datasets from:", url);
+  logger.debug({ projectId, url }, "Fetching datasets");
 
   const res = await authFetch(url, {
     method: "GET",
@@ -50,13 +51,13 @@ async function fetchDatasetsViaApi(
 
   if (!res.ok) {
     const errorText = await res.text();
-    console.error("Failed to fetch datasets:", res.status, errorText);
+    logger.error({ projectId, status: res.status, errorText }, "Failed to fetch datasets");
     throw new Error(`Failed to fetch datasets (${res.status})`);
   }
 
   // Support both array (legacy) and paginated shape { items, nextCursor, total }
   const json = await res.json();
-  console.log("📁 Datasets response:", json);
+  logger.debug({ projectId, isArray: Array.isArray(json) }, "Datasets response received");
 
   const items: ApiDataset[] = Array.isArray(json) ? json : json.items;
   const mapped: ProjectDataset[] = items.map((d) => ({
@@ -66,7 +67,7 @@ async function fetchDatasetsViaApi(
     uploadedAt: d.uploadedAt ? new Date(d.uploadedAt) : new Date(),
   }));
 
-  console.log("📁 Mapped datasets:", mapped);
+  logger.debug({ projectId, count: mapped.length }, "Datasets mapped successfully");
 
   return {
     items: mapped,

@@ -50,7 +50,9 @@ describe("auth-fetch", () => {
         ok: false,
         status: 401,
         text: async () => '{"detail":"Invalid token: Signature has expired."}',
-        clone: function() { return this; },
+        clone: function () {
+          return this;
+        },
       } as Response;
 
       mockFetch.mockResolvedValueOnce(mockResponse);
@@ -70,7 +72,9 @@ describe("auth-fetch", () => {
         ok: false,
         status: 401,
         text: async () => '{"detail":"token expired"}',
-        clone: function() { return this; },
+        clone: function () {
+          return this;
+        },
       } as Response;
 
       const successResponse = {
@@ -111,7 +115,9 @@ describe("auth-fetch", () => {
         ok: false,
         status: 401,
         text: async () => '{"detail":"Signature has expired"}',
-        clone: function() { return this; },
+        clone: function () {
+          return this;
+        },
       } as Response;
 
       mockFetch
@@ -136,7 +142,9 @@ describe("auth-fetch", () => {
         ok: false,
         status: 401,
         text: async () => '{"detail":"Invalid token"}',
-        clone: function() { return this; },
+        clone: function () {
+          return this;
+        },
       } as Response;
 
       mockFetch.mockResolvedValueOnce(expired401Response);
@@ -161,7 +169,9 @@ describe("auth-fetch", () => {
         ok: false,
         status: 401,
         text: async () => '{"detail":"Invalid credentials"}',
-        clone: function() { return this; },
+        clone: function () {
+          return this;
+        },
       } as Response;
 
       mockFetch.mockResolvedValueOnce(mockResponse);
@@ -233,7 +243,9 @@ describe("auth-fetch", () => {
         ok: false,
         status: 401,
         text: async () => '{"detail":"token expired"}',
-        clone: function() { return this; },
+        clone: function () {
+          return this;
+        },
       } as Response;
 
       mockFetch.mockResolvedValueOnce(mockResponse);
@@ -250,7 +262,9 @@ describe("auth-fetch", () => {
         ok: false,
         status: 401,
         text: async () => '{"detail":"Bad credentials"}',
-        clone: function() { return this; },
+        clone: function () {
+          return this;
+        },
       } as Response;
 
       mockFetch.mockResolvedValueOnce(mockResponse);

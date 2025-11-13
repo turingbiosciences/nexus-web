@@ -5,6 +5,7 @@
 
 import { Project } from "@/types/project";
 import { mockProjects } from "@/lib/mock-data";
+import { logger } from "@/lib/logger";
 
 interface ProjectsAPIResponse {
   projects: Project[];
@@ -23,7 +24,7 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
   const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
 
   if (dataMode === "mock") {
-    console.log("[fetchProjects] Using mock data (NEXT_PUBLIC_DATA_MODE=mock)");
+    logger.debug("Using mock data (NEXT_PUBLIC_DATA_MODE=mock)");
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 300));
     return mockProjects;
@@ -38,7 +39,7 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
   // Remove trailing slash if present
   const apiUrl = baseUrl.replace(/\/$/, "");
 
-  console.log(`[fetchProjects] Fetching from API: ${apiUrl}/projects`);
+  logger.debug({ url: `${apiUrl}/projects` }, "Fetching projects from API");
 
   const response = await fetch(`${apiUrl}/projects`, {
     method: "GET",
@@ -58,31 +59,29 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
   const data = await response.json();
 
   // Debug: Log full API response
-  console.log("[fetchProjects] API Response:", JSON.stringify(data, null, 2));
-  console.log("[fetchProjects] API Response type:", typeof data);
-  console.log("[fetchProjects] Is Array?", Array.isArray(data));
-  console.log(
-    "[fetchProjects] Has 'projects' property?",
-    "projects" in (data || {})
-  );
+  logger.debug({
+    responseType: typeof data,
+    isArray: Array.isArray(data),
+    hasProjectsProperty: "projects" in (data || {})
+  }, "Projects API response received");
 
   // Handle both array response and object with projects property
   const projectsArray: RawProject[] = Array.isArray(data)
     ? data
     : data?.projects || [];
-  console.log("[fetchProjects] Projects array length:", projectsArray.length);
+  logger.debug({ count: projectsArray.length }, "Projects array extracted");
 
   // Normalize projects to ensure valid status values and convert date strings to Date objects
   const projects = projectsArray.map((project: RawProject) => {
     // Debug: Log individual project data before transformation
-    console.log("[fetchProjects] Raw project data:", {
-      id: project.id,
+    logger.debug({
+      projectId: project.id,
       name: project.name,
       status: project.status,
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
       completedAt: project.completedAt,
-    });
+    }, "Processing raw project data");
 
     // Helper to safely parse dates, fallback to current date if invalid
     const parseDate = (dateValue: string | Date | null | undefined): Date => {
@@ -109,11 +108,7 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
     };
   });
 
-  console.log(
-    "[fetchProjects] Returning",
-    projects.length,
-    "normalized projects"
-  );
+  logger.info({ count: projects.length }, "Returning normalized projects");
   return projects;
 }
 
@@ -131,9 +126,7 @@ export async function deleteProject(
   const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
 
   if (dataMode === "mock") {
-    console.log(
-      `[deleteProject] Mock deletion of project ${projectId} (NEXT_PUBLIC_DATA_MODE=mock)`
-    );
+    logger.debug({ projectId }, "Mock deletion (NEXT_PUBLIC_DATA_MODE=mock)");
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 300));
     return;
@@ -147,9 +140,7 @@ export async function deleteProject(
 
   const apiUrl = baseUrl.replace(/\/$/, "");
 
-  console.log(
-    `[deleteProject] Deleting via API: ${apiUrl}/projects/${projectId}`
-  );
+  logger.info({ projectId, url: `${apiUrl}/projects/${projectId}` }, "Deleting project via API");
 
   const response = await fetch(`${apiUrl}/projects/${projectId}`, {
     method: "DELETE",
@@ -166,7 +157,7 @@ export async function deleteProject(
     );
   }
 
-  console.log(`[deleteProject] Successfully deleted project ${projectId}`);
+  logger.info({ projectId }, "Successfully deleted project");
 }
 
 /**
@@ -183,7 +174,7 @@ export async function createProject(
   const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
 
   if (dataMode === "mock") {
-    console.log("[createProject] Using mock data (NEXT_PUBLIC_DATA_MODE=mock)");
+    logger.debug({ name: data.name }, "Using mock data (NEXT_PUBLIC_DATA_MODE=mock)");
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 500));
     // Return mock project
@@ -209,7 +200,7 @@ export async function createProject(
 
   const apiUrl = baseUrl.replace(/\/$/, "");
 
-  console.log(`[createProject] Creating via API: ${apiUrl}/projects`);
+  logger.info({ name: data.name, url: `${apiUrl}/projects` }, "Creating project via API");
 
   const response = await fetch(`${apiUrl}/projects`, {
     method: "POST",
@@ -230,10 +221,7 @@ export async function createProject(
   const project = await response.json();
 
   // Debug: Log full API response for created project
-  console.log(
-    "[createProject] API Response:",
-    JSON.stringify(project, null, 2)
-  );
+  logger.debug({ projectId: project.id, name: project.name }, "Project created via API");
 
   // Helper to safely parse dates, fallback to current date if invalid
   const parseDate = (dateValue: string | Date | null | undefined): Date => {

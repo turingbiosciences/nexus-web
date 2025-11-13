@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAccessToken } from "@/components/providers/token-provider";
 import { authFetch } from "@/lib/auth-fetch";
+import { logger } from "@/lib/logger";
 
 interface ProjectResult {
   id: string;
@@ -25,7 +26,7 @@ async function fetchResults(
   if (!base) throw new Error("Missing NEXT_PUBLIC_TURING_API env var");
 
   const url = `${base}/projects/${projectId}/results`;
-  console.log("📊 Fetching results from:", url);
+  logger.debug({ projectId, url }, "Fetching results");
 
   const res = await authFetch(url, {
     method: "GET",
@@ -38,12 +39,12 @@ async function fetchResults(
 
   if (!res.ok) {
     const errorText = await res.text();
-    console.error("Failed to fetch results:", res.status, errorText);
+    logger.error({ projectId, status: res.status, errorText }, "Failed to fetch results");
     throw new Error(`Failed to fetch results (${res.status})`);
   }
 
   const json = await res.json();
-  console.log("📊 Results response:", json);
+  logger.debug({ projectId, count: json.items?.length || json.results?.length || json.length || 0 }, "Results response received");
 
   // Support both array and object with items/results property
   const items: ProjectResult[] = Array.isArray(json)

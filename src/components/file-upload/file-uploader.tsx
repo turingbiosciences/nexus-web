@@ -7,6 +7,7 @@ import { Upload, X, CheckCircle, AlertCircle, Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, formatBytes, formatUploadProgress } from "@/lib/utils";
 import { useAccessToken } from "@/components/providers/token-provider";
+import { logger } from "@/lib/logger";
 
 interface FileUploadItem {
   file: File;
@@ -103,15 +104,13 @@ export function FileUploader({
           errorText.includes("Invalid token");
 
         if (isTokenExpired) {
-          console.error(
-            "Upload failed: Token expired, redirecting to sign out"
-          );
+          logger.error({ uploadId: upload.id }, "Upload failed: Token expired, redirecting to sign out");
           window.location.href = "/api/logto/sign-out";
           return;
         }
 
         const errorMsg = errorText || `Upload failed with status ${xhr.status}`;
-        console.error("XHR upload error:", errorMsg);
+        logger.error({ uploadId: upload.id, status: xhr.status, errorMsg }, "XHR upload error");
         setUploads((prev) =>
           prev.map((u) =>
             u.id === upload.id
@@ -126,7 +125,7 @@ export function FileUploader({
       } else {
         const errorMsg =
           xhr.responseText || `Upload failed with status ${xhr.status}`;
-        console.error("XHR upload error:", errorMsg);
+        logger.error({ uploadId: upload.id, status: xhr.status, errorMsg }, "XHR upload error");
         setUploads((prev) =>
           prev.map((u) =>
             u.id === upload.id
@@ -143,7 +142,7 @@ export function FileUploader({
 
     // Handle errors
     xhr.addEventListener("error", () => {
-      console.error("XHR upload network error");
+      logger.error({ uploadId: upload.id }, "XHR upload network error");
       setUploads((prev) =>
         prev.map((u) =>
           u.id === upload.id
@@ -310,7 +309,7 @@ export function FileUploader({
       // Start the TUS upload
       tusUpload.start();
     } catch (error) {
-      console.error("Upload initialization error:", error);
+      logger.error({ uploadId: upload.id, error }, "Upload initialization error");
       if (!isAuthenticated) {
         setAuthError("Not authenticated. Please sign in.");
       } else if (
