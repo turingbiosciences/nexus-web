@@ -51,15 +51,6 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     projectsLoading ||
     (isAuthenticated && projects.length === 0 && !project);
 
-  console.log("[ProjectDetailsClient] Render state:", {
-    authLoading,
-    projectsLoading,
-    isInitialLoading,
-    hasProject: !!project,
-    projectsCount: projects.length,
-    projectId,
-  });
-
   const handleDeleteProject = async () => {
     if (!project) return;
 
