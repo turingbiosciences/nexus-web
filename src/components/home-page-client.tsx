@@ -33,13 +33,16 @@ export function HomePageClient() {
 
   const isLoading = authLoading || projectsLoading;
 
-  logger.debug({
-    isAuthenticated,
-    authLoading,
-    projectsLoading,
-    isLoading,
-    projectsCount: projects.length,
-  }, "HomePageClient render state");
+  logger.debug(
+    {
+      isAuthenticated,
+      authLoading,
+      projectsLoading,
+      isLoading,
+      projectsCount: projects.length,
+    },
+    "HomePageClient render state"
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
