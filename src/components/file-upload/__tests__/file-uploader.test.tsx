@@ -57,7 +57,9 @@ describe("FileUploader", () => {
     render(<FileUploader />);
     expect(screen.getByText(/drag & drop files here/i)).toBeInTheDocument();
     // Check for the card title
-    expect(screen.getByRole("heading", { name: /upload files/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /upload files/i })
+    ).toBeInTheDocument();
   });
 
   it("shows sign-in banner when not authenticated", () => {
@@ -246,7 +248,9 @@ describe("FileUploader", () => {
     startBtn.click();
 
     await waitFor(() => {
-      expect(screen.getByText(/failed to obtain access token/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/failed to obtain access token/i)
+      ).toBeInTheDocument();
     });
   });
 
@@ -314,9 +318,11 @@ describe("FileUploader", () => {
     });
 
     render(<FileUploader />);
-    
+
     // Should show the sign-in prompt
-    expect(screen.getByText(/please sign in to enable uploads/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/please sign in to enable uploads/i)
+    ).toBeInTheDocument();
   });
 
   it("shows project ID requirement error when missing", async () => {

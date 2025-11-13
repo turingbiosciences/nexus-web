@@ -255,7 +255,8 @@ describe("TokenProvider", () => {
         return Promise.resolve({
           ok: true,
           json: async () => ({
-            accessToken: tokenCallCount === 1 ? "initial-token" : "refreshed-token",
+            accessToken:
+              tokenCallCount === 1 ? "initial-token" : "refreshed-token",
           }),
         });
       }
