@@ -13,10 +13,36 @@ interface UseActivitiesOptions {
 
 interface ApiActivity {
   id: string;
-  type: string;
-  message: string;
-  timestamp?: string;
-  createdAt?: string;
+  event_type: string;
+  description: string;
+  created_at: string;
+  project_id?: string;
+  activity_metadata?: unknown;
+}
+
+/**
+ * Map API event_type to internal ProjectActivity type
+ */
+function mapEventTypeToActivityType(
+  eventType: string
+): ProjectActivity["type"] {
+  switch (eventType) {
+    case "file_uploaded":
+      return "upload";
+    case "project_updated":
+      return "updated";
+    case "project_created":
+      return "created";
+    case "status_change":
+    case "project_status_changed":
+      return "status_change";
+    case "file_deleted":
+    case "dataset_deleted":
+      return "delete";
+    default:
+      // Default to 'updated' for unknown types
+      return "updated";
+  }
 }
 
 async function fetchActivitiesViaApi(
@@ -68,13 +94,9 @@ async function fetchActivitiesViaApi(
 
   const mapped: ProjectActivity[] = items.map((a) => ({
     id: a.id,
-    type: a.type as ProjectActivity["type"],
-    message: a.message,
-    at: a.timestamp
-      ? new Date(a.timestamp)
-      : a.createdAt
-      ? new Date(a.createdAt)
-      : new Date(),
+    type: mapEventTypeToActivityType(a.event_type),
+    message: a.description,
+    at: new Date(a.created_at),
   }));
 
   logger.debug(
