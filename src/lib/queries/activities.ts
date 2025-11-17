@@ -92,10 +92,12 @@ async function fetchActivities(
   opts?: { limit?: number }
 ) {
   if (IS_MOCK) {
+    logger.info({ projectId, IS_MOCK }, "Using mock activities data");
     const projects = await projectsRepository.list();
     const project = projects.find((p) => p.id === projectId);
     return project?.activities || [];
   }
+  logger.info({ projectId, IS_MOCK }, "Using API for activities data");
   return fetchActivitiesViaApi(projectId, accessToken, onTokenRefresh, opts);
 }
 
