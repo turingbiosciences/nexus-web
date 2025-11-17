@@ -249,7 +249,7 @@ export function FileUploader({
         },
         onError: (error) => {
           logger.error(
-            { uploadId: upload.id, error: error.message },
+            { uploadId: upload.id, error },
             "TUS upload error"
           );
 
