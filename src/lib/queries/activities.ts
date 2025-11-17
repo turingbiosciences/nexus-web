@@ -35,7 +35,7 @@ async function fetchActivitiesViaApi(
     params.size ? `?${params.toString()}` : ""
   }`;
 
-  logger.debug({ projectId, url }, "Fetching activities");
+  logger.info({ projectId, url }, "Fetching activities");
 
   const res = await authFetch(url, {
     method: "GET",
