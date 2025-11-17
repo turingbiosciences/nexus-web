@@ -116,5 +116,6 @@ export function useActivities(
     },
     enabled: enabled && !!projectId && isAuthenticated && !!accessToken,
     staleTime: 30_000,
+    refetchOnMount: "always", // Always refetch when component mounts to get fresh activity data
   });
 }
