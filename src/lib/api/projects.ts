@@ -6,10 +6,7 @@
 import { Project } from "@/types/project";
 import { mockProjects } from "@/lib/mock-data";
 import { logger } from "@/lib/logger";
-
-interface ProjectsAPIResponse {
-  projects: Project[];
-}
+import { getRelativeTime } from "@/lib/utils/date-utils";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RawProject = any;
@@ -96,6 +93,9 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
       return isNaN(parsed.getTime()) ? new Date() : parsed;
     };
 
+    const updatedAt = parseDate(project.updatedAt);
+    const lastActivity = getRelativeTime(updatedAt);
+
     return {
       ...project,
       // Default to 'setup' if status is missing or invalid
@@ -107,10 +107,14 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
           : "setup",
       // Convert date strings to Date objects with fallback
       createdAt: parseDate(project.createdAt),
-      updatedAt: parseDate(project.updatedAt),
+      updatedAt,
       completedAt: project.completedAt
         ? parseDate(project.completedAt)
         : undefined,
+      // Initialize datasetCount and lastActivity with defaults if not provided
+      datasetCount: project.datasetCount ?? 0,
+      lastActivity,
+      datasets: project.datasets ?? [],
     };
   });
 
@@ -249,6 +253,9 @@ export async function createProject(
   };
 
   // Normalize status to ensure it's valid and convert date strings to Date objects
+  const updatedAt = parseDate(project.updatedAt);
+  const lastActivity = getRelativeTime(updatedAt);
+
   return {
     ...project,
     status:
@@ -259,9 +266,13 @@ export async function createProject(
         : "setup",
     // Convert date strings to Date objects with fallback
     createdAt: parseDate(project.createdAt),
-    updatedAt: parseDate(project.updatedAt),
+    updatedAt,
     completedAt: project.completedAt
       ? parseDate(project.completedAt)
       : undefined,
+    // Initialize datasetCount and lastActivity with defaults if not provided
+    datasetCount: project.datasetCount ?? 0,
+    lastActivity,
+    datasets: project.datasets ?? [],
   };
 }

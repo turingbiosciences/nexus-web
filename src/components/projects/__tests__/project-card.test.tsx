@@ -17,6 +17,31 @@ jest.mock("next/link", () => {
   return MockLink;
 });
 
+// Mock providers
+jest.mock("@/components/providers/token-provider", () => ({
+  useAccessToken: () => ({
+    accessToken: "mock-token",
+    isLoading: false,
+    error: null,
+  }),
+}));
+
+const mockUpdateProject = jest.fn();
+jest.mock("@/components/providers/projects-provider", () => ({
+  useProjects: () => ({
+    updateProject: mockUpdateProject,
+  }),
+}));
+
+// Mock useProjectMetadata hook
+jest.mock("@/lib/queries/project-metadata", () => ({
+  useProjectMetadata: () => ({
+    data: undefined,
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 describe("ProjectCard", () => {
   const baseProject: Project = {
     id: "test-project-1",
@@ -44,10 +69,10 @@ describe("ProjectCard", () => {
     expect(screen.getByText("5 datasets")).toBeInTheDocument();
   });
 
-  it("does not render dataset count when undefined", () => {
+  it("renders zero datasets when undefined", () => {
     const projectWithoutCount = { ...baseProject, datasetCount: undefined };
     render(<ProjectCard project={projectWithoutCount} />);
-    expect(screen.queryByText(/datasets/)).not.toBeInTheDocument();
+    expect(screen.getByText("0 datasets")).toBeInTheDocument();
   });
 
   it("renders last activity when provided", () => {
@@ -55,10 +80,10 @@ describe("ProjectCard", () => {
     expect(screen.getByText("2 days ago")).toBeInTheDocument();
   });
 
-  it("does not render last activity when undefined", () => {
+  it("renders default last activity when undefined", () => {
     const projectWithoutActivity = { ...baseProject, lastActivity: undefined };
     render(<ProjectCard project={projectWithoutActivity} />);
-    expect(screen.queryByText("2 days ago")).not.toBeInTheDocument();
+    expect(screen.getByText("No recent activity")).toBeInTheDocument();
   });
 
   it("renders complete status with correct styling", () => {
@@ -159,6 +184,7 @@ describe("ProjectCard", () => {
     expect(screen.getByText("Minimal Project")).toBeInTheDocument();
     expect(screen.getByText("Minimal description")).toBeInTheDocument();
     expect(screen.getByText("Setup")).toBeInTheDocument();
-    expect(screen.queryByText(/datasets/)).not.toBeInTheDocument();
+    expect(screen.getByText("0 datasets")).toBeInTheDocument();
+    expect(screen.getByText("No recent activity")).toBeInTheDocument();
   });
 });

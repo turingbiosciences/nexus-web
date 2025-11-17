@@ -1,6 +1,9 @@
 "use client";
 
 import { useActivities } from "@/lib/queries/activities";
+import { useProjects } from "@/components/providers/projects-provider";
+import { getRelativeTime } from "@/lib/utils/date-utils";
+import { useEffect } from "react";
 
 interface ActivitiesSectionProps {
   projectId: string;
@@ -14,6 +17,26 @@ export function ActivitiesSection({
   const activitiesQuery = useActivities(projectId, { limit });
   const activities = activitiesQuery.data || [];
   const activitiesLoading = activitiesQuery.isLoading;
+  const { updateProject, getProjectById } = useProjects();
+  const project = getProjectById(projectId);
+
+  // Sync lastActivity from the most recent activity
+  useEffect(() => {
+    if (activities && activities.length > 0 && !activitiesLoading && project) {
+      // Find the most recent activity
+      const mostRecent = [...activities].sort(
+        (a, b) => b.at.getTime() - a.at.getTime()
+      )[0];
+
+      if (mostRecent) {
+        const lastActivity = getRelativeTime(mostRecent.at);
+
+        if (project.lastActivity !== lastActivity) {
+          updateProject(projectId, { lastActivity });
+        }
+      }
+    }
+  }, [activities, activitiesLoading, project, projectId, updateProject]);
 
   return (
     <div className="card">

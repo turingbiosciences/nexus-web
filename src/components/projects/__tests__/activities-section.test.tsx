@@ -2,16 +2,30 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { ActivitiesSection } from "../activities-section";
 import { useActivities } from "@/lib/queries/activities";
+import { useProjects } from "@/components/providers/projects-provider";
 
-// Mock the useActivities hook
+// Mock the hooks
 jest.mock("@/lib/queries/activities");
+jest.mock("@/components/providers/projects-provider");
+
 const mockUseActivities = useActivities as jest.MockedFunction<
   typeof useActivities
 >;
+const mockUseProjects = useProjects as jest.MockedFunction<typeof useProjects>;
 
 describe("ActivitiesSection", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Mock useProjects to return minimal required data
+    mockUseProjects.mockReturnValue({
+      updateProject: jest.fn(),
+      getProjectById: jest.fn().mockReturnValue({
+        id: "test-project-id",
+        name: "Test Project",
+        lastActivity: "No recent activity",
+      }),
+    } as any);
   });
 
   it("renders loading state", () => {

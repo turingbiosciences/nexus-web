@@ -38,6 +38,7 @@ describe("projects API", () => {
       process.env.NEXT_PUBLIC_DATA_MODE = "api";
       process.env.NEXT_PUBLIC_TURING_API = "https://api.example.com";
 
+      const now = new Date();
       const mockResponse = {
         projects: [
           {
@@ -45,11 +46,10 @@ describe("projects API", () => {
             name: "Test Project",
             description: "Test description",
             status: "active" as const,
-            createdAt: new Date("2024-01-01"),
-            updatedAt: new Date("2024-01-02"),
+            createdAt: new Date(now.getTime() - 86400000), // 1 day ago
+            updatedAt: new Date(now.getTime() - 3600000), // 1 hour ago
             datasets: [],
             datasetCount: 0,
-            lastActivity: "2 days ago",
           },
         ],
       };
@@ -62,12 +62,18 @@ describe("projects API", () => {
       const result = await fetchProjects("test-token");
 
       // Expect normalized result - invalid status "active" becomes "setup"
-      expect(result).toEqual([
-        {
-          ...mockResponse.projects[0],
-          status: "setup", // Invalid status normalized to "setup"
-        },
-      ]);
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        id: "1",
+        name: "Test Project",
+        description: "Test description",
+        status: "setup", // Invalid status normalized to "setup"
+        datasets: [],
+        datasetCount: 0,
+      });
+      // lastActivity is calculated from updatedAt, so just verify it exists
+      expect(result[0].lastActivity).toBeDefined();
+      expect(typeof result[0].lastActivity).toBe("string");
       expect(global.fetch).toHaveBeenCalledWith(
         "https://api.example.com/projects",
         {

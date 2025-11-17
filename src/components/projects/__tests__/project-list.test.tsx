@@ -1,6 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { ProjectList } from "../project-list";
 import { Project } from "@/types/project";
+import { TokenProvider } from "@/components/providers/token-provider";
+import { ProjectsProvider } from "@/components/providers/projects-provider";
+import { useProjectMetadata } from "@/lib/queries/project-metadata";
 
 // Mock Next.js Link
 jest.mock("next/link", () => {
@@ -16,6 +19,12 @@ jest.mock("next/link", () => {
   MockLink.displayName = "Link";
   return MockLink;
 });
+
+// Mock useProjectMetadata hook
+jest.mock("@/lib/queries/project-metadata");
+const mockUseProjectMetadata = useProjectMetadata as jest.MockedFunction<
+  typeof useProjectMetadata
+>;
 
 describe("ProjectList", () => {
   const mockProjects: Project[] = [
@@ -48,8 +57,28 @@ describe("ProjectList", () => {
     },
   ];
 
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Mock useProjectMetadata to return loading state
+    mockUseProjectMetadata.mockReturnValue({
+      datasetCount: undefined,
+      lastActivity: undefined,
+      isLoading: false,
+    });
+  });
+
+  const renderWithProviders = (ui: React.ReactElement) => {
+    return render(
+      <TokenProvider>
+        <ProjectsProvider initialProjects={mockProjects}>{ui}</ProjectsProvider>
+      </TokenProvider>
+    );
+  };
+
   it("renders all projects in a grid layout", () => {
-    const { container } = render(<ProjectList projects={mockProjects} />);
+    const { container } = renderWithProviders(
+      <ProjectList projects={mockProjects} />
+    );
 
     expect(screen.getByText("Project Alpha")).toBeInTheDocument();
     expect(screen.getByText("Project Beta")).toBeInTheDocument();
@@ -60,7 +89,7 @@ describe("ProjectList", () => {
   });
 
   it("renders project cards with correct data", () => {
-    render(<ProjectList projects={mockProjects} />);
+    renderWithProviders(<ProjectList projects={mockProjects} />);
 
     expect(screen.getByText("First test project")).toBeInTheDocument();
     expect(screen.getByText("Second test project")).toBeInTheDocument();
@@ -68,7 +97,7 @@ describe("ProjectList", () => {
 
     expect(screen.getByText("3 datasets")).toBeInTheDocument();
     expect(screen.getByText("7 datasets")).toBeInTheDocument();
-    expect(screen.getByText("1 datasets")).toBeInTheDocument();
+    expect(screen.getByText("1 dataset")).toBeInTheDocument(); // Singular form
   });
 
   it("shows empty state when no projects exist", () => {
@@ -91,7 +120,7 @@ describe("ProjectList", () => {
   });
 
   it("does not show empty state when projects exist", () => {
-    render(<ProjectList projects={mockProjects} />);
+    renderWithProviders(<ProjectList projects={mockProjects} />);
 
     expect(screen.queryByText("No projects yet")).not.toBeInTheDocument();
     expect(
@@ -102,7 +131,7 @@ describe("ProjectList", () => {
   });
 
   it("renders correct number of project cards", () => {
-    render(<ProjectList projects={mockProjects} />);
+    renderWithProviders(<ProjectList projects={mockProjects} />);
 
     const links = screen.getAllByRole("link");
     expect(links).toHaveLength(3);
@@ -110,7 +139,7 @@ describe("ProjectList", () => {
 
   it("renders single project correctly", () => {
     const singleProject = [mockProjects[0]];
-    render(<ProjectList projects={singleProject} />);
+    renderWithProviders(<ProjectList projects={singleProject} />);
 
     expect(screen.getByText("Project Alpha")).toBeInTheDocument();
     expect(screen.queryByText("Project Beta")).not.toBeInTheDocument();
@@ -128,21 +157,25 @@ describe("ProjectList", () => {
       datasetCount: i,
     }));
 
-    render(<ProjectList projects={manyProjects} />);
+    renderWithProviders(<ProjectList projects={manyProjects} />);
 
     expect(screen.getByText("Project 0")).toBeInTheDocument();
     expect(screen.getByText("Project 19")).toBeInTheDocument();
   });
 
   it("uses unique keys for project cards", () => {
-    const { container } = render(<ProjectList projects={mockProjects} />);
+    const { container } = renderWithProviders(
+      <ProjectList projects={mockProjects} />
+    );
 
     const cards = container.querySelectorAll(".card");
     expect(cards).toHaveLength(3);
   });
 
   it("applies correct grid gap spacing", () => {
-    const { container } = render(<ProjectList projects={mockProjects} />);
+    const { container } = renderWithProviders(
+      <ProjectList projects={mockProjects} />
+    );
 
     const grid = container.querySelector(".grid");
     expect(grid).toHaveClass("gap-6");
@@ -161,8 +194,9 @@ describe("ProjectList", () => {
       datasetCount: undefined,
     }));
 
-    render(<ProjectList projects={projectsWithoutCounts} />);
+    renderWithProviders(<ProjectList projects={projectsWithoutCounts} />);
 
-    expect(screen.queryByText(/datasets/)).not.toBeInTheDocument();
+    // Now expects default value of "0 datasets" when datasetCount is undefined
+    expect(screen.getAllByText("0 datasets")).toHaveLength(3);
   });
 });

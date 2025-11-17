@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { Project } from "@/types/project";
 import { Clock, Database, CheckCircle, Play, Settings2 } from "lucide-react";
+import { useProjectMetadata } from "@/lib/queries/project-metadata";
+import { useEffect } from "react";
+import { useProjects } from "@/components/providers/projects-provider";
 
 interface ProjectCardProps {
   project: Project;
@@ -37,6 +40,25 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const config = statusConfig[project.status] || statusConfig.setup;
   const StatusIcon = config.icon;
 
+  // Fetch metadata for this project
+  const { data: metadata, isLoading } = useProjectMetadata(project.id);
+  const { updateProject } = useProjects();
+
+  // Update project in provider when metadata loads
+  useEffect(() => {
+    if (metadata && !isLoading) {
+      updateProject(project.id, {
+        datasetCount: metadata.datasetCount,
+        lastActivity: metadata.lastActivity,
+      });
+    }
+  }, [metadata, isLoading, project.id, updateProject]);
+
+  // Use metadata if available, otherwise use project data
+  const datasetCount = metadata?.datasetCount ?? project.datasetCount ?? 0;
+  const lastActivity =
+    metadata?.lastActivity ?? project.lastActivity ?? "No recent activity";
+
   return (
     <Link href={`/projects/${project.id}`}>
       <div className="card hover:shadow-lg transition-shadow duration-200 cursor-pointer h-full">
@@ -57,18 +79,16 @@ export function ProjectCard({ project }: ProjectCardProps) {
         </p>
 
         <div className="flex items-center gap-4 text-xs text-gray-500">
-          {project.datasetCount !== undefined && (
-            <div className="flex items-center gap-1">
-              <Database className="h-3.5 w-3.5" />
-              <span>{project.datasetCount} datasets</span>
-            </div>
-          )}
-          {project.lastActivity && (
-            <div className="flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" />
-              <span>{project.lastActivity}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-1">
+            <Database className="h-3.5 w-3.5" />
+            <span>
+              {datasetCount} dataset{datasetCount === 1 ? "" : "s"}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Clock className="h-3.5 w-3.5" />
+            <span>{lastActivity}</span>
+          </div>
         </div>
       </div>
     </Link>

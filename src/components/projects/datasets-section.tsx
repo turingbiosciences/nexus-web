@@ -6,7 +6,7 @@ import { formatBytes } from "@/lib/utils";
 import { useProjects } from "@/components/providers/projects-provider";
 import { useDatasets } from "@/lib/queries/datasets";
 import { reconcileDatasets } from "@/lib/reconcile-datasets";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/toast-provider";
 import {
   useUploadDatasetMutation,
@@ -52,6 +52,25 @@ export function DatasetsSection({
     optimistic,
     pendingDeleteIds,
   });
+
+  // Sync datasetCount from API with project state
+  const total = (datasetsQuery as { total?: number }).total;
+  useEffect(() => {
+    if (remoteDatasets && !remoteLoading && total !== undefined) {
+      const currentCount = project.datasetCount ?? 0;
+      const apiCount = total;
+      if (currentCount !== apiCount) {
+        updateProject(project.id, { datasetCount: apiCount });
+      }
+    }
+  }, [
+    remoteDatasets,
+    remoteLoading,
+    total,
+    project.id,
+    project.datasetCount,
+    updateProject,
+  ]);
 
   return (
     <div className="card">
