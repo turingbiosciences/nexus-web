@@ -74,76 +74,78 @@ export function DatasetsSection({
         )}
         {combined.length > 0 && !remoteLoading && (
           <ul className="divide-y divide-gray-200 border rounded-lg overflow-hidden">
-            {combined.map((d) => (
-              <li
-                key={d.id}
-                className={`flex items-center justify-between px-4 py-3 text-sm bg-white hover:bg-gray-50 ${
-                  d.id.startsWith("optimistic-") ? "opacity-70 italic" : ""
-                }`}
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 truncate">
-                    {d.filename}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {formatBytes(d.size)} • {d.uploadedAt.toLocaleString()}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-xs"
-                    onClick={() => {
-                      // Temporary stub for download action; logs for test instrumentation
-                      console.log("Download dataset", d.id);
-                    }}
-                    aria-label={`Download ${d.filename}`}
-                  >
-                    Download
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-xs"
-                    disabled={deleteMutation.isPending}
-                    onClick={() => {
-                      const newDatasets =
-                        project.datasets?.filter((x) => x.id !== d.id) || [];
-                      updateProject(project.id, {
-                        datasets: newDatasets,
-                        datasetCount: newDatasets.length,
-                        lastActivity: "dataset deleted",
-                      });
-                      setPendingDeleteIds((prev) => [...prev, d.id]);
-                      deleteMutation.mutate(d.id, {
-                        onSuccess: () => {
-                          push({
-                            title: "Dataset deleted",
-                            description: `${d.filename} was removed successfully.`,
-                            variant: "default",
-                          });
-                        },
-                        onError: () => {
-                          push({
-                            title: "Deletion failed",
-                            description: `Could not delete ${d.filename}. Please retry.`,
-                            variant: "destructive",
-                          });
-                        },
-                        onSettled: () => {
-                          setPendingDeleteIds((prev) =>
-                            prev.filter((id) => id !== d.id)
-                          );
-                        },
-                      });
-                    }}
-                  >
-                    {deleteMutation.isPending ? "Deleting..." : "Delete"}
-                  </Button>
-                </div>
-              </li>
-            ))}
+            {combined
+              .filter((d) => d?.id)
+              .map((d) => (
+                <li
+                  key={d.id}
+                  className={`flex items-center justify-between px-4 py-3 text-sm bg-white hover:bg-gray-50 ${
+                    d.id?.startsWith("optimistic-") ? "opacity-70 italic" : ""
+                  }`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">
+                      {d.filename}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {formatBytes(d.size)} • {d.uploadedAt.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs"
+                      onClick={() => {
+                        // Temporary stub for download action; logs for test instrumentation
+                        console.log("Download dataset", d.id);
+                      }}
+                      aria-label={`Download ${d.filename}`}
+                    >
+                      Download
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      disabled={deleteMutation.isPending}
+                      onClick={() => {
+                        const newDatasets =
+                          project.datasets?.filter((x) => x.id !== d.id) || [];
+                        updateProject(project.id, {
+                          datasets: newDatasets,
+                          datasetCount: newDatasets.length,
+                          lastActivity: "dataset deleted",
+                        });
+                        setPendingDeleteIds((prev) => [...prev, d.id]);
+                        deleteMutation.mutate(d.id, {
+                          onSuccess: () => {
+                            push({
+                              title: "Dataset deleted",
+                              description: `${d.filename} was removed successfully.`,
+                              variant: "default",
+                            });
+                          },
+                          onError: () => {
+                            push({
+                              title: "Deletion failed",
+                              description: `Could not delete ${d.filename}. Please retry.`,
+                              variant: "destructive",
+                            });
+                          },
+                          onSettled: () => {
+                            setPendingDeleteIds((prev) =>
+                              prev.filter((id) => id !== d.id)
+                            );
+                          },
+                        });
+                      }}
+                    >
+                      {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                    </Button>
+                  </div>
+                </li>
+              ))}
           </ul>
         )}
         {nextCursor && !remoteLoading && (

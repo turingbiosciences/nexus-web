@@ -71,11 +71,18 @@ describe("useDatasets", () => {
       authLoading: false,
     });
 
-    // Default successful fetch response
+    // Default successful fetch response - match real API format with snake_case
+    const apiDatasets = mockDatasets.map((d) => ({
+      file_id: d.id,
+      filename: d.filename,
+      file_size: d.size,
+      uploaded_at: d.uploadedAt.toISOString(),
+    }));
+
     mockedAuthFetch.mockResolvedValue({
       ok: true,
       json: jest.fn().mockResolvedValue({
-        items: mockDatasets,
+        items: apiDatasets,
         nextCursor: undefined,
         total: 2,
       }),
@@ -250,10 +257,17 @@ describe("useDatasets", () => {
 
   describe("Response Formats", () => {
     it("handles paginated response format", async () => {
+      const apiDatasets = mockDatasets.map((d) => ({
+        file_id: d.id,
+        filename: d.filename,
+        file_size: d.size,
+        uploaded_at: d.uploadedAt.toISOString(),
+      }));
+
       mockedAuthFetch.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({
-          items: mockDatasets,
+          items: apiDatasets,
           nextCursor: "cursor-next",
           total: 10,
         }),
@@ -274,9 +288,16 @@ describe("useDatasets", () => {
     });
 
     it("handles legacy array response format", async () => {
+      const apiDatasets = mockDatasets.map((d) => ({
+        file_id: d.id,
+        filename: d.filename,
+        file_size: d.size,
+        uploaded_at: d.uploadedAt.toISOString(),
+      }));
+
       mockedAuthFetch.mockResolvedValue({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockDatasets),
+        json: jest.fn().mockResolvedValue(apiDatasets),
       });
 
       const { result } = renderHook(() => useDatasets("project-1"), {
@@ -294,10 +315,17 @@ describe("useDatasets", () => {
     });
 
     it("returns full response when paginated option is true", async () => {
+      const apiDatasets = mockDatasets.map((d) => ({
+        file_id: d.id,
+        filename: d.filename,
+        file_size: d.size,
+        uploaded_at: d.uploadedAt.toISOString(),
+      }));
+
       mockedAuthFetch.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({
-          items: mockDatasets,
+          items: apiDatasets,
           nextCursor: "cursor-next",
           total: 10,
         }),
@@ -318,10 +346,10 @@ describe("useDatasets", () => {
     it("maps API response to ProjectDataset format", async () => {
       const apiDatasets = [
         {
-          id: "ds-1",
+          file_id: "ds-1",
           filename: "test.csv",
-          size: 1024,
-          uploadedAt: "2024-06-15T10:00:00Z",
+          file_size: 1024,
+          uploaded_at: "2024-06-15T10:00:00Z",
         },
       ];
 
@@ -343,9 +371,9 @@ describe("useDatasets", () => {
     it("uses current date when uploadedAt is missing", async () => {
       const apiDatasets = [
         {
-          id: "ds-1",
+          file_id: "ds-1",
           filename: "test.csv",
-          size: 1024,
+          file_size: 1024,
         },
       ];
 
@@ -453,10 +481,17 @@ describe("useDatasets", () => {
 
   describe("Pagination Support", () => {
     it("handles nextCursor in response", async () => {
+      const apiDatasets = mockDatasets.map((d) => ({
+        file_id: d.id,
+        filename: d.filename,
+        file_size: d.size,
+        uploaded_at: d.uploadedAt.toISOString(),
+      }));
+
       mockedAuthFetch.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({
-          items: mockDatasets,
+          items: apiDatasets,
           nextCursor: "page-2",
           total: 100,
         }),
@@ -475,10 +510,17 @@ describe("useDatasets", () => {
     });
 
     it("handles undefined nextCursor when no more pages", async () => {
+      const apiDatasets = mockDatasets.map((d) => ({
+        file_id: d.id,
+        filename: d.filename,
+        file_size: d.size,
+        uploaded_at: d.uploadedAt.toISOString(),
+      }));
+
       mockedAuthFetch.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({
-          items: mockDatasets,
+          items: apiDatasets,
           nextCursor: undefined,
           total: 2,
         }),

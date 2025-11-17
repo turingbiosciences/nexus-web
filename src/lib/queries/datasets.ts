@@ -16,10 +16,10 @@ interface UseDatasetsOptions {
 }
 
 interface ApiDataset {
-  id: string;
+  file_id: string;
   filename: string;
-  size: number;
-  uploadedAt?: string;
+  file_size: number;
+  uploaded_at?: string;
 }
 
 async function fetchDatasetsViaApi(
@@ -38,7 +38,7 @@ async function fetchDatasetsViaApi(
     params.size ? `?${params.toString()}` : ""
   }`;
 
-  logger.debug({ projectId, url }, "Fetching datasets");
+  logger.info({ projectId, url }, "Fetching datasets");
 
   const res = await authFetch(url, {
     method: "GET",
@@ -60,17 +60,17 @@ async function fetchDatasetsViaApi(
 
   // Support both array (legacy) and paginated shape { items, nextCursor, total }
   const json = await res.json();
-  logger.debug(
-    { projectId, isArray: Array.isArray(json) },
+  logger.info(
+    { projectId, isArray: Array.isArray(json), json },
     "Datasets response received"
   );
 
   const items: ApiDataset[] = Array.isArray(json) ? json : json.items;
   const mapped: ProjectDataset[] = items.map((d) => ({
-    id: d.id,
+    id: d.file_id,
     filename: d.filename,
-    size: d.size,
-    uploadedAt: d.uploadedAt ? new Date(d.uploadedAt) : new Date(),
+    size: d.file_size,
+    uploadedAt: d.uploaded_at ? new Date(d.uploaded_at) : new Date(),
   }));
 
   logger.debug(

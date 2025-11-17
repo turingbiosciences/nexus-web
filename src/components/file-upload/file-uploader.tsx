@@ -248,10 +248,7 @@ export function FileUploader({
           Authorization: `Bearer ${accessToken}`,
         },
         onError: (error) => {
-          logger.error(
-            { uploadId: upload.id, error },
-            "TUS upload error"
-          );
+          logger.error({ uploadId: upload.id, error }, "TUS upload error");
 
           // Check if it's a 401 error (token expired)
           const is401Error =
