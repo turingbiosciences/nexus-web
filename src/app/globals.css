@@ -52,6 +52,11 @@
 
   /* Container sizes */
   --width-container: var(--max-width-container);
+
+  /* Alert Warning color */
+  --bg-yellow-50: #fffbeb;
+  --border-yellow-200: #fbbf24;
+  --text-yellow-600: #f59e0b;
 }
 
 @media (prefers-color-scheme: dark) {

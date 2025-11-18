@@ -40,7 +40,8 @@ describe("ActivitiesSection", () => {
 
     expect(screen.getByText("Recent Activity")).toBeInTheDocument();
     // Should show skeleton loaders
-    expect(document.querySelector(".animate-pulse")).toBeInTheDocument();
+    const skeletons = document.querySelectorAll(".animate-pulse");
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it("renders empty state when no activities", () => {

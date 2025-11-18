@@ -77,9 +77,9 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
       const response = await authFetch(
-        `${baseUrl}/projects/${project.id}/train`,
+        `${baseUrl}/projects/${project.id}/training/start`,
         {
-          method: "GET",
+          method: "POST",
           token: accessToken,
           onTokenRefresh: refreshToken,
           headers: {

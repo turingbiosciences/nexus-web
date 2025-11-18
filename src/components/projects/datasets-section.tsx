@@ -8,6 +8,8 @@ import { useDatasets } from "@/lib/queries/datasets";
 import { reconcileDatasets } from "@/lib/reconcile-datasets";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/toast-provider";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Download, Trash2 } from "lucide-react";
 import {
   useUploadDatasetMutation,
   useDeleteDatasetMutation,
@@ -42,9 +44,7 @@ export function DatasetsSection({
   const { push } = useToast();
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
 
-  if (!project) return null;
-
-  const optimistic = (project.datasets || []).filter((d) =>
+  const optimistic = (project?.datasets || []).filter((d) =>
     d.id.startsWith("optimistic-")
   );
   const combined = reconcileDatasets({
@@ -56,21 +56,16 @@ export function DatasetsSection({
   // Sync datasetCount from API with project state
   const total = (datasetsQuery as { total?: number }).total;
   useEffect(() => {
-    if (remoteDatasets && !remoteLoading && total !== undefined) {
+    if (remoteDatasets && !remoteLoading && total !== undefined && project) {
       const currentCount = project.datasetCount ?? 0;
       const apiCount = total;
       if (currentCount !== apiCount) {
         updateProject(project.id, { datasetCount: apiCount });
       }
     }
-  }, [
-    remoteDatasets,
-    remoteLoading,
-    total,
-    project.id,
-    project.datasetCount,
-    updateProject,
-  ]);
+  }, [remoteDatasets, remoteLoading, total, project, updateProject]);
+
+  if (!project) return null;
 
   return (
     <div className="card">
@@ -82,11 +77,11 @@ export function DatasetsSection({
             : `This project has ${project.datasetCount} dataset(s).`}
         </p>
         {remoteLoading && (
-          <ul className="divide-y divide-gray-200 border rounded-lg overflow-hidden animate-pulse">
+          <ul className="divide-y divide-gray-200 border rounded-lg overflow-hidden">
             {Array.from({ length: 3 }).map((_, i) => (
               <li key={i} className="px-4 py-3 bg-white">
-                <div className="h-3 w-1/3 bg-gray-200 rounded mb-2" />
-                <div className="h-2 w-1/4 bg-gray-100 rounded" />
+                <Skeleton width="33%" height="0.75rem" className="mb-2" />
+                <Skeleton width="25%" height="0.5rem" />
               </li>
             ))}
           </ul>
@@ -95,6 +90,7 @@ export function DatasetsSection({
           <ul className="divide-y divide-gray-200 border rounded-lg overflow-hidden">
             {combined
               .filter((d) => d?.id)
+              .sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime())
               .map((d) => (
                 <li
                   key={d.id}
@@ -102,7 +98,7 @@ export function DatasetsSection({
                     d.id?.startsWith("optimistic-") ? "opacity-70 italic" : ""
                   }`}
                 >
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 pr-4">
                     <p className="font-medium text-gray-900 truncate">
                       {d.filename}
                     </p>
@@ -114,20 +110,21 @@ export function DatasetsSection({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-xs"
+                      className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
                       onClick={() => {
                         // Temporary stub for download action; logs for test instrumentation
                         console.log("Download dataset", d.id);
                       }}
                       aria-label={`Download ${d.filename}`}
                     >
-                      Download
+                      <Download className="h-4 w-4" />
                     </Button>
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="text-xs"
+                      variant="ghost"
+                      className="hover:bg-red-50 hover:text-red-600 transition-colors"
                       disabled={deleteMutation.isPending}
+                      aria-label={`Delete ${d.filename}`}
                       onClick={() => {
                         const newDatasets =
                           project.datasets?.filter((x) => x.id !== d.id) || [];
@@ -160,7 +157,7 @@ export function DatasetsSection({
                         });
                       }}
                     >
-                      {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </li>

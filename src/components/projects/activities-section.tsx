@@ -4,6 +4,7 @@ import { useActivities } from "@/lib/queries/activities";
 import { useProjects } from "@/components/providers/projects-provider";
 import { getRelativeTime } from "@/lib/utils/date-utils";
 import { useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ActivitiesSectionProps {
   projectId: string;
@@ -43,13 +44,18 @@ export function ActivitiesSection({
       <h3 className="card-title">Recent Activity</h3>
       <div className="space-y-4">
         {activitiesLoading && (
-          <div className="animate-pulse space-y-3">
+          <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full mt-1.5 bg-gray-200" />
+                <Skeleton
+                  variant="circle"
+                  width="0.5rem"
+                  height="0.5rem"
+                  className="mt-1.5"
+                />
                 <div className="flex-1">
-                  <div className="h-3 w-3/4 bg-gray-200 rounded mb-2" />
-                  <div className="h-2 w-1/2 bg-gray-100 rounded" />
+                  <Skeleton width="75%" height="0.75rem" className="mb-2" />
+                  <Skeleton width="50%" height="0.5rem" />
                 </div>
               </div>
             ))}
