@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { ActivitiesSection } from "../activities-section";
 import { useActivities } from "@/lib/queries/activities";
 import { useProjects } from "@/components/providers/projects-provider";
@@ -25,7 +25,7 @@ describe("ActivitiesSection", () => {
         name: "Test Project",
         lastActivity: "No recent activity",
       }),
-    } as any);
+    } as ReturnType<typeof useProjects>);
   });
 
   it("renders loading state", () => {
@@ -34,7 +34,7 @@ describe("ActivitiesSection", () => {
       isLoading: true,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useActivities>);
 
     render(<ActivitiesSection projectId="test-project-id" />);
 
@@ -50,7 +50,7 @@ describe("ActivitiesSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useActivities>);
 
     render(<ActivitiesSection projectId="test-project-id" />);
 
@@ -85,7 +85,7 @@ describe("ActivitiesSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useActivities>);
 
     render(<ActivitiesSection projectId="test-project-id" />);
 
@@ -123,7 +123,7 @@ describe("ActivitiesSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useActivities>);
 
     render(<ActivitiesSection projectId="test-project-id" />);
 
@@ -146,7 +146,7 @@ describe("ActivitiesSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useActivities>);
 
     render(<ActivitiesSection projectId="test-project-id" limit={5} />);
 
@@ -167,7 +167,7 @@ describe("ActivitiesSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useActivities>);
 
     render(<ActivitiesSection projectId="test-project-id" />);
 
@@ -190,7 +190,7 @@ describe("ActivitiesSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useActivities>);
 
     const { container } = render(
       <ActivitiesSection projectId="test-project-id" />
@@ -215,7 +215,7 @@ describe("ActivitiesSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useActivities>);
 
     const { container } = render(
       <ActivitiesSection projectId="test-project-id" />
@@ -240,7 +240,7 @@ describe("ActivitiesSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useActivities>);
 
     const { container } = render(
       <ActivitiesSection projectId="test-project-id" />
@@ -265,7 +265,7 @@ describe("ActivitiesSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useActivities>);
 
     const { container } = render(
       <ActivitiesSection projectId="test-project-id" />
@@ -290,7 +290,7 @@ describe("ActivitiesSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useActivities>);
 
     const { container } = render(
       <ActivitiesSection projectId="test-project-id" />
@@ -315,7 +315,7 @@ describe("ActivitiesSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useActivities>);
 
     render(<ActivitiesSection projectId="test-project-id" />);
 
@@ -330,7 +330,7 @@ describe("ActivitiesSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useActivities>);
 
     render(<ActivitiesSection projectId="my-project-123" />);
 
@@ -345,7 +345,7 @@ describe("ActivitiesSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useActivities>);
 
     render(<ActivitiesSection projectId="my-project-123" limit={10} />);
 

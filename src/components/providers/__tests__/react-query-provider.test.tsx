@@ -1,7 +1,7 @@
 import React from "react";
 import { render, waitFor } from "@testing-library/react";
 import { ReactQueryProvider } from "@/components/providers/react-query-provider";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 describe("ReactQueryProvider", () => {
   beforeEach(() => {
