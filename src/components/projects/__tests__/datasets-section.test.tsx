@@ -200,7 +200,7 @@ describe("DatasetsSection", () => {
     });
     await user.click(downloadButtons[0]);
 
-    expect(consoleSpy).toHaveBeenCalledWith("Download dataset", "dataset-1");
+    expect(consoleSpy).toHaveBeenCalledWith("Download dataset", "dataset-2");
 
     consoleSpy.mockRestore();
   });
@@ -213,13 +213,13 @@ describe("DatasetsSection", () => {
     await user.click(deleteButtons[0]);
 
     expect(mockUpdateProject).toHaveBeenCalledWith("project-1", {
-      datasets: [mockProject.datasets![1]], // Removed first dataset
+      datasets: [mockProject.datasets![0]], // Removed second dataset (dataset-2 is now first after sort)
       datasetCount: 1,
       lastActivity: "dataset deleted",
     });
 
     expect(mockDeleteMutate).toHaveBeenCalledWith(
-      "dataset-1",
+      "dataset-2",
       expect.objectContaining({
         onSuccess: expect.any(Function),
         onError: expect.any(Function),
@@ -241,7 +241,7 @@ describe("DatasetsSection", () => {
 
     expect(mockPush).toHaveBeenCalledWith({
       title: "Dataset deleted",
-      description: "test1.csv was removed successfully.",
+      description: "test2.csv was removed successfully.",
       variant: "default",
     });
   });
@@ -259,7 +259,7 @@ describe("DatasetsSection", () => {
 
     expect(mockPush).toHaveBeenCalledWith({
       title: "Deletion failed",
-      description: "Could not delete test1.csv. Please retry.",
+      description: "Could not delete test2.csv. Please retry.",
       variant: "destructive",
     });
   });

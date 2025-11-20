@@ -8,6 +8,7 @@ import {
   useEffect,
   ReactNode,
 } from "react";
+import { logger } from "@/lib/logger";
 import {
   Project,
   ProjectStatusCount,
@@ -17,6 +18,7 @@ import {
 import {
   fetchProjects,
   createProject as createProjectAPI,
+  deleteProject as deleteProjectAPI,
 } from "@/lib/api/projects";
 import { useAccessToken } from "./token-provider";
 
@@ -29,6 +31,7 @@ interface ProjectsContextValue {
     description: string;
   }) => Promise<Project>;
   updateProject: (id: string, updates: Partial<Project>) => void;
+  deleteProject: (id: string) => Promise<void>;
   getProjectById: (id: string) => Project | undefined;
   getStatusCounts: () => ProjectStatusCount;
   addDataset: (projectId: string, file: { name: string; size: number }) => void;
@@ -50,6 +53,18 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     error: tokenError,
   } = useAccessToken();
 
+  logger.debug(
+    {
+      projectsCount: projects.length,
+      loading,
+      hasFetched,
+      hasToken: !!accessToken,
+      tokenLoading,
+      error: error?.message,
+    },
+    "ProjectsProvider component render"
+  );
+
   // Track authentication state (boolean) to detect user switching, not token refresh
   const isAuthenticated = !!accessToken;
 
@@ -66,28 +81,60 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, previousAuthState]); // Only reacts to auth state transitions, not token refreshes
 
   useEffect(() => {
+    logger.debug(
+      {
+        hasToken: !!accessToken,
+        tokenLoading,
+        hasFetched,
+        tokenError: tokenError?.message,
+      },
+      "ProjectsProvider useEffect triggered"
+    );
+
     // Don't fetch if no token, token still loading, or already attempted fetch
     if (!accessToken || tokenLoading || hasFetched) {
+      logger.debug(
+        {
+          reason: !accessToken
+            ? "no token"
+            : tokenLoading
+            ? "token loading"
+            : "already fetched",
+        },
+        "ProjectsProvider skipping fetch"
+      );
       return;
     }
 
     // If there's a token error, set it and don't fetch
     if (tokenError) {
+      logger.error(
+        { error: tokenError },
+        "ProjectsProvider token error detected"
+      );
       setError(tokenError);
       setHasFetched(true); // Mark as attempted to prevent retry loop
       return;
     }
 
+    logger.debug("ProjectsProvider starting fetch");
     setLoading(true);
     setError(null);
 
     (async () => {
       try {
-        console.log("[ProjectsProvider] Fetching projects with cached token");
+        logger.debug("Fetching projects with cached token");
         const fetchedProjects = await fetchProjects(accessToken);
+        logger.info(
+          { count: fetchedProjects.length },
+          "ProjectsProvider fetch successful"
+        );
         setProjects(fetchedProjects);
       } catch (err) {
-        console.error("[ProjectsProvider] Failed to fetch projects:", err);
+        logger.error(
+          { error: err },
+          "ProjectsProvider failed to fetch projects"
+        );
         setError(err instanceof Error ? err : new Error("Unknown error"));
         setProjects([]);
       } finally {
@@ -99,19 +146,22 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 
   const createProject = useCallback(
     async (data: { name: string; description: string }) => {
-      console.log("[ProjectsProvider] createProject called", {
-        hasToken: !!accessToken,
-        tokenLength: accessToken?.length,
-        tokenLoading,
-        tokenError: tokenError?.message,
-      });
+      logger.debug(
+        {
+          hasToken: !!accessToken,
+          tokenLength: accessToken?.length,
+          tokenLoading,
+          tokenError: tokenError?.message,
+        },
+        "ProjectsProvider createProject called"
+      );
 
       // Check if token is available
       if (!accessToken) {
         const errorMsg = tokenError
           ? `Authentication error: ${tokenError.message}`
           : "Authentication token unavailable. Please sign out and sign back in to obtain an access token.";
-        console.error("[ProjectsProvider]", errorMsg);
+        logger.error({ tokenError }, errorMsg);
         throw new Error(errorMsg);
       }
 
@@ -120,12 +170,15 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        console.log("[ProjectsProvider] Creating project with cached token");
+        logger.debug({ name: data.name }, "Creating project with cached token");
         const newProject = await createProjectAPI(accessToken, data);
         setProjects((prev) => [newProject, ...prev]);
         return newProject;
       } catch (err) {
-        console.error("[ProjectsProvider] Failed to create project:", err);
+        logger.error(
+          { error: err },
+          "ProjectsProvider failed to create project"
+        );
         throw err;
       }
     },
@@ -173,6 +226,45 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     );
     // TODO: Add API call to persist updates
   }, []);
+
+  const deleteProject = useCallback(
+    async (id: string) => {
+      logger.debug(
+        {
+          projectId: id,
+          hasToken: !!accessToken,
+          tokenLoading,
+          tokenError: tokenError?.message,
+        },
+        "ProjectsProvider deleteProject called"
+      );
+
+      // Check if token is available
+      if (!accessToken) {
+        const errorMsg = tokenError
+          ? `Authentication error: ${tokenError.message}`
+          : "Authentication token unavailable. Please sign out and sign back in to obtain an access token.";
+        logger.error({ tokenError }, errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      if (tokenLoading) {
+        throw new Error("Authentication loading. Please wait and try again.");
+      }
+
+      try {
+        logger.debug({ projectId: id }, "Deleting project with cached token");
+        await deleteProjectAPI(accessToken, id);
+        // Remove from local state after successful deletion
+        setProjects((prev) => prev.filter((p) => p.id !== id));
+        logger.info({ projectId: id }, "Project deleted successfully");
+      } catch (err) {
+        logger.error({ error: err, projectId: id }, "Failed to delete project");
+        throw err;
+      }
+    },
+    [accessToken, tokenLoading, tokenError]
+  );
 
   const addDataset = useCallback(
     (projectId: string, file: { name: string; size: number }) => {
@@ -233,6 +325,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     error,
     createProject,
     updateProject,
+    deleteProject,
     getProjectById,
     getStatusCounts,
     addDataset,

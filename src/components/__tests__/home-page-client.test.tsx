@@ -34,18 +34,18 @@ jest.mock("@/components/debug/debug-panel", () => ({
   DebugPanel: () => <div>Debug Panel</div>,
 }));
 
-jest.mock("@/components/providers/global-auth-provider", () => ({
-  useGlobalAuth: jest.fn(),
+jest.mock("@/components/providers/token-provider", () => ({
+  useAccessToken: jest.fn(),
 }));
 
 jest.mock("@/components/providers/projects-provider", () => ({
   useProjects: jest.fn(),
 }));
 
-import { useGlobalAuth } from "@/components/providers/global-auth-provider";
+import { useAccessToken } from "@/components/providers/token-provider";
 import { useProjects } from "@/components/providers/projects-provider";
 
-const mockedUseGlobalAuth = useGlobalAuth as jest.Mock;
+const mockedUseAccessToken = useAccessToken as jest.Mock;
 const mockedUseProjects = useProjects as jest.Mock;
 
 describe("HomePageClient", () => {
@@ -53,12 +53,11 @@ describe("HomePageClient", () => {
     jest.clearAllMocks();
 
     // Default mocks
-    mockedUseGlobalAuth.mockReturnValue({
+    mockedUseAccessToken.mockReturnValue({
       isAuthenticated: false,
-      isLoading: false,
-      claims: null,
-      error: null,
-      getAccessToken: jest.fn(),
+      authLoading: false,
+      accessToken: null,
+      refreshToken: jest.fn(),
     });
 
     mockedUseProjects.mockReturnValue({
@@ -87,12 +86,11 @@ describe("HomePageClient", () => {
   });
 
   it("shows sign-in prompt when not authenticated", () => {
-    mockedUseGlobalAuth.mockReturnValue({
+    mockedUseAccessToken.mockReturnValue({
       isAuthenticated: false,
-      isLoading: false,
-      claims: null,
-      error: null,
-      getAccessToken: jest.fn(),
+      authLoading: false,
+      accessToken: null,
+      refreshToken: jest.fn(),
     });
 
     render(<HomePageClient />);
@@ -101,12 +99,11 @@ describe("HomePageClient", () => {
   });
 
   it("shows projects dashboard when authenticated", () => {
-    mockedUseGlobalAuth.mockReturnValue({
+    mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
-      isLoading: false,
-      claims: { name: "John Doe", email: "john@example.com" },
-      error: null,
-      getAccessToken: jest.fn(),
+      authLoading: false,
+      accessToken: "mock-token",
+      refreshToken: jest.fn(),
     });
 
     render(<HomePageClient />);
@@ -120,12 +117,11 @@ describe("HomePageClient", () => {
   });
 
   it("renders project list when authenticated", () => {
-    mockedUseGlobalAuth.mockReturnValue({
+    mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
-      isLoading: false,
-      claims: { name: "John Doe" },
-      error: null,
-      getAccessToken: jest.fn(),
+      authLoading: false,
+      accessToken: "mock-token",
+      refreshToken: jest.fn(),
     });
 
     render(<HomePageClient />);
@@ -134,12 +130,11 @@ describe("HomePageClient", () => {
   });
 
   it("renders project status chart when authenticated", () => {
-    mockedUseGlobalAuth.mockReturnValue({
+    mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
-      isLoading: false,
-      claims: { name: "John Doe" },
-      error: null,
-      getAccessToken: jest.fn(),
+      authLoading: false,
+      accessToken: "mock-token",
+      refreshToken: jest.fn(),
     });
 
     render(<HomePageClient />);
@@ -148,12 +143,11 @@ describe("HomePageClient", () => {
   });
 
   it("renders new project button when authenticated", () => {
-    mockedUseGlobalAuth.mockReturnValue({
+    mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
-      isLoading: false,
-      claims: { name: "John Doe" },
-      error: null,
-      getAccessToken: jest.fn(),
+      authLoading: false,
+      accessToken: "mock-token",
+      refreshToken: jest.fn(),
     });
 
     render(<HomePageClient />);
@@ -162,12 +156,11 @@ describe("HomePageClient", () => {
   });
 
   it("renders new project dialog when authenticated", () => {
-    mockedUseGlobalAuth.mockReturnValue({
+    mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
-      isLoading: false,
-      claims: { name: "John Doe" },
-      error: null,
-      getAccessToken: jest.fn(),
+      authLoading: false,
+      accessToken: "mock-token",
+      refreshToken: jest.fn(),
     });
 
     render(<HomePageClient />);
@@ -182,12 +175,11 @@ describe("HomePageClient", () => {
   });
 
   it("handles loading state", () => {
-    mockedUseGlobalAuth.mockReturnValue({
+    mockedUseAccessToken.mockReturnValue({
       isAuthenticated: false,
-      isLoading: true,
-      claims: null,
-      error: null,
-      getAccessToken: jest.fn(),
+      authLoading: true,
+      accessToken: null,
+      refreshToken: jest.fn(),
     });
 
     render(<HomePageClient />);
@@ -197,12 +189,11 @@ describe("HomePageClient", () => {
   });
 
   it("shows projects error when projects fail to load", () => {
-    mockedUseGlobalAuth.mockReturnValue({
+    mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
-      isLoading: false,
-      claims: { name: "John Doe" },
-      error: null,
-      getAccessToken: jest.fn(),
+      authLoading: false,
+      accessToken: "mock-token",
+      refreshToken: jest.fn(),
     });
 
     mockedUseProjects.mockReturnValue({

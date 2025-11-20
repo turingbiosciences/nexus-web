@@ -3,6 +3,9 @@ import { datasetsKey } from "@/lib/queries/keys";
 import { ProjectDataset } from "@/types/project";
 import { IS_MOCK } from "@/config/flags";
 import { projectsRepository } from "@/data";
+import { useAccessToken } from "@/components/providers/token-provider";
+import { authFetch } from "@/lib/auth-fetch";
+import { logger } from "@/lib/logger";
 
 interface UseDatasetsOptions {
   enabled?: boolean;
@@ -13,14 +16,16 @@ interface UseDatasetsOptions {
 }
 
 interface ApiDataset {
-  id: string;
+  file_id: string;
   filename: string;
-  size: number;
-  uploadedAt?: string;
+  file_size: number;
+  uploaded_at?: string;
 }
 
 async function fetchDatasetsViaApi(
   projectId: string,
+  accessToken: string,
+  onTokenRefresh: () => Promise<string | null>,
   opts?: { cursor?: string; limit?: number }
 ) {
   const base = process.env.NEXT_PUBLIC_TURING_API;
@@ -28,24 +33,51 @@ async function fetchDatasetsViaApi(
   const params = new URLSearchParams();
   if (opts?.cursor) params.set("cursor", opts.cursor);
   if (opts?.limit) params.set("limit", String(opts.limit));
-  const url = `${base}/projects/${projectId}/datasets${
+  // Updated endpoint to match backend API: /projects/[id]/files instead of /datasets
+  const url = `${base}/projects/${projectId}/files${
     params.size ? `?${params.toString()}` : ""
   }`;
-  const res = await fetch(url, {
+
+  logger.info({ projectId, url }, "Fetching datasets");
+
+  const res = await authFetch(url, {
+    method: "GET",
+    token: accessToken,
+    onTokenRefresh,
     headers: {
-      // Authorization header will be injected later via an authenticated fetch wrapper
+      "Content-Type": "application/json",
     },
   });
-  if (!res.ok) throw new Error(`Failed to fetch datasets (${res.status})`);
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    logger.error(
+      { projectId, status: res.status, errorText },
+      "Failed to fetch datasets"
+    );
+    throw new Error(`Failed to fetch datasets (${res.status})`);
+  }
+
   // Support both array (legacy) and paginated shape { items, nextCursor, total }
   const json = await res.json();
+  logger.info(
+    { projectId, isArray: Array.isArray(json), json },
+    "Datasets response received"
+  );
+
   const items: ApiDataset[] = Array.isArray(json) ? json : json.items;
   const mapped: ProjectDataset[] = items.map((d) => ({
-    id: d.id,
+    id: d.file_id,
     filename: d.filename,
-    size: d.size,
-    uploadedAt: d.uploadedAt ? new Date(d.uploadedAt) : new Date(),
+    size: d.file_size,
+    uploadedAt: d.uploaded_at ? new Date(d.uploaded_at) : new Date(),
   }));
+
+  logger.debug(
+    { projectId, count: mapped.length },
+    "Datasets mapped successfully"
+  );
+
   return {
     items: mapped,
     nextCursor: Array.isArray(json) ? undefined : json.nextCursor,
@@ -55,18 +87,21 @@ async function fetchDatasetsViaApi(
 
 async function fetchDatasets(
   projectId: string,
+  accessToken: string,
+  onTokenRefresh: () => Promise<string | null>,
   opts?: { cursor?: string; limit?: number }
 ) {
   if (IS_MOCK) {
     return projectsRepository.listDatasets(projectId, opts);
   }
-  return fetchDatasetsViaApi(projectId, opts);
+  return fetchDatasetsViaApi(projectId, accessToken, onTokenRefresh, opts);
 }
 
 export function useDatasets(
   projectId: string,
   enabledOrOptions: boolean | UseDatasetsOptions = true
 ) {
+  const { accessToken, isAuthenticated, refreshToken } = useAccessToken();
   const options: UseDatasetsOptions =
     typeof enabledOrOptions === "boolean"
       ? { enabled: enabledOrOptions }
@@ -74,8 +109,16 @@ export function useDatasets(
   const { enabled = true, cursor, limit, paginated } = options;
   const query = useQuery({
     queryKey: datasetsKey(projectId, cursor, limit),
-    queryFn: () => fetchDatasets(projectId, { cursor, limit }),
-    enabled: enabled && !!projectId,
+    queryFn: () => {
+      if (!accessToken) {
+        throw new Error("Access token not available");
+      }
+      return fetchDatasets(projectId, accessToken, refreshToken, {
+        cursor,
+        limit,
+      });
+    },
+    enabled: enabled && !!projectId && isAuthenticated && !!accessToken,
     staleTime: 30_000,
   });
   // Preserve existing API: if not paginated, surface items array as data for backwards compatibility
