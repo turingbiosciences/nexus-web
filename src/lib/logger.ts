@@ -103,12 +103,12 @@ const createLogger = () => {
           (obj as Record<string, unknown>).err;
         if (error instanceof Error) {
           Sentry.captureException(error, {
-            contexts: { extra: obj },
+            extra: obj as Record<string, unknown>,
           });
         } else {
           Sentry.captureMessage(msg || "Error occurred", {
             level: "error",
-            contexts: { extra: obj },
+            extra: obj as Record<string, unknown>,
           });
         }
       }
