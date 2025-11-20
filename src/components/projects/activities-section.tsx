@@ -16,13 +16,13 @@ export function ActivitiesSection({
   limit = 20,
 }: ActivitiesSectionProps) {
   const activitiesQuery = useActivities(projectId, { limit });
-  const activities = activitiesQuery.data || [];
   const activitiesLoading = activitiesQuery.isLoading;
   const { updateProject, getProjectById } = useProjects();
   const project = getProjectById(projectId);
 
   // Sync lastActivity from the most recent activity
   useEffect(() => {
+    const activities = activitiesQuery.data || [];
     if (activities && activities.length > 0 && !activitiesLoading && project) {
       // Find the most recent activity
       const mostRecent = [...activities].sort(
@@ -37,7 +37,9 @@ export function ActivitiesSection({
         }
       }
     }
-  }, [activities, activitiesLoading, project, projectId, updateProject]);
+  }, [activitiesQuery.data, activitiesLoading, project, projectId, updateProject]);
+
+  const activities = activitiesQuery.data || [];
 
   return (
     <div className="card">

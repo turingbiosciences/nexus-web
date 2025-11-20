@@ -69,7 +69,7 @@ describe("Skeleton", () => {
   });
 
   it("spreads additional HTML attributes", () => {
-    const { container } = render(
+    render(
       <Skeleton data-testid="test-skeleton" aria-label="Loading" />
     );
     const skeleton = screen.getByTestId("test-skeleton");

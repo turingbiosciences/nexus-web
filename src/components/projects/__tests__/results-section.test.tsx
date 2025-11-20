@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { ResultsSection } from "../results-section";
 import { useAccessToken } from "@/components/providers/token-provider";
 import { useQuery } from "@tanstack/react-query";
@@ -37,7 +37,7 @@ describe("ResultsSection", () => {
       isLoading: true,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useQuery>);
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -51,7 +51,7 @@ describe("ResultsSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useQuery>);
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -83,7 +83,7 @@ describe("ResultsSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useQuery>);
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -108,7 +108,7 @@ describe("ResultsSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useQuery>);
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -132,7 +132,7 @@ describe("ResultsSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useQuery>);
 
     const { container } = render(
       <ResultsSection projectId="test-project-id" />
@@ -157,7 +157,7 @@ describe("ResultsSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useQuery>);
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -183,7 +183,7 @@ describe("ResultsSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useQuery>);
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -200,7 +200,7 @@ describe("ResultsSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useQuery>);
 
     render(<ResultsSection projectId="my-project-123" />);
 
@@ -217,7 +217,7 @@ describe("ResultsSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useQuery>);
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -234,7 +234,7 @@ describe("ResultsSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useQuery>);
 
     const { container } = render(
       <ResultsSection projectId="test-project-id" />
@@ -258,7 +258,7 @@ describe("ResultsSection", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useQuery>);
 
     render(<ResultsSection projectId="test-project-id" />);
 

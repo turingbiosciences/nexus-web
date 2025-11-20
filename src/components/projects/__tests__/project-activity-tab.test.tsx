@@ -19,7 +19,7 @@ describe("ProjectActivityTab", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as any);
+    } as ReturnType<typeof useActivities>);
   });
 
   const renderWithProviders = (ui: React.ReactElement) => {
