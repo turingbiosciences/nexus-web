@@ -1,17 +1,13 @@
 import LogtoClient from "@logto/next/edge";
 import type { NextRequest } from "next/server";
 import { logtoConfig } from "@/lib/auth";
-
-function logRequest(label: string, req: Request) {
-  console.log(`[logto:${label}] URL=${req.url}`);
-}
+import { logRequestWithResponse } from "@/lib/api-logger";
 
 const logto = new LogtoClient(logtoConfig);
 
 export const GET = async (req: NextRequest) => {
-  logRequest("sign-out", req);
   const handler = logto.handleSignOut();
   const res = await handler(req);
-  console.log(`[logto:sign-out] Status=${res.status}`);
+  logRequestWithResponse("sign-out", req, res);
   return res;
 };

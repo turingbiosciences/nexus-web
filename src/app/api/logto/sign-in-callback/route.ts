@@ -1,10 +1,7 @@
 import LogtoClient from "@logto/next/edge";
 import type { NextRequest } from "next/server";
 import { logtoConfig } from "@/lib/auth";
-
-function logRequest(label: string, req: Request) {
-  console.log(`[logto:${label}] URL=${req.url}`);
-}
+import { logRequest } from "@/lib/api-logger";
 
 const logto = new LogtoClient(logtoConfig);
 
