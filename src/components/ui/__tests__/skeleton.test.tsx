@@ -69,9 +69,7 @@ describe("Skeleton", () => {
   });
 
   it("spreads additional HTML attributes", () => {
-    render(
-      <Skeleton data-testid="test-skeleton" aria-label="Loading" />
-    );
+    render(<Skeleton data-testid="test-skeleton" aria-label="Loading" />);
     const skeleton = screen.getByTestId("test-skeleton");
     expect(skeleton).toHaveAttribute("aria-label", "Loading");
   });

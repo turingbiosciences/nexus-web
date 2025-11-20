@@ -37,7 +37,13 @@ export function ActivitiesSection({
         }
       }
     }
-  }, [activitiesQuery.data, activitiesLoading, project, projectId, updateProject]);
+  }, [
+    activitiesQuery.data,
+    activitiesLoading,
+    project,
+    projectId,
+    updateProject,
+  ]);
 
   const activities = activitiesQuery.data || [];
 
