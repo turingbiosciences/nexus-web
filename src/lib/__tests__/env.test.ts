@@ -19,12 +19,14 @@ describe("env", () => {
   describe("getServerEnv", () => {
     it("should throw error when called on client side", () => {
       // Mock window to simulate client side
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global as any).window = {};
 
       expect(() => getServerEnv()).toThrow(
         "getServerEnv() can only be called on the server side"
       );
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (global as any).window;
     });
 

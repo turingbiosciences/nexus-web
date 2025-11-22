@@ -39,7 +39,7 @@ export const GET = async (req: NextRequest) => {
     "Sign-in callback response"
   );
   if (setCookies.length > 0) {
-    const cookieNames = setCookies.map((cookie, idx) => {
+    const cookieNames = setCookies.map((cookie) => {
       const nameMatch = cookie.match(/^([^=]+)=/);
       return nameMatch?.[1] || "unknown";
     });
