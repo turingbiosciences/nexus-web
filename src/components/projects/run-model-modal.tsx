@@ -70,9 +70,8 @@ export function RunModelModal({
               <option value="">Choose a dataset...</option>
               {datasets.map((dataset) => (
                 <option key={dataset.id} value={dataset.id}>
-                  {dataset.filename} (
-                  {(dataset.size / 1024 / 1024).toFixed(2)} MB) -{" "}
-                  {dataset.uploadedAt.toLocaleDateString()}
+                  {dataset.filename} ({(dataset.size / 1024 / 1024).toFixed(2)}{" "}
+                  MB) - {dataset.uploadedAt.toLocaleDateString()}
                 </option>
               ))}
             </select>

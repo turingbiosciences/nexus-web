@@ -13,7 +13,6 @@ import {
   Project,
   ProjectStatusCount,
   STATUS_ORDER,
-  ProjectActivity,
 } from "@/types/project";
 import {
   fetchProjects,
@@ -190,37 +189,10 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       prev.map((p) => {
         if (p.id !== id) return p;
         const now = new Date();
-        const activities = [...(p.activities || [])];
-        if (updates.status && updates.status !== p.status) {
-          activities.push({
-            id: crypto.randomUUID(),
-            type: "status_change",
-            message: `Status changed to ${updates.status}`,
-            at: now,
-          } satisfies ProjectActivity);
-        }
-        if (updates.name && updates.name !== p.name) {
-          activities.push({
-            id: crypto.randomUUID(),
-            type: "updated",
-            message: "Name updated",
-            at: now,
-          } satisfies ProjectActivity);
-        }
-        if (updates.description && updates.description !== p.description) {
-          activities.push({
-            id: crypto.randomUUID(),
-            type: "updated",
-            message: "Description updated",
-            at: now,
-          } satisfies ProjectActivity);
-        }
         return {
           ...p,
           ...updates,
           updatedAt: updates.updatedAt ? updates.updatedAt : now,
-          lastActivity: updates.lastActivity || "just now",
-          activities,
         };
       })
     );
@@ -268,37 +240,20 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 
   const addDataset = useCallback(
     (projectId: string, file: { name: string; size: number }) => {
+      // Optimistically increment dataset count
       setProjects((prev) =>
         prev.map((p) => {
           if (p.id !== projectId) return p;
           const now = new Date();
-          const optimistic = {
-            id: `optimistic-${crypto.randomUUID()}`,
-            filename: file.name,
-            size: file.size,
-            uploadedAt: now,
-          };
-          const datasets = [...(p.datasets || []), optimistic];
-          const activities = [
-            ...(p.activities || []),
-            {
-              id: crypto.randomUUID(),
-              type: "upload",
-              message: `Uploaded ${file.name}`,
-              at: now,
-            } satisfies ProjectActivity,
-          ];
           return {
             ...p,
-            datasets,
-            datasetCount: datasets.length,
+            datasetCount: (p.datasetCount || 0) + 1,
             updatedAt: now,
-            lastActivity: "dataset uploaded",
-            activities,
+            lastActivity: "just now",
           };
         })
       );
-      // TODO: Add API call to persist dataset addition
+      // Note: Actual dataset list is fetched separately via useDatasets hook
     },
     []
   );
