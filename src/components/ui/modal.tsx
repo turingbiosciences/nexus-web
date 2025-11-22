@@ -24,7 +24,22 @@ export function Modal({
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        // Check if the event target is a form control that might have its own ESC handler
+        const target = e.target as HTMLElement;
+        const isFormControl =
+          target instanceof HTMLInputElement ||
+          target instanceof HTMLTextAreaElement ||
+          target instanceof HTMLSelectElement ||
+          target.getAttribute("role") === "combobox" ||
+          target.getAttribute("role") === "listbox";
+
+        // Only close modal if ESC is not from a form control
+        // Form controls should handle their own ESC behavior first
+        if (!isFormControl) {
+          onClose();
+        }
+      }
     };
 
     if (isOpen) {

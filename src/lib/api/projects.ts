@@ -12,6 +12,15 @@ import { getRelativeTime } from "@/lib/utils/date-utils";
 type RawProject = any;
 
 /**
+ * Helper to safely parse dates, fallback to current date if invalid
+ */
+function parseDate(dateValue: string | Date | null | undefined): Date {
+  if (!dateValue) return new Date();
+  const parsed = new Date(dateValue);
+  return isNaN(parsed.getTime()) ? new Date() : parsed;
+}
+
+/**
  * Fetch projects list from the backend API or mock data
  * @param accessToken - Logto access token for authentication
  * @returns Promise resolving to array of projects
@@ -70,13 +79,6 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
     ? data
     : data?.projects || [];
   logger.debug({ count: projectsArray.length }, "Projects array extracted");
-
-  // Helper to safely parse dates, fallback to current date if invalid
-  const parseDate = (dateValue: string | Date | null | undefined): Date => {
-    if (!dateValue) return new Date();
-    const parsed = new Date(dateValue);
-    return isNaN(parsed.getTime()) ? new Date() : parsed;
-  };
 
   // Normalize projects to ensure valid status values and convert date strings to Date objects
   const projects = projectsArray.map((project: RawProject) => {
@@ -247,13 +249,6 @@ export async function createProject(
     { projectId: project.id, name: project.name },
     "Project created via API"
   );
-
-  // Helper to safely parse dates, fallback to current date if invalid
-  const parseDate = (dateValue: string | Date | null | undefined): Date => {
-    if (!dateValue) return new Date();
-    const parsed = new Date(dateValue);
-    return isNaN(parsed.getTime()) ? new Date() : parsed;
-  };
 
   // Map API status to internal status
   const statusMap: Record<string, Project["status"]> = {

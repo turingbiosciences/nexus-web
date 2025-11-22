@@ -38,7 +38,12 @@ const ProjectsContext = createContext<ProjectsContextValue | undefined>(
 
 export function ProjectsProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true); // Start with loading=true to prevent empty state flash
+  // Start with loading=true to prevent empty state flash during initial render
+  // Set to false in three scenarios:
+  // 1. After successful/failed fetch completion (line 139)
+  // 2. When skipping fetch because already fetched or no token (lines 103-105)
+  // 3. On token error (line 117)
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [hasFetched, setHasFetched] = useState(false); // Track if we've attempted fetch
   const [previousAuthState, setPreviousAuthState] = useState<boolean>(false);
