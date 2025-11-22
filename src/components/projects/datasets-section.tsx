@@ -183,7 +183,7 @@ export function DatasetsSection({
             onUploadComplete={(files) => {
               if (!project) return;
               files.forEach((f) => {
-                addDataset(project.id, { name: f.name, size: f.size });
+                addDataset(project.id);
                 uploadMutation.mutate(f, {
                   onSuccess: () => {
                     push({

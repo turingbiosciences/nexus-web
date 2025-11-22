@@ -15,6 +15,7 @@ import {
   createProject as createProjectAPI,
   deleteProject as deleteProjectAPI,
 } from "@/lib/api/projects";
+import { getTokenErrorMessage } from "@/lib/api/utils";
 import { useAccessToken } from "./token-provider";
 
 interface ProjectsContextValue {
@@ -29,7 +30,7 @@ interface ProjectsContextValue {
   deleteProject: (id: string) => Promise<void>;
   getProjectById: (id: string) => Project | undefined;
   getStatusCounts: () => ProjectStatusCount;
-  addDataset: (projectId: string, file: { name: string; size: number }) => void;
+  addDataset: (projectId: string) => void;
 }
 
 const ProjectsContext = createContext<ProjectsContextValue | undefined>(
@@ -163,9 +164,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 
       // Check if token is available
       if (!accessToken) {
-        const errorMsg = tokenError
-          ? `Authentication error: ${tokenError.message}`
-          : "Authentication token unavailable. Please sign out and sign back in to obtain an access token.";
+        const errorMsg = getTokenErrorMessage(tokenError);
         logger.error({ tokenError }, errorMsg);
         throw new Error(errorMsg);
       }
@@ -219,9 +218,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 
       // Check if token is available
       if (!accessToken) {
-        const errorMsg = tokenError
-          ? `Authentication error: ${tokenError.message}`
-          : "Authentication token unavailable. Please sign out and sign back in to obtain an access token.";
+        const errorMsg = getTokenErrorMessage(tokenError);
         logger.error({ tokenError }, errorMsg);
         throw new Error(errorMsg);
       }
@@ -245,7 +242,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   );
 
   const addDataset = useCallback(
-    (projectId: string, file: { name: string; size: number }) => {
+    (projectId: string) => {
       // Optimistically increment dataset count
       setProjects((prev) =>
         prev.map((p) => {

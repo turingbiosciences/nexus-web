@@ -7,6 +7,7 @@ import { Project } from "@/types/project";
 import { mockProjects } from "@/lib/mock-data";
 import { logger } from "@/lib/logger";
 import { getRelativeTime } from "@/lib/utils/date-utils";
+import { getApiUrl, API_STATUS_MAP } from "@/lib/api/utils";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RawProject = any;
@@ -36,14 +37,7 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
     return mockProjects;
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
-
-  if (!baseUrl) {
-    throw new Error("Missing NEXT_PUBLIC_TURING_API environment variable");
-  }
-
-  // Remove trailing slash if present
-  const apiUrl = baseUrl.replace(/\/$/, "");
+  const apiUrl = getApiUrl();
 
   logger.debug({ url: `${apiUrl}/projects` }, "Fetching projects from API");
 
@@ -96,12 +90,7 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
     );
 
     // Map API status to internal status
-    const statusMap: Record<string, Project["status"]> = {
-      active: "setup",
-      running: "running",
-      complete: "complete",
-    };
-    const status = statusMap[project.status] || "setup";
+    const status = API_STATUS_MAP[project.status] || "setup";
 
     // Use last_activity.created_at for relative time calculation
     const lastActivityDate = project.last_activity?.created_at
@@ -147,13 +136,7 @@ export async function deleteProject(
     return;
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
-
-  if (!baseUrl) {
-    throw new Error("Missing NEXT_PUBLIC_TURING_API environment variable");
-  }
-
-  const apiUrl = baseUrl.replace(/\/$/, "");
+  const apiUrl = getApiUrl();
 
   logger.info(
     { projectId, url: `${apiUrl}/projects/${projectId}` },
@@ -213,13 +196,7 @@ export async function createProject(
     return newProject;
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
-
-  if (!baseUrl) {
-    throw new Error("Missing NEXT_PUBLIC_TURING_API environment variable");
-  }
-
-  const apiUrl = baseUrl.replace(/\/$/, "");
+  const apiUrl = getApiUrl();
 
   logger.info(
     { name: data.name, url: `${apiUrl}/projects` },
@@ -251,12 +228,7 @@ export async function createProject(
   );
 
   // Map API status to internal status
-  const statusMap: Record<string, Project["status"]> = {
-    active: "setup",
-    running: "running",
-    complete: "complete",
-  };
-  const status = statusMap[project.status] || "setup";
+  const status = API_STATUS_MAP[project.status] || "setup";
 
   // Use last_activity.created_at for relative time calculation
   const lastActivityDate = project.last_activity?.created_at
