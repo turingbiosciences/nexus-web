@@ -1,4 +1,5 @@
 # Security Audit Report
+
 **Date:** November 22, 2025  
 **Project:** nexus-web (Turing Biosciences)  
 **Branch:** fix-logger-and-ci
@@ -20,6 +21,7 @@ The application demonstrates solid security practices with proper authentication
 ## High Priority Issues
 
 ### 1. ~~**Sensitive Data in Console Logs**~~ ✅ RESOLVED
+
 **Severity:** HIGH → **FIXED**  
 **Status:** ✅ Completed November 22, 2025  
 **Commits:** 93b71de, e26be94
@@ -31,6 +33,7 @@ Debug logging exposed sensitive token information in production environments via
 All console logging in authentication code has been replaced with structured logger:
 
 **Files Updated:**
+
 - ✅ `src/app/api/logto/token/route.ts` - 10+ console calls replaced with logger.debug/info/error
 - ✅ `src/lib/global-fetch-handler.ts` - 4 console calls replaced with logger.warn/error/debug
 - ✅ `src/lib/auth-utils.ts` - 3 console calls replaced with logger.warn/error
@@ -40,6 +43,7 @@ All console logging in authentication code has been replaced with structured log
 - ✅ `src/components/auth/auth-provider.tsx` - Client-side config logging removed
 
 **Security Improvements:**
+
 - Sensitive config only logged in development mode with `NODE_ENV === "development"` guards
 - Token claims logging enhanced with double guards (NODE_ENV + DEBUG flag)
 - Structured logging with context objects enables proper Sentry integration
@@ -50,57 +54,77 @@ All console logging in authentication code has been replaced with structured log
 
 ## Medium Priority Issues
 
-### 2. **Missing Rate Limiting on Token Endpoint**
-**Severity:** MEDIUM  
-**File:** `src/app/api/logto/token/route.ts`
+### 2. ~~**Missing Rate Limiting on Token Endpoint**~~ ✅ RESOLVED
 
-**Issue:**  
-The `/api/logto/token` endpoint has authentication but no rate limiting. An authenticated user could potentially abuse this endpoint to generate excessive M2M tokens.
+**Severity:** MEDIUM → **FIXED**  
+**Status:** ✅ Completed November 22, 2025
 
-**Recommendation:**
+**Original Issue:**  
+The `/api/logto/token` endpoint had authentication but no rate limiting. An authenticated user could potentially abuse this endpoint to generate excessive M2M tokens.
+
+**Resolution Implemented:**
+Created custom in-memory rate limiting system and applied to token endpoint:
+
+**Files Created:**
+
+- ✅ `src/lib/rate-limit.ts` - Rate limiting with Map storage, automatic cleanup, standard headers
+- ✅ `src/lib/__tests__/rate-limit.test.ts` - Comprehensive test coverage (10 tests)
+
+**Files Updated:**
+
+- ✅ `src/app/api/logto/token/route.ts` - Added rate limiting: 10 requests/minute per IP
+
+**Implementation Details:**
+
 ```typescript
-// Add rate limiting middleware or use a library like next-rate-limit
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
-
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, "1 m"), // 10 requests per minute
+// Rate limit check before authentication
+const identifier = req.ip ?? req.headers.get("x-forwarded-for") ?? "unknown";
+const rateLimitResult = checkRateLimit(identifier, {
+  maxRequests: 10,
+  windowMs: 60000, // 1 minute
+  prefix: "token",
 });
 
-export const GET = async (req: NextRequest) => {
-  const ip = req.ip ?? "127.0.0.1";
-  const { success } = await ratelimit.limit(ip);
-  
-  if (!success) {
-    return NextResponse.json(
-      { error: "Too many requests" },
-      { status: 429 }
-    );
-  }
-  
-  // ... rest of handler
-};
+if (!rateLimitResult.success) {
+  return NextResponse.json(
+    { error: "Too many requests. Please try again later." },
+    {
+      status: 429,
+      headers: getRateLimitHeaders(rateLimitResult),
+    },
+  );
+}
 ```
 
-### 3. **Environment Variable Validation Not Centralized**
-**Severity:** MEDIUM  
-**Files:** Multiple API and lib files
+**Features:**
 
-**Issue:**  
-Environment variables are validated ad-hoc throughout the codebase. Missing or invalid values could cause runtime errors.
+- In-memory storage suitable for single-instance deployments (can upgrade to Redis if needed)
+- Automatic cleanup every 5 minutes
+- Standard rate limit headers (X-RateLimit-Limit, Remaining, Reset, Retry-After)
+- Identifier-based isolation with optional prefixes
+- Test coverage: 81.81% statements, 88.88% branches
 
-**Current State:**
-- `src/lib/api/utils.ts` validates `NEXT_PUBLIC_TURING_API`
-- `src/app/api/logto/token/route.ts` validates M2M variables
-- Other files may assume variables exist
+### 3. ~~**Environment Variable Validation Not Centralized**~~ ✅ RESOLVED
 
-**Recommendation:**
+**Severity:** MEDIUM → **FIXED**  
+**Status:** ✅ Completed November 22, 2025
+
+**Original Issue:**  
+Environment variables were validated ad-hoc throughout the codebase. Missing or invalid values could cause runtime errors.
+
+**Resolution Implemented:**
+Created centralized environment variable validation using Zod schemas:
+
+**Files Created:**
+
+- ✅ `src/lib/env.ts` - Server and client env validation with Zod
+- ✅ `src/lib/__tests__/env.test.ts` - Comprehensive test coverage (5 tests)
+
+**Implementation Details:**
+
 ```typescript
-// src/lib/env-validation.ts
-import { z } from "zod";
-
-const envSchema = z.object({
+// Server environment schema
+const serverEnvSchema = z.object({
   LOGTO_ENDPOINT: z.string().url(),
   LOGTO_APP_ID: z.string().min(1),
   LOGTO_APP_SECRET: z.string().min(1),
@@ -109,71 +133,93 @@ const envSchema = z.object({
   LOGTO_M2M_ENDPOINT: z.string().url(),
   NEXTAUTH_URL: z.string().url(),
   NEXTAUTH_SECRET: z.string().min(32),
+});
+
+// Client environment schema
+const clientEnvSchema = z.object({
   NEXT_PUBLIC_TURING_API: z.string().url(),
   NEXT_PUBLIC_LOGTO_ENDPOINT: z.string().url(),
   NEXT_PUBLIC_LOGTO_APP_ID: z.string().min(1),
-  NODE_ENV: z.enum(["development", "production", "test"]),
 });
 
-export const env = envSchema.parse(process.env);
+export function getServerEnv(): ServerEnv {
+  /* validation */
+}
+export function getClientEnv(): ClientEnv {
+  /* validation */
+}
 ```
 
-### 4. **No Content Security Policy (CSP)**
-**Severity:** MEDIUM  
-**File:** Missing
+**Features:**
 
-**Issue:**  
-No Content Security Policy headers are configured, which could allow XSS attacks if any vulnerabilities are introduced.
+- Type-safe environment variable access with `ServerEnv` and `ClientEnv` types
+- Server-side only enforcement (throws error if called on client)
+- Helpful error messages showing which variables are missing/invalid
+- URL validation for endpoints
+- Minimum length validation for secrets (NEXTAUTH_SECRET ≥ 32 chars)
+- Test coverage: 90.47% statements, 100% branches
 
-**Recommendation:**
+### 4. ~~**No Content Security Policy (CSP)**~~ ✅ RESOLVED
+
+**Severity:** MEDIUM → **FIXED**  
+**Status:** ✅ Completed November 22, 2025
+
+**Original Issue:**  
+No Content Security Policy headers were configured, which could allow XSS attacks if any vulnerabilities are introduced.
+
+**Resolution Implemented:**
+Added comprehensive security headers to Next.js configuration:
+
+**Files Updated:**
+
+- ✅ `next.config.ts` - Added async headers() function with security headers
+
+**Implementation Details:**
+
 ```typescript
-// next.config.ts
-const nextConfig: NextConfig = {
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // unsafe-inline needed for Next.js
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https:",
-              "font-src 'self'",
-              "connect-src 'self' https://*.logto.io https://api.turingbio.com",
-              "frame-ancestors 'none'",
-            ].join('; ')
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY'
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
-          }
-        ],
-      },
-    ];
-  },
-};
+async headers() {
+  return [
+    {
+      source: "/:path*",
+      headers: [
+        {
+          key: "Content-Security-Policy",
+          value: [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data: https:",
+            "font-src 'self'",
+            "connect-src 'self' https://*.logto.io https://api.turingbio.com",
+            "frame-ancestors 'none'",
+          ].join("; "),
+        },
+        { key: "X-Frame-Options", value: "DENY" },
+        { key: "X-Content-Type-Options", value: "nosniff" },
+        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        { key: "X-XSS-Protection", value: "1; mode=block" },
+      ],
+    },
+  ];
+}
 ```
+
+**Security Headers Added:**
+
+- Content-Security-Policy with Next.js-compatible directives
+- X-Frame-Options: DENY (prevents clickjacking)
+- X-Content-Type-Options: nosniff (prevents MIME sniffing)
+- Referrer-Policy: strict-origin-when-cross-origin
+- Permissions-Policy: Restricts camera, microphone, geolocation
+- X-XSS-Protection: 1; mode=block
 
 ---
 
 ## Low Priority Issues
 
 ### 5. **File Upload Size Validation Only on Client**
+
 **Severity:** LOW  
 **File:** `src/components/file-upload/file-uploader.tsx`
 
@@ -184,7 +230,8 @@ File size validation (5GB limit) is only enforced client-side via react-dropzone
 Ensure the backend API also validates file sizes and rejects oversized uploads. The TUS protocol should handle this, but verify backend enforcement.
 
 ### 6. **Missing CSRF Protection Documentation**
-**Severity:** LOW  
+
+**Severity:** LOW
 
 **Issue:**  
 No explicit CSRF protection mentioned. Next.js API routes don't have built-in CSRF tokens.
@@ -193,24 +240,23 @@ No explicit CSRF protection mentioned. Next.js API routes don't have built-in CS
 Logto session cookies should provide some protection, but custom API routes may be vulnerable.
 
 **Recommendation:**
+
 ```typescript
 // For state-changing operations, verify origin header
 export async function POST(req: NextRequest) {
-  const origin = req.headers.get('origin');
-  const host = req.headers.get('host');
-  
+  const origin = req.headers.get("origin");
+  const host = req.headers.get("host");
+
   if (origin && !origin.includes(host)) {
-    return NextResponse.json(
-      { error: 'Invalid origin' },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
   }
-  
+
   // ... rest of handler
 }
 ```
 
 ### 7. **Error Messages May Leak Implementation Details**
+
 **Severity:** LOW  
 **Files:** Various API routes
 
@@ -218,23 +264,22 @@ export async function POST(req: NextRequest) {
 Some error messages include stack traces or detailed error information that could help attackers.
 
 **Example:**
+
 ```typescript
 // src/app/api/logto/token/route.ts line 94
 throw new Error(`Token fetch failed: ${tokenResponse.status} - ${errorText}`);
 ```
 
 **Recommendation:**
+
 ```typescript
 // In production, sanitize error messages
 if (process.env.NODE_ENV === "production") {
-  return NextResponse.json(
-    { error: "Token fetch failed" },
-    { status: 500 }
-  );
+  return NextResponse.json({ error: "Token fetch failed" }, { status: 500 });
 } else {
   return NextResponse.json(
     { error: `Token fetch failed: ${tokenResponse.status} - ${errorText}` },
-    { status: 500 }
+    { status: 500 },
   );
 }
 ```
@@ -283,13 +328,13 @@ if (process.env.NODE_ENV === "production") {
 
 1. ~~Replace `console.log` with `logger` in token route~~ ✅ **COMPLETED**
 2. ~~Remove or guard token claims logging~~ ✅ **COMPLETED**
-3. Add rate limiting to token endpoint
 
 ### Short Term (Medium Priority)
 
-1. Implement centralized environment variable validation
-2. Add Content Security Policy headers
-3. Add security headers (X-Frame-Options, etc.)
+1. ~~Add rate limiting to token endpoint~~ ✅ **COMPLETED**
+2. ~~Implement centralized environment variable validation~~ ✅ **COMPLETED**
+3. ~~Add Content Security Policy headers~~ ✅ **COMPLETED**
+4. ~~Add security headers (X-Frame-Options, etc.)~~ ✅ **COMPLETED**
 
 ### Long Term (Low Priority)
 

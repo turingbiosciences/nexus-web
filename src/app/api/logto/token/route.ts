@@ -2,11 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import LogtoClient from "@logto/next/edge";
 import { logtoConfig } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 const logto = new LogtoClient(logtoConfig);
 
 export const GET = async (req: NextRequest) => {
   logger.debug("M2M token request received");
+
+  // Rate limiting: 10 requests per minute per IP
+  const identifier = req.ip ?? req.headers.get("x-forwarded-for") ?? "unknown";
+  const rateLimitResult = checkRateLimit(identifier, {
+    maxRequests: 10,
+    windowMs: 60 * 1000, // 1 minute
+    prefix: "token",
+  });
+
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { 
+        status: 429,
+        headers: getRateLimitHeaders(rateLimitResult),
+      }
+    );
+  }
 
   // CRITICAL SECURITY: Verify user is authenticated before issuing tokens
   try {
