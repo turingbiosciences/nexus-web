@@ -23,10 +23,17 @@ export function RunModelModal({
   const [targetColumn, setTargetColumn] = useState<string>("");
 
   // Fetch latest 3 datasets
-  const { data: datasets, isLoading } = useDatasets(projectId, {
+  const { data: datasetsData, isLoading } = useDatasets(projectId, {
     enabled: isOpen,
     limit: 3,
   });
+
+  // Sort datasets by most recent first (ensure we have an array)
+  const datasets = Array.isArray(datasetsData)
+    ? [...datasetsData].sort(
+        (a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime()
+      )
+    : [];
 
   // Reset selection when modal opens/closes
   useEffect(() => {
