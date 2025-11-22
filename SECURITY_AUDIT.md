@@ -19,47 +19,32 @@ The application demonstrates solid security practices with proper authentication
 
 ## High Priority Issues
 
-### 1. **Sensitive Data in Console Logs**
-**Severity:** HIGH  
-**Files Affected:**
-- `src/app/api/logto/token/route.ts` (lines 65, 104, 113, 120)
+### 1. ~~**Sensitive Data in Console Logs**~~ ✅ RESOLVED
+**Severity:** HIGH → **FIXED**  
+**Status:** ✅ Completed November 22, 2025  
+**Commits:** 93b71de, e26be94
 
-**Issue:**
-Debug logging may expose sensitive token information in production environments:
-```typescript
-console.log("[logto:token] Config validated:", {
-  endpoint: requiredEnvVars.LOGTO_ENDPOINT,
-  m2mAppId: requiredEnvVars.LOGTO_M2M_APP_ID,
-  resource: requiredEnvVars.LOGTO_M2M_ENDPOINT,
-});
+**Original Issue:**
+Debug logging exposed sensitive token information in production environments via `console.log` calls in authentication-related code.
 
-console.log("[logto:token] ✅ M2M token obtained successfully");
+**Resolution Implemented:**
+All console logging in authentication code has been replaced with structured logger:
 
-// JWT decoding in debug mode
-console.log("[logto:token] Token claims:", { ... });
-```
+**Files Updated:**
+- ✅ `src/app/api/logto/token/route.ts` - 10+ console calls replaced with logger.debug/info/error
+- ✅ `src/lib/global-fetch-handler.ts` - 4 console calls replaced with logger.warn/error/debug
+- ✅ `src/lib/auth-utils.ts` - 3 console calls replaced with logger.warn/error
+- ✅ `src/lib/auth.ts` - Config logging now uses logger.debug with NODE_ENV guard
+- ✅ `src/app/api/logto/sign-in-callback/route.ts` - 4 console calls replaced with logger
+- ✅ `src/app/api/logto/manual-sign-out/route.ts` - 1 console call replaced with logger.error
+- ✅ `src/components/auth/auth-provider.tsx` - Client-side config logging removed
 
-**Risk:**  
-- Token claims and configuration exposed in browser/server logs
-- Potential information disclosure if logs are compromised
-- JWT structure reveals internal API design
-
-**Recommendation:**
-```typescript
-// Use logger instead of console.log with appropriate levels
-import { logger } from "@/lib/logger";
-
-// Only log in development
-if (process.env.NODE_ENV === "development") {
-  logger.debug({ 
-    endpoint: requiredEnvVars.LOGTO_ENDPOINT,
-    m2mAppId: requiredEnvVars.LOGTO_M2M_APP_ID,
-  }, "M2M config validated");
-}
-
-// Remove token claims logging entirely or make it admin-only
-// Never log actual token values
-```
+**Security Improvements:**
+- Sensitive config only logged in development mode with `NODE_ENV === "development"` guards
+- Token claims logging enhanced with double guards (NODE_ENV + DEBUG flag)
+- Structured logging with context objects enables proper Sentry integration
+- Error logging includes error objects for better debugging without exposing sensitive data
+- All 501 unit tests passing after refactoring
 
 ---
 
@@ -295,20 +280,23 @@ if (process.env.NODE_ENV === "production") {
 ## Recommendations Summary
 
 ### Immediate Actions (High Priority)
-1. Replace `console.log` with `logger` in token route
-2. Remove or guard token claims logging
+
+1. ~~Replace `console.log` with `logger` in token route~~ ✅ **COMPLETED**
+2. ~~Remove or guard token claims logging~~ ✅ **COMPLETED**
 3. Add rate limiting to token endpoint
 
 ### Short Term (Medium Priority)
-4. Implement centralized environment variable validation
-5. Add Content Security Policy headers
-6. Add security headers (X-Frame-Options, etc.)
+
+1. Implement centralized environment variable validation
+2. Add Content Security Policy headers
+3. Add security headers (X-Frame-Options, etc.)
 
 ### Long Term (Low Priority)
-7. Verify backend file size validation
-8. Document CSRF protection strategy
-9. Sanitize production error messages
-10. Consider adding request logging for audit trail
+
+1. Verify backend file size validation
+2. Document CSRF protection strategy
+3. Sanitize production error messages
+4. Consider adding request logging for audit trail
 
 ---
 
