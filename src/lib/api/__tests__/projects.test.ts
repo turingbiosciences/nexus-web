@@ -246,7 +246,17 @@ describe("projects API", () => {
 
       const result = await createProject("test-token", projectData);
 
-      expect(result).toEqual(mockCreatedProject);
+      expect(result).toMatchObject({
+        id: "new-123",
+        name: projectData.name,
+        description: projectData.description,
+        status: "setup",
+        datasets: [],
+        datasetCount: 0,
+        lastActivity: "just now",
+      });
+      expect(result.createdAt).toBeInstanceOf(Date);
+      expect(result.updatedAt).toBeInstanceOf(Date);
       expect(global.fetch).toHaveBeenCalledWith(
         "https://api.example.com/projects",
         {

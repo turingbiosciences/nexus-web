@@ -241,25 +241,22 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     [accessToken, tokenLoading, tokenError]
   );
 
-  const addDataset = useCallback(
-    (projectId: string) => {
-      // Optimistically increment dataset count
-      setProjects((prev) =>
-        prev.map((p) => {
-          if (p.id !== projectId) return p;
-          const now = new Date();
-          return {
-            ...p,
-            datasetCount: (p.datasetCount || 0) + 1,
-            updatedAt: now,
-            lastActivity: "just now",
-          };
-        })
-      );
-      // Note: Actual dataset list is fetched separately via useDatasets hook
-    },
-    []
-  );
+  const addDataset = useCallback((projectId: string) => {
+    // Optimistically increment dataset count
+    setProjects((prev) =>
+      prev.map((p) => {
+        if (p.id !== projectId) return p;
+        const now = new Date();
+        return {
+          ...p,
+          datasetCount: (p.datasetCount || 0) + 1,
+          updatedAt: now,
+          lastActivity: "just now",
+        };
+      })
+    );
+    // Note: Actual dataset list is fetched separately via useDatasets hook
+  }, []);
 
   const getProjectById = useCallback(
     (id: string) => projects.find((p) => p.id === id),

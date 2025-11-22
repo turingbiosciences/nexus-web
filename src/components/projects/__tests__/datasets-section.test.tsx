@@ -287,10 +287,7 @@ describe("DatasetsSection", () => {
     const uploadButton = screen.getByRole("button", { name: /upload file/i });
     await user.click(uploadButton);
 
-    expect(mockAddDataset).toHaveBeenCalledWith("project-1", {
-      name: "test.csv",
-      size: 4,
-    });
+    expect(mockAddDataset).toHaveBeenCalledWith("project-1");
 
     expect(mockUploadMutate).toHaveBeenCalledWith(
       expect.any(File),
