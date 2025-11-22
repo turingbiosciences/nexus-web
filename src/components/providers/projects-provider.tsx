@@ -9,17 +9,13 @@ import {
   ReactNode,
 } from "react";
 import { logger } from "@/lib/logger";
-import {
-  Project,
-  ProjectStatusCount,
-  STATUS_ORDER,
-  ProjectActivity,
-} from "@/types/project";
+import { Project, ProjectStatusCount, STATUS_ORDER } from "@/types/project";
 import {
   fetchProjects,
   createProject as createProjectAPI,
   deleteProject as deleteProjectAPI,
 } from "@/lib/api/projects";
+import { getTokenErrorMessage } from "@/lib/api/utils";
 import { useAccessToken } from "./token-provider";
 
 interface ProjectsContextValue {
@@ -34,7 +30,7 @@ interface ProjectsContextValue {
   deleteProject: (id: string) => Promise<void>;
   getProjectById: (id: string) => Project | undefined;
   getStatusCounts: () => ProjectStatusCount;
-  addDataset: (projectId: string, file: { name: string; size: number }) => void;
+  addDataset: (projectId: string) => void;
 }
 
 const ProjectsContext = createContext<ProjectsContextValue | undefined>(
@@ -43,7 +39,12 @@ const ProjectsContext = createContext<ProjectsContextValue | undefined>(
 
 export function ProjectsProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(false);
+  // Start with loading=true to prevent empty state flash during initial render
+  // Set to false in three scenarios:
+  // 1. After successful/failed fetch completion (line 139)
+  // 2. When skipping fetch because already fetched or no token (lines 103-105)
+  // 3. On token error (line 117)
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [hasFetched, setHasFetched] = useState(false); // Track if we've attempted fetch
   const [previousAuthState, setPreviousAuthState] = useState<boolean>(false);
@@ -103,6 +104,10 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         },
         "ProjectsProvider skipping fetch"
       );
+      // If we're not going to fetch and not waiting for token, stop loading
+      if (hasFetched || (!accessToken && !tokenLoading)) {
+        setLoading(false);
+      }
       return;
     }
 
@@ -114,6 +119,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       );
       setError(tokenError);
       setHasFetched(true); // Mark as attempted to prevent retry loop
+      setLoading(false);
       return;
     }
 
@@ -158,9 +164,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 
       // Check if token is available
       if (!accessToken) {
-        const errorMsg = tokenError
-          ? `Authentication error: ${tokenError.message}`
-          : "Authentication token unavailable. Please sign out and sign back in to obtain an access token.";
+        const errorMsg = getTokenErrorMessage(tokenError);
         logger.error({ tokenError }, errorMsg);
         throw new Error(errorMsg);
       }
@@ -190,37 +194,10 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       prev.map((p) => {
         if (p.id !== id) return p;
         const now = new Date();
-        const activities = [...(p.activities || [])];
-        if (updates.status && updates.status !== p.status) {
-          activities.push({
-            id: crypto.randomUUID(),
-            type: "status_change",
-            message: `Status changed to ${updates.status}`,
-            at: now,
-          } satisfies ProjectActivity);
-        }
-        if (updates.name && updates.name !== p.name) {
-          activities.push({
-            id: crypto.randomUUID(),
-            type: "updated",
-            message: "Name updated",
-            at: now,
-          } satisfies ProjectActivity);
-        }
-        if (updates.description && updates.description !== p.description) {
-          activities.push({
-            id: crypto.randomUUID(),
-            type: "updated",
-            message: "Description updated",
-            at: now,
-          } satisfies ProjectActivity);
-        }
         return {
           ...p,
           ...updates,
           updatedAt: updates.updatedAt ? updates.updatedAt : now,
-          lastActivity: updates.lastActivity || "just now",
-          activities,
         };
       })
     );
@@ -241,9 +218,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 
       // Check if token is available
       if (!accessToken) {
-        const errorMsg = tokenError
-          ? `Authentication error: ${tokenError.message}`
-          : "Authentication token unavailable. Please sign out and sign back in to obtain an access token.";
+        const errorMsg = getTokenErrorMessage(tokenError);
         logger.error({ tokenError }, errorMsg);
         throw new Error(errorMsg);
       }
@@ -266,42 +241,22 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     [accessToken, tokenLoading, tokenError]
   );
 
-  const addDataset = useCallback(
-    (projectId: string, file: { name: string; size: number }) => {
-      setProjects((prev) =>
-        prev.map((p) => {
-          if (p.id !== projectId) return p;
-          const now = new Date();
-          const optimistic = {
-            id: `optimistic-${crypto.randomUUID()}`,
-            filename: file.name,
-            size: file.size,
-            uploadedAt: now,
-          };
-          const datasets = [...(p.datasets || []), optimistic];
-          const activities = [
-            ...(p.activities || []),
-            {
-              id: crypto.randomUUID(),
-              type: "upload",
-              message: `Uploaded ${file.name}`,
-              at: now,
-            } satisfies ProjectActivity,
-          ];
-          return {
-            ...p,
-            datasets,
-            datasetCount: datasets.length,
-            updatedAt: now,
-            lastActivity: "dataset uploaded",
-            activities,
-          };
-        })
-      );
-      // TODO: Add API call to persist dataset addition
-    },
-    []
-  );
+  const addDataset = useCallback((projectId: string) => {
+    // Optimistically increment dataset count
+    setProjects((prev) =>
+      prev.map((p) => {
+        if (p.id !== projectId) return p;
+        const now = new Date();
+        return {
+          ...p,
+          datasetCount: (p.datasetCount || 0) + 1,
+          updatedAt: now,
+          lastActivity: "just now",
+        };
+      })
+    );
+    // Note: Actual dataset list is fetched separately via useDatasets hook
+  }, []);
 
   const getProjectById = useCallback(
     (id: string) => projects.find((p) => p.id === id),

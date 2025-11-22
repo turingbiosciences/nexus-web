@@ -136,13 +136,9 @@ describe("global-fetch-handler", () => {
         },
       } as unknown as Response;
 
-      // Should not throw
+      // Should not throw even when text() fails
+      // After security improvements, logger.error is called instead of console.error
       await expect(checkTokenExpiration(mockResponse)).resolves.not.toThrow();
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "[GlobalFetch] Error checking token expiration:",
-        expect.any(Error)
-      );
 
       consoleErrorSpy.mockRestore();
     });

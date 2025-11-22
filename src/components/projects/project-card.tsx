@@ -3,9 +3,6 @@
 import Link from "next/link";
 import { Project } from "@/types/project";
 import { Clock, Database, CheckCircle, Play, Settings2 } from "lucide-react";
-import { useProjectMetadata } from "@/lib/queries/project-metadata";
-import { useEffect } from "react";
-import { useProjects } from "@/components/providers/projects-provider";
 
 interface ProjectCardProps {
   project: Project;
@@ -40,24 +37,9 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const config = statusConfig[project.status] || statusConfig.setup;
   const StatusIcon = config.icon;
 
-  // Fetch metadata for this project
-  const { data: metadata, isLoading } = useProjectMetadata(project.id);
-  const { updateProject } = useProjects();
-
-  // Update project in provider when metadata loads
-  useEffect(() => {
-    if (metadata && !isLoading) {
-      updateProject(project.id, {
-        datasetCount: metadata.datasetCount,
-        lastActivity: metadata.lastActivity,
-      });
-    }
-  }, [metadata, isLoading, project.id, updateProject]);
-
-  // Use metadata if available, otherwise use project data
-  const datasetCount = metadata?.datasetCount ?? project.datasetCount ?? 0;
-  const lastActivity =
-    metadata?.lastActivity ?? project.lastActivity ?? "No recent activity";
+  // Use project data directly - it now comes from the API with file_count and last_activity
+  const datasetCount = project.datasetCount ?? 0;
+  const lastActivity = project.lastActivity ?? "No recent activity";
 
   return (
     <Link href={`/projects/${project.id}`}>

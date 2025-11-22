@@ -16,6 +16,7 @@ import { ProjectActivityTab } from "@/components/projects/project-activity-tab";
 import { ProjectDatasetsTab } from "@/components/projects/project-datasets-tab";
 import { ProjectSettingsTab } from "@/components/projects/project-settings-tab";
 import { ProjectHeaderCard } from "@/components/projects/project-header-card";
+import { RunModelModal } from "@/components/projects/run-model-modal";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/toast-provider";
 import { authFetch } from "@/lib/auth-fetch";
@@ -34,6 +35,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
   >("overview");
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  const [isRunModalOpen, setIsRunModalOpen] = useState(false);
 
   const {
     getProjectById,
@@ -70,7 +72,11 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     }
   };
 
-  const handleRun = async () => {
+  const handleRun = () => {
+    setIsRunModalOpen(true);
+  };
+
+  const handleConfirmRun = async (datasetId: string, targetColumn: string) => {
     if (!project || !accessToken) return;
 
     setIsRunning(true);
@@ -85,6 +91,12 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            file_id: datasetId,
+            target_column: targetColumn,
+            exclude_columns: [],
+            exclude_rows: [],
+          }),
         }
       );
 
@@ -255,6 +267,14 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
       </main>
 
       <Footer />
+
+      {/* Run Model Modal */}
+      <RunModelModal
+        isOpen={isRunModalOpen}
+        onClose={() => setIsRunModalOpen(false)}
+        projectId={project.id}
+        onConfirm={handleConfirmRun}
+      />
     </div>
   );
 }
