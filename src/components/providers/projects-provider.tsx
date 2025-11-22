@@ -9,11 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { logger } from "@/lib/logger";
-import {
-  Project,
-  ProjectStatusCount,
-  STATUS_ORDER,
-} from "@/types/project";
+import { Project, ProjectStatusCount, STATUS_ORDER } from "@/types/project";
 import {
   fetchProjects,
   createProject as createProjectAPI,
@@ -42,7 +38,7 @@ const ProjectsContext = createContext<ProjectsContextValue | undefined>(
 
 export function ProjectsProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading=true to prevent empty state flash
   const [error, setError] = useState<Error | null>(null);
   const [hasFetched, setHasFetched] = useState(false); // Track if we've attempted fetch
   const [previousAuthState, setPreviousAuthState] = useState<boolean>(false);
@@ -102,6 +98,10 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         },
         "ProjectsProvider skipping fetch"
       );
+      // If we're not going to fetch and not waiting for token, stop loading
+      if (hasFetched || (!accessToken && !tokenLoading)) {
+        setLoading(false);
+      }
       return;
     }
 
@@ -113,6 +113,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       );
       setError(tokenError);
       setHasFetched(true); // Mark as attempted to prevent retry loop
+      setLoading(false);
       return;
     }
 

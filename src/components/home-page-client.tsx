@@ -136,7 +136,7 @@ export function HomePageClient() {
 
                 {/* Project List - Main content */}
                 <div className="lg:col-span-2">
-                  <ProjectList projects={projects} />
+                  <ProjectList projects={projects} loading={projectsLoading} />
                 </div>
               </div>
               <NewProjectDialog

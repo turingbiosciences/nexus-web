@@ -80,6 +80,19 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
 
   // Normalize projects to ensure valid status values and convert date strings to Date objects
   const projects = projectsArray.map((project: RawProject) => {
+    // Debug: Log raw project data to see API format
+    logger.debug(
+      {
+        id: project.id,
+        status: project.status,
+        file_count: project.file_count,
+        created_at: project.created_at,
+        updated_at: project.updated_at,
+        last_activity: project.last_activity,
+      },
+      "Raw project data from API"
+    );
+
     // Map API status to internal status
     const statusMap: Record<string, Project["status"]> = {
       active: "setup",
