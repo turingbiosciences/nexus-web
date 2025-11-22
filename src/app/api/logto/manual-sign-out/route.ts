@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export const POST = async (request: NextRequest) => {
   try {
@@ -22,7 +23,7 @@ export const POST = async (request: NextRequest) => {
     
     return response
   } catch (error) {
-    console.error('Manual sign-out error:', error)
+    logger.error({ error }, 'Manual sign-out error')
     return NextResponse.json({ error: 'Sign-out failed' }, { status: 500 })
   }
 }

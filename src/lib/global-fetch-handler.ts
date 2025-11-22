@@ -5,6 +5,8 @@
  * without needing to wrap every fetch call in try-catch blocks.
  */
 
+import { logger } from "@/lib/logger";
+
 /**
  * Check if a fetch response indicates an expired token
  */
@@ -22,9 +24,7 @@ export async function checkTokenExpiration(response: Response): Promise<void> {
         errorText.includes("Unauthorized");
 
       if (isExpired) {
-        console.error(
-          "[GlobalFetch] Token expired detected, redirecting to sign out"
-        );
+        logger.warn("Token expired detected, redirecting to sign out");
 
         // Use setTimeout to avoid interrupting the current execution flow
         setTimeout(() => {
@@ -32,7 +32,7 @@ export async function checkTokenExpiration(response: Response): Promise<void> {
         }, 100);
       }
     } catch (err) {
-      console.error("[GlobalFetch] Error checking token expiration:", err);
+      logger.error({ error: err }, "Error checking token expiration");
     }
   }
 }
@@ -76,7 +76,7 @@ export function installGlobalFetchInterceptor() {
     return response;
   };
 
-  console.log("[GlobalFetch] Global fetch interceptor installed");
+  logger.debug("Global fetch interceptor installed");
 }
 
 /**
@@ -84,5 +84,5 @@ export function installGlobalFetchInterceptor() {
  */
 export function uninstallGlobalFetchInterceptor() {
   // This is a placeholder - in practice, you'd need to store the original fetch
-  console.log("[GlobalFetch] Global fetch interceptor uninstalled");
+  logger.debug("Global fetch interceptor uninstalled");
 }

@@ -1,6 +1,7 @@
 import LogtoClient from "@logto/next/edge";
 import type { NextRequest } from "next/server";
 import { logtoConfig } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 import { logRequest } from "@/lib/api-logger";
 
 const logto = new LogtoClient(logtoConfig);
@@ -14,12 +15,12 @@ export const GET = async (req: NextRequest) => {
   const errorDescription = url.searchParams.get("error_description");
 
   if (error) {
-    console.error("[logto:sign-in-callback] Logto error:", {
+    logger.error({
       error,
       errorDescription,
       configuredResources: logtoConfig.resources,
       state: url.searchParams.get("state"),
-    });
+    }, "Logto sign-in callback error");
   }
 
   const handler = logto.handleSignInCallback();
@@ -27,22 +28,18 @@ export const GET = async (req: NextRequest) => {
 
   // Log cookies being set for session persistence diagnostics
   const setCookies = res.headers.getSetCookie?.() || [];
-  console.log(
-    `[logto:sign-in-callback] Status=${res.status} Set-Cookie count=${setCookies.length}`
-  );
+  logger.debug({
+    status: res.status,
+    setCookieCount: setCookies.length,
+  }, "Sign-in callback response");
   if (setCookies.length > 0) {
-    setCookies.forEach((cookie, idx) => {
+    const cookieNames = setCookies.map((cookie, idx) => {
       const nameMatch = cookie.match(/^([^=]+)=/);
-      console.log(
-        `[logto:sign-in-callback] Cookie[${idx}]: ${
-          nameMatch?.[1] || "unknown"
-        }`
-      );
+      return nameMatch?.[1] || "unknown";
     });
+    logger.debug({ cookieNames }, "Session cookies set");
   } else {
-    console.warn(
-      "[logto:sign-in-callback] WARNING: No Set-Cookie headers found!"
-    );
+    logger.warn("No Set-Cookie headers found in sign-in callback response");
   }
 
   return res;
