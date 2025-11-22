@@ -1,6 +1,6 @@
 /**
  * Centralized environment variable validation using Zod
- * 
+ *
  * This ensures all required environment variables are present and valid
  * at application startup, preventing runtime errors.
  */
@@ -13,21 +13,23 @@ const serverEnvSchema = z.object({
   LOGTO_ENDPOINT: z.string().url(),
   LOGTO_APP_ID: z.string().min(1),
   LOGTO_APP_SECRET: z.string().min(1),
-  
+
   // Logto M2M (Machine-to-Machine)
   LOGTO_M2M_APP_ID: z.string().min(1),
   LOGTO_M2M_APP_SECRET: z.string().min(1),
   LOGTO_M2M_ENDPOINT: z.string().url(),
-  
+
   // NextAuth
   NEXTAUTH_URL: z.string().url(),
   NEXTAUTH_SECRET: z.string().min(32),
-  
+
   // Sentry (optional in development)
   SENTRY_AUTH_TOKEN: z.string().optional(),
-  
+
   // Node environment
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
 });
 
 // Client-side environment variables (exposed via NEXT_PUBLIC_ prefix)
@@ -45,12 +47,14 @@ export function getServerEnv() {
   if (typeof window !== "undefined") {
     throw new Error("getServerEnv() can only be called on the server side");
   }
-  
+
   try {
     return serverEnvSchema.parse(process.env);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const missingVars = error.issues.map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`).join("\n");
+      const missingVars = error.issues
+        .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
+        .join("\n");
       throw new Error(
         `❌ Invalid or missing server environment variables:\n${missingVars}\n\nPlease check your .env.local file.`
       );
@@ -68,7 +72,9 @@ export function getClientEnv() {
     return clientEnvSchema.parse(process.env);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const missingVars = error.issues.map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`).join("\n");
+      const missingVars = error.issues
+        .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
+        .join("\n");
       throw new Error(
         `❌ Invalid or missing client environment variables:\n${missingVars}\n\nPlease check your .env.local file.`
       );

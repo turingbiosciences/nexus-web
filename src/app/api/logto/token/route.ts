@@ -20,7 +20,7 @@ export const GET = async (req: NextRequest) => {
   if (!rateLimitResult.success) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
-      { 
+      {
         status: 429,
         headers: getRateLimitHeaders(rateLimitResult),
       }
@@ -61,10 +61,7 @@ export const GET = async (req: NextRequest) => {
     .map(([key]) => key);
 
   if (missingVars.length > 0) {
-    logger.error(
-      { missingVars },
-      "Missing required environment variables"
-    );
+    logger.error({ missingVars }, "Missing required environment variables");
     return NextResponse.json(
       {
         error:
@@ -129,7 +126,10 @@ export const GET = async (req: NextRequest) => {
     logger.info("M2M token obtained successfully");
 
     // Decode the JWT to inspect claims (just for debugging) for debugging)
-    if (process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_TBIO_DEBUG === "true") {
+    if (
+      process.env.NODE_ENV === "development" &&
+      process.env.NEXT_PUBLIC_TBIO_DEBUG === "true"
+    ) {
       try {
         const [, payload] = tokenData.access_token.split(".");
         const decodedPayload = JSON.parse(

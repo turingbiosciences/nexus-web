@@ -56,7 +56,9 @@ describe("env", () => {
         // Missing other required variables
       };
 
-      expect(() => getServerEnv()).toThrow(/Invalid or missing server environment variables/);
+      expect(() => getServerEnv()).toThrow(
+        /Invalid or missing server environment variables/
+      );
     });
 
     it("should throw error for invalid URL format", () => {
@@ -72,7 +74,9 @@ describe("env", () => {
         NEXTAUTH_SECRET: "this-is-a-very-long-secret-at-least-32-chars",
       };
 
-      expect(() => getServerEnv()).toThrow(/Invalid or missing server environment variables/);
+      expect(() => getServerEnv()).toThrow(
+        /Invalid or missing server environment variables/
+      );
     });
 
     it("should throw error for short NEXTAUTH_SECRET", () => {
@@ -88,7 +92,9 @@ describe("env", () => {
         NEXTAUTH_SECRET: "short", // Too short
       };
 
-      expect(() => getServerEnv()).toThrow(/Invalid or missing server environment variables/);
+      expect(() => getServerEnv()).toThrow(
+        /Invalid or missing server environment variables/
+      );
     });
   });
 
@@ -115,7 +121,9 @@ describe("env", () => {
         // Missing other variables
       };
 
-      expect(() => getClientEnv()).toThrow(/Invalid or missing client environment variables/);
+      expect(() => getClientEnv()).toThrow(
+        /Invalid or missing client environment variables/
+      );
     });
 
     it("should throw error for invalid URL in client variables", () => {
@@ -126,7 +134,9 @@ describe("env", () => {
         NEXT_PUBLIC_LOGTO_APP_ID: "test-app-id",
       };
 
-      expect(() => getClientEnv()).toThrow(/Invalid or missing client environment variables/);
+      expect(() => getClientEnv()).toThrow(
+        /Invalid or missing client environment variables/
+      );
     });
   });
 });

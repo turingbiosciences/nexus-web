@@ -15,12 +15,15 @@ export const GET = async (req: NextRequest) => {
   const errorDescription = url.searchParams.get("error_description");
 
   if (error) {
-    logger.error({
-      error,
-      errorDescription,
-      configuredResources: logtoConfig.resources,
-      state: url.searchParams.get("state"),
-    }, "Logto sign-in callback error");
+    logger.error(
+      {
+        error,
+        errorDescription,
+        configuredResources: logtoConfig.resources,
+        state: url.searchParams.get("state"),
+      },
+      "Logto sign-in callback error"
+    );
   }
 
   const handler = logto.handleSignInCallback();
@@ -28,10 +31,13 @@ export const GET = async (req: NextRequest) => {
 
   // Log cookies being set for session persistence diagnostics
   const setCookies = res.headers.getSetCookie?.() || [];
-  logger.debug({
-    status: res.status,
-    setCookieCount: setCookies.length,
-  }, "Sign-in callback response");
+  logger.debug(
+    {
+      status: res.status,
+      setCookieCount: setCookies.length,
+    },
+    "Sign-in callback response"
+  );
   if (setCookies.length > 0) {
     const cookieNames = setCookies.map((cookie, idx) => {
       const nameMatch = cookie.match(/^([^=]+)=/);

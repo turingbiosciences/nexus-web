@@ -71,22 +71,26 @@ describe("rate-limit", () => {
     });
 
     it("should use prefix to namespace rate limits", () => {
-      checkRateLimit("user", { maxRequests: 1, windowMs: 60000, prefix: "api" });
-      
-      // Same user, different prefix should succeed
-      const result = checkRateLimit("user", { 
-        maxRequests: 1, 
-        windowMs: 60000, 
-        prefix: "auth" 
+      checkRateLimit("user", {
+        maxRequests: 1,
+        windowMs: 60000,
+        prefix: "api",
       });
-      
+
+      // Same user, different prefix should succeed
+      const result = checkRateLimit("user", {
+        maxRequests: 1,
+        windowMs: 60000,
+        prefix: "auth",
+      });
+
       expect(result.success).toBe(true);
     });
 
     it("should return correct reset time", () => {
       const now = Date.now();
       const windowMs = 60000;
-      
+
       const result = checkRateLimit("test-user-3", {
         maxRequests: 10,
         windowMs,

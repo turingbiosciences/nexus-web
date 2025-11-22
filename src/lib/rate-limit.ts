@@ -1,6 +1,6 @@
 /**
  * Simple in-memory rate limiting for API routes
- * 
+ *
  * For production with multiple instances, consider using:
  * - Upstash Redis (@upstash/ratelimit)
  * - Vercel Edge Config
@@ -45,11 +45,11 @@ export interface RateLimitResult {
 
 /**
  * Check if a request should be rate limited
- * 
+ *
  * @param identifier - Unique identifier (e.g., IP address, user ID)
  * @param config - Rate limit configuration
  * @returns Result with success flag and rate limit headers
- * 
+ *
  * @example
  * ```typescript
  * const result = checkRateLimit(req.ip ?? "127.0.0.1", {
@@ -57,7 +57,7 @@ export interface RateLimitResult {
  *   windowMs: 60000, // 1 minute
  *   prefix: "token"
  * });
- * 
+ *
  * if (!result.success) {
  *   return NextResponse.json(
  *     { error: "Too many requests" },
@@ -72,9 +72,9 @@ export function checkRateLimit(
 ): RateLimitResult {
   const key = config.prefix ? `${config.prefix}:${identifier}` : identifier;
   const now = Date.now();
-  
+
   const entry = rateLimitStore.get(key);
-  
+
   // No existing entry or expired
   if (!entry || entry.resetAt < now) {
     const resetAt = now + config.windowMs;
@@ -82,7 +82,7 @@ export function checkRateLimit(
       count: 1,
       resetAt,
     });
-    
+
     return {
       success: true,
       limit: config.maxRequests,
@@ -90,17 +90,20 @@ export function checkRateLimit(
       reset: resetAt,
     };
   }
-  
+
   // Within window, increment count
   entry.count++;
-  
+
   if (entry.count > config.maxRequests) {
-    logger.warn({
-      identifier: key,
-      count: entry.count,
-      limit: config.maxRequests,
-    }, "Rate limit exceeded");
-    
+    logger.warn(
+      {
+        identifier: key,
+        count: entry.count,
+        limit: config.maxRequests,
+      },
+      "Rate limit exceeded"
+    );
+
     return {
       success: false,
       limit: config.maxRequests,
@@ -108,7 +111,7 @@ export function checkRateLimit(
       reset: entry.resetAt,
     };
   }
-  
+
   return {
     success: true,
     limit: config.maxRequests,
@@ -120,11 +123,19 @@ export function checkRateLimit(
 /**
  * Generate standard rate limit headers
  */
-export function getRateLimitHeaders(result: RateLimitResult): Record<string, string> {
+export function getRateLimitHeaders(
+  result: RateLimitResult
+): Record<string, string> {
   return {
     "X-RateLimit-Limit": result.limit.toString(),
     "X-RateLimit-Remaining": result.remaining.toString(),
     "X-RateLimit-Reset": new Date(result.reset).toISOString(),
-    ...(result.success ? {} : { "Retry-After": Math.ceil((result.reset - Date.now()) / 1000).toString() }),
+    ...(result.success
+      ? {}
+      : {
+          "Retry-After": Math.ceil(
+            (result.reset - Date.now()) / 1000
+          ).toString(),
+        }),
   };
 }

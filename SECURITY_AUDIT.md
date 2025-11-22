@@ -91,7 +91,7 @@ if (!rateLimitResult.success) {
     {
       status: 429,
       headers: getRateLimitHeaders(rateLimitResult),
-    },
+    }
   );
 }
 ```
@@ -279,7 +279,7 @@ if (process.env.NODE_ENV === "production") {
 } else {
   return NextResponse.json(
     { error: `Token fetch failed: ${tokenResponse.status} - ${errorText}` },
-    { status: 500 },
+    { status: 500 }
   );
 }
 ```
@@ -289,30 +289,37 @@ if (process.env.NODE_ENV === "production") {
 ## Security Best Practices Already Implemented ✅
 
 1. **Authentication Required for Token Endpoint**
+
    - `/api/logto/token` verifies user authentication before issuing tokens
    - Proper HTTP-only cookie usage via Logto
 
 2. **No localStorage/sessionStorage for Tokens**
+
    - Tokens managed server-side and via secure context
    - No client-side token storage vulnerabilities
 
 3. **No Obvious XSS Vulnerabilities**
+
    - No `dangerouslySetInnerHTML` usage found
    - No direct HTML injection patterns
    - React's automatic escaping provides protection
 
 4. **Environment Variables Properly Namespaced**
+
    - Public variables prefixed with `NEXT_PUBLIC_`
    - Secrets properly separated from client code
 
 5. **HTTPS-Only Cookies in Production**
+
    - `cookieSecure: process.env.NODE_ENV === "production"`
 
 6. **Structured Logging with Sentry Integration**
+
    - Errors automatically tracked
    - Production logs structured as JSON
 
 7. **Token Refresh Mechanism**
+
    - Proper token refresh flow implemented
    - Stale token handling
 
