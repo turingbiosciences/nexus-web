@@ -1,6 +1,7 @@
 // Global authentication utilities integrating directly with the Logto React SDK.
 // Provides a global context + module-level cache for non-React consumers.
 
+import { logger } from "@/lib/logger";
 import React, {
   createContext,
   useContext,
@@ -64,7 +65,7 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (e) {
         // Non-fatal; keep going without claims.
-        console.warn("GlobalAuthProvider claims fetch failed", e);
+        logger.warn({ error: e }, "GlobalAuthProvider claims fetch failed");
       }
     })();
   }, [isAuthenticated]);
@@ -99,7 +100,7 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
         };
       }
     } catch (error) {
-      console.error("refreshAuth error", error);
+      logger.error({ error }, "refreshAuth error");
     }
   }, []);
 
@@ -144,7 +145,7 @@ export async function checkAuth(): Promise<boolean> {
     if (!response.ok) return false;
     return true;
   } catch (error) {
-    console.error("checkAuth fallback error:", error);
+    logger.error({ error }, "checkAuth fallback error");
     return false;
   }
 }

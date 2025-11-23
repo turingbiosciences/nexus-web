@@ -1,4 +1,5 @@
 import { LogtoNextConfig } from "@logto/next";
+import { logger } from "@/lib/logger";
 
 export const logtoScopes = [
   "openid",
@@ -16,14 +17,17 @@ const turingApiResource =
 export const logtoResources = turingApiResource ? [turingApiResource] : [];
 
 // Log configuration state for debugging
-if (typeof window === "undefined") {
-  // Server-side only logging
-  console.log("[auth:config]", {
-    hasResource: !!turingApiResource,
-    resourceValue: turingApiResource || "(not set)",
-    resourcesArray: logtoResources,
-    nodeEnv: process.env.NODE_ENV,
-  });
+if (typeof window === "undefined" && process.env.NODE_ENV === "development") {
+  // Server-side only logging in development
+  logger.debug(
+    {
+      hasResource: !!turingApiResource,
+      resourceValue: turingApiResource || "(not set)",
+      resourcesArray: logtoResources,
+      nodeEnv: process.env.NODE_ENV,
+    },
+    "Auth configuration"
+  );
 }
 
 export const logtoConfig: LogtoNextConfig = {

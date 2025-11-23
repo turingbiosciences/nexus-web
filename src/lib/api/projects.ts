@@ -7,9 +7,19 @@ import { Project } from "@/types/project";
 import { mockProjects } from "@/lib/mock-data";
 import { logger } from "@/lib/logger";
 import { getRelativeTime } from "@/lib/utils/date-utils";
+import { getApiUrl, API_STATUS_MAP } from "@/lib/api/utils";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RawProject = any;
+
+/**
+ * Helper to safely parse dates, fallback to current date if invalid
+ */
+function parseDate(dateValue: string | Date | null | undefined): Date {
+  if (!dateValue) return new Date();
+  const parsed = new Date(dateValue);
+  return isNaN(parsed.getTime()) ? new Date() : parsed;
+}
 
 /**
  * Fetch projects list from the backend API or mock data
@@ -27,14 +37,7 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
     return mockProjects;
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
-
-  if (!baseUrl) {
-    throw new Error("Missing NEXT_PUBLIC_TURING_API environment variable");
-  }
-
-  // Remove trailing slash if present
-  const apiUrl = baseUrl.replace(/\/$/, "");
+  const apiUrl = getApiUrl();
 
   logger.debug({ url: `${apiUrl}/projects` }, "Fetching projects from API");
 
@@ -73,48 +76,39 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
 
   // Normalize projects to ensure valid status values and convert date strings to Date objects
   const projects = projectsArray.map((project: RawProject) => {
-    // Debug: Log individual project data before transformation
+    // Debug: Log raw project data to see API format
     logger.debug(
       {
-        projectId: project.id,
-        name: project.name,
+        id: project.id,
         status: project.status,
-        createdAt: project.createdAt,
-        updatedAt: project.updatedAt,
-        completedAt: project.completedAt,
+        file_count: project.file_count,
+        created_at: project.created_at,
+        updated_at: project.updated_at,
+        last_activity: project.last_activity,
       },
-      "Processing raw project data"
+      "Raw project data from API"
     );
 
-    // Helper to safely parse dates, fallback to current date if invalid
-    const parseDate = (dateValue: string | Date | null | undefined): Date => {
-      if (!dateValue) return new Date();
-      const parsed = new Date(dateValue);
-      return isNaN(parsed.getTime()) ? new Date() : parsed;
-    };
+    // Map API status to internal status
+    const status = API_STATUS_MAP[project.status] || "setup";
 
-    const updatedAt = parseDate(project.updatedAt);
-    const lastActivity = getRelativeTime(updatedAt);
+    // Use last_activity.created_at for relative time calculation
+    const lastActivityDate = project.last_activity?.created_at
+      ? parseDate(project.last_activity.created_at)
+      : parseDate(project.updated_at);
+    const lastActivity = getRelativeTime(lastActivityDate);
 
     return {
-      ...project,
-      // Default to 'setup' if status is missing or invalid
-      status:
-        project.status === "complete" ||
-        project.status === "running" ||
-        project.status === "setup"
-          ? project.status
-          : "setup",
-      // Convert date strings to Date objects with fallback
-      createdAt: parseDate(project.createdAt),
-      updatedAt,
-      completedAt: project.completedAt
-        ? parseDate(project.completedAt)
-        : undefined,
-      // Initialize datasetCount and lastActivity with defaults if not provided
-      datasetCount: project.datasetCount ?? 0,
+      id: project.id,
+      name: project.name,
+      description: project.description,
+      status,
+      createdAt: parseDate(project.created_at),
+      updatedAt: parseDate(project.updated_at),
+      completedAt: undefined, // API doesn't provide this yet
+      datasetCount: project.file_count ?? 0,
       lastActivity,
-      datasets: project.datasets ?? [],
+      datasets: [], // Datasets are fetched separately per project
     };
   });
 
@@ -142,13 +136,7 @@ export async function deleteProject(
     return;
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
-
-  if (!baseUrl) {
-    throw new Error("Missing NEXT_PUBLIC_TURING_API environment variable");
-  }
-
-  const apiUrl = baseUrl.replace(/\/$/, "");
+  const apiUrl = getApiUrl();
 
   logger.info(
     { projectId, url: `${apiUrl}/projects/${projectId}` },
@@ -208,13 +196,7 @@ export async function createProject(
     return newProject;
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
-
-  if (!baseUrl) {
-    throw new Error("Missing NEXT_PUBLIC_TURING_API environment variable");
-  }
-
-  const apiUrl = baseUrl.replace(/\/$/, "");
+  const apiUrl = getApiUrl();
 
   logger.info(
     { name: data.name, url: `${apiUrl}/projects` },
@@ -245,34 +227,25 @@ export async function createProject(
     "Project created via API"
   );
 
-  // Helper to safely parse dates, fallback to current date if invalid
-  const parseDate = (dateValue: string | Date | null | undefined): Date => {
-    if (!dateValue) return new Date();
-    const parsed = new Date(dateValue);
-    return isNaN(parsed.getTime()) ? new Date() : parsed;
-  };
+  // Map API status to internal status
+  const status = API_STATUS_MAP[project.status] || "setup";
 
-  // Normalize status to ensure it's valid and convert date strings to Date objects
-  const updatedAt = parseDate(project.updatedAt);
-  const lastActivity = getRelativeTime(updatedAt);
+  // Use last_activity.created_at for relative time calculation
+  const lastActivityDate = project.last_activity?.created_at
+    ? parseDate(project.last_activity.created_at)
+    : parseDate(project.updated_at);
+  const lastActivity = getRelativeTime(lastActivityDate);
 
   return {
-    ...project,
-    status:
-      project.status === "complete" ||
-      project.status === "running" ||
-      project.status === "setup"
-        ? project.status
-        : "setup",
-    // Convert date strings to Date objects with fallback
-    createdAt: parseDate(project.createdAt),
-    updatedAt,
-    completedAt: project.completedAt
-      ? parseDate(project.completedAt)
-      : undefined,
-    // Initialize datasetCount and lastActivity with defaults if not provided
-    datasetCount: project.datasetCount ?? 0,
+    id: project.id,
+    name: project.name,
+    description: project.description,
+    status,
+    createdAt: parseDate(project.created_at),
+    updatedAt: parseDate(project.updated_at),
+    completedAt: undefined,
+    datasetCount: project.file_count ?? 0,
     lastActivity,
-    datasets: project.datasets ?? [],
+    datasets: [],
   };
 }

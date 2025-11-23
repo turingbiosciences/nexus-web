@@ -9,7 +9,6 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  console.log("Logto config:", logtoClientConfig);
-
+  // Client-side auth provider - config logged server-side in auth.ts
   return <LogtoProvider config={logtoClientConfig}>{children}</LogtoProvider>;
 }
