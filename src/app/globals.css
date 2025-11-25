@@ -79,7 +79,7 @@ body {
 @layer components {
   /* Container utility */
   .container-page {
-    @apply w-[80%] mx-auto px-4 sm:px-6 lg:px-8;
+    @apply w-[80%] max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 
   /* Card utility */
