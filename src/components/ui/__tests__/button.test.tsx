@@ -21,7 +21,7 @@ describe("Button", () => {
     render(<Button variant="outline">Outline</Button>);
     const button = screen.getByRole("button", { name: /outline/i });
     expect(button).toHaveClass("border");
-    expect(button).toHaveClass("border-input");
+    expect(button).toHaveClass("border-gray-300");
   });
 
   it("renders with secondary variant", () => {
