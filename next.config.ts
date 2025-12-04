@@ -19,8 +19,10 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self'",
-              // Allow connections to Logto and API
-              "connect-src 'self' https://*.logto.io https://*.logto.app",
+              // Allow connections to Logto, API, and Sentry
+              "connect-src 'self' https://*.logto.io https://*.logto.app https://*.ondigitalocean.app https://*.sentry.io",
+              // Allow workers for Sentry
+              "worker-src 'self' blob:",
               "frame-ancestors 'none'",
             ].join("; "),
           },
