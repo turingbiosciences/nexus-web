@@ -1,24 +1,24 @@
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useActivities } from "../activities";
-import { ProjectActivity } from "@/types/project";
-import React from "react";
+import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useActivities } from '../activities';
+import { ProjectActivity } from '@/types/project';
+import React from 'react';
 
 // Mock dependencies
-jest.mock("@/config/flags", () => ({
+jest.mock('@/config/flags', () => ({
   IS_MOCK: false,
 }));
 
-jest.mock("@/components/providers/token-provider", () => ({
+jest.mock('@/components/providers/token-provider', () => ({
   useAccessToken: jest.fn(),
 }));
 
-jest.mock("@/lib/auth-fetch");
+jest.mock('@/lib/auth-fetch');
 
 const mockedUseAccessToken = jest.requireMock(
-  "@/components/providers/token-provider"
+  '@/components/providers/token-provider'
 ).useAccessToken;
-const mockedAuthFetch = jest.requireMock("@/lib/auth-fetch").authFetch;
+const mockedAuthFetch = jest.requireMock('@/lib/auth-fetch').authFetch;
 
 // Test wrapper with React Query
 function createWrapper() {
@@ -31,30 +31,30 @@ function createWrapper() {
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
-  Wrapper.displayName = "QueryClientWrapper";
+  Wrapper.displayName = 'QueryClientWrapper';
   return Wrapper;
 }
 
-describe("useActivities", () => {
+describe('useActivities', () => {
   const originalEnv = process.env.NEXT_PUBLIC_TURING_API;
 
   const mockActivities: ProjectActivity[] = [
     {
-      id: "act-1",
-      type: "upload",
-      message: "Dataset uploaded",
-      at: new Date("2024-06-15T10:00:00"),
+      id: 'act-1',
+      type: 'upload',
+      message: 'Dataset uploaded',
+      at: new Date('2024-06-15T10:00:00'),
     },
     {
-      id: "act-2",
-      type: "status_change",
-      message: "Project run started",
-      at: new Date("2024-06-15T11:00:00"),
+      id: 'act-2',
+      type: 'status_change',
+      message: 'Project run started',
+      at: new Date('2024-06-15T11:00:00'),
     },
   ];
 
   beforeAll(() => {
-    process.env.NEXT_PUBLIC_TURING_API = "https://api.example.com";
+    process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
   });
 
   afterAll(() => {
@@ -65,9 +65,9 @@ describe("useActivities", () => {
     jest.clearAllMocks();
     // Set up default mock responses
     mockedUseAccessToken.mockReturnValue({
-      accessToken: "mock-token",
+      accessToken: 'mock-token',
       isAuthenticated: true,
-      refreshToken: jest.fn().mockResolvedValue("new-token"),
+      refreshToken: jest.fn().mockResolvedValue('new-token'),
       authLoading: false,
     });
 
@@ -75,42 +75,42 @@ describe("useActivities", () => {
     mockedAuthFetch.mockResolvedValue({
       ok: true,
       json: jest.fn().mockResolvedValue(mockActivities),
-      text: jest.fn().mockResolvedValue(""),
+      text: jest.fn().mockResolvedValue(''),
     });
   });
 
-  describe("Basic Functionality", () => {
-    it("fetches activities successfully", async () => {
-      const { result } = renderHook(() => useActivities("project-1"), {
+  describe('Basic Functionality', () => {
+    it('fetches activities successfully', async () => {
+      const { result } = renderHook(() => useActivities('project-1'), {
         wrapper: createWrapper(),
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(result.current.data).toHaveLength(2);
-      expect(result.current.data?.[0].id).toBe("act-1");
-      expect(result.current.data?.[1].id).toBe("act-2");
+      expect(result.current.data?.[0].id).toBe('act-1');
+      expect(result.current.data?.[1].id).toBe('act-2');
     });
 
-    it("calls authFetch with correct parameters", async () => {
-      renderHook(() => useActivities("project-1", { limit: 10 }), {
+    it('calls authFetch with correct parameters', async () => {
+      renderHook(() => useActivities('project-1', { limit: 10 }), {
         wrapper: createWrapper(),
       });
 
       await waitFor(() => expect(mockedAuthFetch).toHaveBeenCalled());
 
       expect(mockedAuthFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/projects/project-1/activities"),
+        expect.stringContaining('/projects/project-1/activities'),
         expect.objectContaining({
-          method: "GET",
-          token: "mock-token",
-          headers: { "Content-Type": "application/json" },
+          method: 'GET',
+          token: 'mock-token',
+          headers: { 'Content-Type': 'application/json' },
         })
       );
     });
 
-    it("passes limit parameter to fetchActivities", async () => {
-      renderHook(() => useActivities("project-1", { limit: 5 }), {
+    it('passes limit parameter to fetchActivities', async () => {
+      renderHook(() => useActivities('project-1', { limit: 5 }), {
         wrapper: createWrapper(),
       });
 
@@ -121,9 +121,9 @@ describe("useActivities", () => {
     });
   });
 
-  describe("Query States", () => {
-    it("starts in loading state", () => {
-      const { result } = renderHook(() => useActivities("project-1"), {
+  describe('Query States', () => {
+    it('starts in loading state', () => {
+      const { result } = renderHook(() => useActivities('project-1'), {
         wrapper: createWrapper(),
       });
 
@@ -131,14 +131,14 @@ describe("useActivities", () => {
       expect(result.current.data).toBeUndefined();
     });
 
-    it("handles error state", async () => {
+    it('handles error state', async () => {
       mockedAuthFetch.mockResolvedValue({
         ok: false,
         status: 500,
-        text: jest.fn().mockResolvedValue("Internal Server Error"),
+        text: jest.fn().mockResolvedValue('Internal Server Error'),
       });
 
-      const { result } = renderHook(() => useActivities("project-1"), {
+      const { result } = renderHook(() => useActivities('project-1'), {
         wrapper: createWrapper(),
       });
 
@@ -148,17 +148,17 @@ describe("useActivities", () => {
       expect(result.current.data).toBeUndefined();
     });
 
-    it("is disabled when projectId is empty", () => {
-      const { result } = renderHook(() => useActivities(""), {
+    it('is disabled when projectId is empty', () => {
+      const { result } = renderHook(() => useActivities(''), {
         wrapper: createWrapper(),
       });
 
       expect(result.current.isPending).toBe(true);
-      expect(result.current.fetchStatus).toBe("idle");
+      expect(result.current.fetchStatus).toBe('idle');
       expect(mockedAuthFetch).not.toHaveBeenCalled();
     });
 
-    it("is disabled when not authenticated", () => {
+    it('is disabled when not authenticated', () => {
       mockedUseAccessToken.mockReturnValue({
         accessToken: null,
         isAuthenticated: false,
@@ -166,15 +166,15 @@ describe("useActivities", () => {
         authLoading: false,
       });
 
-      const { result } = renderHook(() => useActivities("project-1"), {
+      const { result } = renderHook(() => useActivities('project-1'), {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.fetchStatus).toBe("idle");
+      expect(result.current.fetchStatus).toBe('idle');
       expect(mockedAuthFetch).not.toHaveBeenCalled();
     });
 
-    it("is disabled when accessToken is missing", () => {
+    it('is disabled when accessToken is missing', () => {
       mockedUseAccessToken.mockReturnValue({
         accessToken: null,
         isAuthenticated: true,
@@ -182,33 +182,33 @@ describe("useActivities", () => {
         authLoading: false,
       });
 
-      const { result } = renderHook(() => useActivities("project-1"), {
+      const { result } = renderHook(() => useActivities('project-1'), {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.fetchStatus).toBe("idle");
+      expect(result.current.fetchStatus).toBe('idle');
       expect(mockedAuthFetch).not.toHaveBeenCalled();
     });
 
-    it("is disabled when enabled option is false", () => {
+    it('is disabled when enabled option is false', () => {
       const { result } = renderHook(
-        () => useActivities("project-1", { enabled: false }),
+        () => useActivities('project-1', { enabled: false }),
         { wrapper: createWrapper() }
       );
 
-      expect(result.current.fetchStatus).toBe("idle");
+      expect(result.current.fetchStatus).toBe('idle');
       expect(mockedAuthFetch).not.toHaveBeenCalled();
     });
   });
 
-  describe("Response Formats", () => {
-    it("handles array response format", async () => {
+  describe('Response Formats', () => {
+    it('handles array response format', async () => {
       mockedAuthFetch.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue(mockActivities),
       });
 
-      const { result } = renderHook(() => useActivities("project-1"), {
+      const { result } = renderHook(() => useActivities('project-1'), {
         wrapper: createWrapper(),
       });
 
@@ -217,13 +217,13 @@ describe("useActivities", () => {
       expect(result.current.data).toHaveLength(2);
     });
 
-    it("handles object with items property", async () => {
+    it('handles object with items property', async () => {
       mockedAuthFetch.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({ items: mockActivities }),
       });
 
-      const { result } = renderHook(() => useActivities("project-1"), {
+      const { result } = renderHook(() => useActivities('project-1'), {
         wrapper: createWrapper(),
       });
 
@@ -232,13 +232,13 @@ describe("useActivities", () => {
       expect(result.current.data).toHaveLength(2);
     });
 
-    it("handles object with activities property", async () => {
+    it('handles object with activities property', async () => {
       mockedAuthFetch.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({ activities: mockActivities }),
       });
 
-      const { result } = renderHook(() => useActivities("project-1"), {
+      const { result } = renderHook(() => useActivities('project-1'), {
         wrapper: createWrapper(),
       });
 
@@ -247,13 +247,13 @@ describe("useActivities", () => {
       expect(result.current.data).toHaveLength(2);
     });
 
-    it("maps timestamp field to at", async () => {
+    it('maps timestamp field to at', async () => {
       const apiActivities = [
         {
-          id: "act-1",
-          type: "upload",
-          message: "Test",
-          timestamp: "2024-06-15T10:00:00Z",
+          id: 'act-1',
+          type: 'upload',
+          message: 'Test',
+          timestamp: '2024-06-15T10:00:00Z',
         },
       ];
 
@@ -262,7 +262,7 @@ describe("useActivities", () => {
         json: jest.fn().mockResolvedValue(apiActivities),
       });
 
-      const { result } = renderHook(() => useActivities("project-1"), {
+      const { result } = renderHook(() => useActivities('project-1'), {
         wrapper: createWrapper(),
       });
 
@@ -271,13 +271,13 @@ describe("useActivities", () => {
       expect(result.current.data?.[0].at).toBeInstanceOf(Date);
     });
 
-    it("maps createdAt field to at when timestamp is missing", async () => {
+    it('maps createdAt field to at when timestamp is missing', async () => {
       const apiActivities = [
         {
-          id: "act-1",
-          type: "upload",
-          message: "Test",
-          createdAt: "2024-06-15T10:00:00Z",
+          id: 'act-1',
+          type: 'upload',
+          message: 'Test',
+          createdAt: '2024-06-15T10:00:00Z',
         },
       ];
 
@@ -286,7 +286,7 @@ describe("useActivities", () => {
         json: jest.fn().mockResolvedValue(apiActivities),
       });
 
-      const { result } = renderHook(() => useActivities("project-1"), {
+      const { result } = renderHook(() => useActivities('project-1'), {
         wrapper: createWrapper(),
       });
 
@@ -295,12 +295,12 @@ describe("useActivities", () => {
       expect(result.current.data?.[0].at).toBeInstanceOf(Date);
     });
 
-    it("uses current date when no timestamp fields present", async () => {
+    it('uses current date when no timestamp fields present', async () => {
       const apiActivities = [
         {
-          id: "act-1",
-          type: "upload",
-          message: "Test",
+          id: 'act-1',
+          type: 'upload',
+          message: 'Test',
         },
       ];
 
@@ -309,7 +309,7 @@ describe("useActivities", () => {
         json: jest.fn().mockResolvedValue(apiActivities),
       });
 
-      const { result } = renderHook(() => useActivities("project-1"), {
+      const { result } = renderHook(() => useActivities('project-1'), {
         wrapper: createWrapper(),
       });
 
@@ -319,9 +319,9 @@ describe("useActivities", () => {
     });
   });
 
-  describe("Options", () => {
-    it("passes default limit of 20 to query function", async () => {
-      renderHook(() => useActivities("project-1"), {
+  describe('Options', () => {
+    it('passes default limit of 20 to query function', async () => {
+      renderHook(() => useActivities('project-1'), {
         wrapper: createWrapper(),
       });
 
@@ -331,8 +331,8 @@ describe("useActivities", () => {
       expect(mockedAuthFetch).toHaveBeenCalled();
     });
 
-    it("respects custom limit option", async () => {
-      renderHook(() => useActivities("project-1", { limit: 50 }), {
+    it('respects custom limit option', async () => {
+      renderHook(() => useActivities('project-1', { limit: 50 }), {
         wrapper: createWrapper(),
       });
 
@@ -343,10 +343,10 @@ describe("useActivities", () => {
     });
   });
 
-  describe("Query Key", () => {
-    it("uses correct query key format", async () => {
+  describe('Query Key', () => {
+    it('uses correct query key format', async () => {
       const { result } = renderHook(
-        () => useActivities("project-1", { limit: 10 }),
+        () => useActivities('project-1', { limit: 10 }),
         { wrapper: createWrapper() }
       );
 
@@ -358,12 +358,12 @@ describe("useActivities", () => {
     });
   });
 
-  describe("Error Handling", () => {
-    it("throws error when NEXT_PUBLIC_TURING_API is missing", async () => {
+  describe('Error Handling', () => {
+    it('throws error when NEXT_PUBLIC_TURING_API is missing', async () => {
       const originalEnv = process.env.NEXT_PUBLIC_TURING_API;
       delete process.env.NEXT_PUBLIC_TURING_API;
 
-      const { result } = renderHook(() => useActivities("project-1"), {
+      const { result } = renderHook(() => useActivities('project-1'), {
         wrapper: createWrapper(),
       });
 
@@ -371,13 +371,13 @@ describe("useActivities", () => {
 
       expect(result.current.error).toBeDefined();
       expect(String(result.current.error)).toContain(
-        "Missing NEXT_PUBLIC_TURING_API"
+        'Missing NEXT_PUBLIC_TURING_API'
       );
 
       process.env.NEXT_PUBLIC_TURING_API = originalEnv;
     });
 
-    it("throws error when accessToken is not available during fetch", async () => {
+    it('throws error when accessToken is not available during fetch', async () => {
       mockedUseAccessToken.mockReturnValue({
         accessToken: null,
         isAuthenticated: true,
@@ -386,18 +386,18 @@ describe("useActivities", () => {
       });
 
       const { result } = renderHook(
-        () => useActivities("project-1", { enabled: true }),
+        () => useActivities('project-1', { enabled: true }),
         { wrapper: createWrapper() }
       );
 
       // Query should be disabled, so it won't fetch
-      expect(result.current.fetchStatus).toBe("idle");
+      expect(result.current.fetchStatus).toBe('idle');
     });
   });
 
-  describe("Stale Time", () => {
-    it("sets staleTime to 30 seconds", async () => {
-      const { result } = renderHook(() => useActivities("project-1"), {
+  describe('Stale Time', () => {
+    it('sets staleTime to 30 seconds', async () => {
+      const { result } = renderHook(() => useActivities('project-1'), {
         wrapper: createWrapper(),
       });
 

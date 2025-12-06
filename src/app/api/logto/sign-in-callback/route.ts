@@ -1,18 +1,18 @@
-import LogtoClient from "@logto/next/edge";
-import type { NextRequest } from "next/server";
-import { logtoConfig } from "@/lib/auth";
-import { logger } from "@/lib/logger";
-import { logRequest } from "@/lib/api-logger";
+import LogtoClient from '@logto/next/edge';
+import type { NextRequest } from 'next/server';
+import { logtoConfig } from '@/lib/auth';
+import { logger } from '@/lib/logger';
+import { logRequest } from '@/lib/api-logger';
 
 const logto = new LogtoClient(logtoConfig);
 
 export const GET = async (req: NextRequest) => {
-  logRequest("sign-in-callback", req);
+  logRequest('sign-in-callback', req);
 
   // Log error parameters if present
   const url = new URL(req.url);
-  const error = url.searchParams.get("error");
-  const errorDescription = url.searchParams.get("error_description");
+  const error = url.searchParams.get('error');
+  const errorDescription = url.searchParams.get('error_description');
 
   if (error) {
     logger.error(
@@ -20,9 +20,9 @@ export const GET = async (req: NextRequest) => {
         error,
         errorDescription,
         configuredResources: logtoConfig.resources,
-        state: url.searchParams.get("state"),
+        state: url.searchParams.get('state'),
       },
-      "Logto sign-in callback error"
+      'Logto sign-in callback error'
     );
   }
 
@@ -36,16 +36,16 @@ export const GET = async (req: NextRequest) => {
       status: res.status,
       setCookieCount: setCookies.length,
     },
-    "Sign-in callback response"
+    'Sign-in callback response'
   );
   if (setCookies.length > 0) {
     const cookieNames = setCookies.map((cookie) => {
       const nameMatch = cookie.match(/^([^=]+)=/);
-      return nameMatch?.[1] || "unknown";
+      return nameMatch?.[1] || 'unknown';
     });
-    logger.debug({ cookieNames }, "Session cookies set");
+    logger.debug({ cookieNames }, 'Session cookies set');
   } else {
-    logger.warn("No Set-Cookie headers found in sign-in callback response");
+    logger.warn('No Set-Cookie headers found in sign-in callback response');
   }
 
   return res;

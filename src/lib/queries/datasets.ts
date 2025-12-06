@@ -1,11 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
-import { datasetsKey } from "@/lib/queries/keys";
-import { ProjectDataset } from "@/types/project";
-import { IS_MOCK } from "@/config/flags";
-import { projectsRepository } from "@/data";
-import { useAccessToken } from "@/components/providers/token-provider";
-import { authFetch } from "@/lib/auth-fetch";
-import { logger } from "@/lib/logger";
+import { useQuery } from '@tanstack/react-query';
+import { datasetsKey } from '@/lib/queries/keys';
+import { ProjectDataset } from '@/types/project';
+import { IS_MOCK } from '@/config/flags';
+import { projectsRepository } from '@/data';
+import { useAccessToken } from '@/components/providers/token-provider';
+import { authFetch } from '@/lib/auth-fetch';
+import { logger } from '@/lib/logger';
 
 interface UseDatasetsOptions {
   enabled?: boolean;
@@ -29,23 +29,23 @@ async function fetchDatasetsViaApi(
   opts?: { cursor?: string; limit?: number }
 ) {
   const base = process.env.NEXT_PUBLIC_TURING_API;
-  if (!base) throw new Error("Missing NEXT_PUBLIC_TURING_API env var");
+  if (!base) throw new Error('Missing NEXT_PUBLIC_TURING_API env var');
   const params = new URLSearchParams();
-  if (opts?.cursor) params.set("cursor", opts.cursor);
-  if (opts?.limit) params.set("limit", String(opts.limit));
+  if (opts?.cursor) params.set('cursor', opts.cursor);
+  if (opts?.limit) params.set('limit', String(opts.limit));
   // Updated endpoint to match backend API: /projects/[id]/files instead of /datasets
   const url = `${base}/projects/${projectId}/files${
-    params.size ? `?${params.toString()}` : ""
+    params.size ? `?${params.toString()}` : ''
   }`;
 
-  logger.info({ projectId, url }, "Fetching datasets");
+  logger.info({ projectId, url }, 'Fetching datasets');
 
   const res = await authFetch(url, {
-    method: "GET",
+    method: 'GET',
     token: accessToken,
     onTokenRefresh,
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
 
@@ -53,7 +53,7 @@ async function fetchDatasetsViaApi(
     const errorText = await res.text();
     logger.error(
       { projectId, status: res.status, errorText },
-      "Failed to fetch datasets"
+      'Failed to fetch datasets'
     );
     throw new Error(`Failed to fetch datasets (${res.status})`);
   }
@@ -62,7 +62,7 @@ async function fetchDatasetsViaApi(
   const json = await res.json();
   logger.info(
     { projectId, isArray: Array.isArray(json), json },
-    "Datasets response received"
+    'Datasets response received'
   );
 
   const items: ApiDataset[] = Array.isArray(json) ? json : json.items;
@@ -75,7 +75,7 @@ async function fetchDatasetsViaApi(
 
   logger.debug(
     { projectId, count: mapped.length },
-    "Datasets mapped successfully"
+    'Datasets mapped successfully'
   );
 
   return {
@@ -103,7 +103,7 @@ export function useDatasets(
 ) {
   const { accessToken, isAuthenticated, refreshToken } = useAccessToken();
   const options: UseDatasetsOptions =
-    typeof enabledOrOptions === "boolean"
+    typeof enabledOrOptions === 'boolean'
       ? { enabled: enabledOrOptions }
       : enabledOrOptions;
   const { enabled = true, cursor, limit, paginated } = options;
@@ -111,7 +111,7 @@ export function useDatasets(
     queryKey: datasetsKey(projectId, cursor, limit),
     queryFn: () => {
       if (!accessToken) {
-        throw new Error("Access token not available");
+        throw new Error('Access token not available');
       }
       return fetchDatasets(projectId, accessToken, refreshToken, {
         cursor,

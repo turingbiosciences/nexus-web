@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { ResultsSection } from "@/components/projects/results-section";
+import { ResultsSection } from '@/components/projects/results-section';
 
 interface ProjectResultsTabProps {
   projectId: string;

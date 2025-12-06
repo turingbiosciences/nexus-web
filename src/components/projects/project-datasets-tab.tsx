@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { DatasetsSection } from "@/components/projects/datasets-section";
+import { DatasetsSection } from '@/components/projects/datasets-section';
 
 interface ProjectDatasetsTabProps {
   projectId: string;

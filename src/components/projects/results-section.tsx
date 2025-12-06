@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
-import { useAccessToken } from "@/components/providers/token-provider";
-import { authFetch } from "@/lib/auth-fetch";
-import { logger } from "@/lib/logger";
+import { useQuery } from '@tanstack/react-query';
+import { useAccessToken } from '@/components/providers/token-provider';
+import { authFetch } from '@/lib/auth-fetch';
+import { logger } from '@/lib/logger';
 
 interface ProjectResult {
   id: string;
@@ -23,17 +23,17 @@ async function fetchResults(
   onTokenRefresh: () => Promise<string | null>
 ): Promise<ProjectResult[]> {
   const base = process.env.NEXT_PUBLIC_TURING_API;
-  if (!base) throw new Error("Missing NEXT_PUBLIC_TURING_API env var");
+  if (!base) throw new Error('Missing NEXT_PUBLIC_TURING_API env var');
 
   const url = `${base}/projects/${projectId}/results`;
-  logger.debug({ projectId, url }, "Fetching results");
+  logger.debug({ projectId, url }, 'Fetching results');
 
   const res = await authFetch(url, {
-    method: "GET",
+    method: 'GET',
     token: accessToken,
     onTokenRefresh,
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
 
@@ -41,7 +41,7 @@ async function fetchResults(
     const errorText = await res.text();
     logger.error(
       { projectId, status: res.status, errorText },
-      "Failed to fetch results"
+      'Failed to fetch results'
     );
     throw new Error(`Failed to fetch results (${res.status})`);
   }
@@ -52,7 +52,7 @@ async function fetchResults(
       projectId,
       count: json.items?.length || json.results?.length || json.length || 0,
     },
-    "Results response received"
+    'Results response received'
   );
 
   // Support both array and object with items/results property
@@ -67,10 +67,10 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
   const { accessToken, isAuthenticated, refreshToken } = useAccessToken();
 
   const resultsQuery = useQuery({
-    queryKey: ["results", projectId],
+    queryKey: ['results', projectId],
     queryFn: () => {
       if (!accessToken) {
-        throw new Error("Access token not available");
+        throw new Error('Access token not available');
       }
       return fetchResults(projectId, accessToken, refreshToken);
     },

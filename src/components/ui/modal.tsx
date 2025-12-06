@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useRef } from "react";
-import { X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useEffect, useRef } from 'react';
+import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ModalProps {
   isOpen: boolean;
@@ -24,15 +24,15 @@ export function Modal({
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         // Check if the event target is a form control that might have its own ESC handler
         const target = e.target as HTMLElement;
         const isFormControl =
           target instanceof HTMLInputElement ||
           target instanceof HTMLTextAreaElement ||
           target instanceof HTMLSelectElement ||
-          target.getAttribute("role") === "combobox" ||
-          target.getAttribute("role") === "listbox";
+          target.getAttribute('role') === 'combobox' ||
+          target.getAttribute('role') === 'listbox';
 
         // Only close modal if ESC is not from a form control
         // Form controls should handle their own ESC behavior first
@@ -43,14 +43,14 @@ export function Modal({
     };
 
     if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
+      document.addEventListener('keydown', handleEscape);
       // Prevent body scroll when modal is open
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
     }
 
     return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
 
@@ -71,7 +71,7 @@ export function Modal({
       <div
         ref={modalRef}
         className={cn(
-          "bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto",
+          'bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto',
           className
         )}
       >

@@ -1,25 +1,25 @@
-import React from "react";
-import { render } from "@testing-library/react";
-import { ProjectOverviewTab } from "../project-overview-tab";
-import { useProjects } from "@/components/providers/projects-provider";
+import React from 'react';
+import { render } from '@testing-library/react';
+import { ProjectOverviewTab } from '../project-overview-tab';
+import { useProjects } from '@/components/providers/projects-provider';
 
 // Mock dependencies
-jest.mock("@/components/providers/projects-provider");
+jest.mock('@/components/providers/projects-provider');
 
 const mockUseProjects = useProjects as jest.MockedFunction<typeof useProjects>;
 
-describe("ProjectOverviewTab", () => {
+describe('ProjectOverviewTab', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseProjects.mockReturnValue({
       projects: [
         {
-          id: "test-project-123",
-          name: "Test Project",
-          description: "Test description",
-          status: "running" as const,
-          createdAt: new Date("2024-01-01T00:00:00Z"),
-          updatedAt: new Date("2024-01-01T00:00:00Z"),
+          id: 'test-project-123',
+          name: 'Test Project',
+          description: 'Test description',
+          status: 'running' as const,
+          createdAt: new Date('2024-01-01T00:00:00Z'),
+          updatedAt: new Date('2024-01-01T00:00:00Z'),
         },
       ],
       loading: false,
@@ -33,14 +33,14 @@ describe("ProjectOverviewTab", () => {
     });
   });
 
-  it("renders ProjectStatsCard", () => {
+  it('renders ProjectStatsCard', () => {
     render(<ProjectOverviewTab projectId="test-project-123" />);
 
     // ProjectStatsCard renders project name
     expect(mockUseProjects).toHaveBeenCalled();
   });
 
-  it("passes projectId prop to ProjectStatsCard", () => {
+  it('passes projectId prop to ProjectStatsCard', () => {
     render(<ProjectOverviewTab projectId="another-project-456" />);
 
     expect(mockUseProjects).toHaveBeenCalled();

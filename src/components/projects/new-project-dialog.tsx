@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useProjects } from "@/components/providers/projects-provider";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { useState } from 'react';
+import { useProjects } from '@/components/providers/projects-provider';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 
 interface NewProjectDialogProps {
   open: boolean;
@@ -17,16 +17,16 @@ export function NewProjectDialog({
   onCreated,
 }: NewProjectDialogProps) {
   const { createProject } = useProjects();
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   if (!open) return null;
 
   const reset = () => {
-    setName("");
-    setDescription("");
+    setName('');
+    setDescription('');
     setError(null);
     setSubmitting(false);
   };
@@ -34,7 +34,7 @@ export function NewProjectDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setError("Project name is required");
+      setError('Project name is required');
       return;
     }
     setSubmitting(true);
@@ -44,7 +44,7 @@ export function NewProjectDialog({
       reset();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create project");
+      setError(err instanceof Error ? err.message : 'Failed to create project');
       setSubmitting(false);
     }
   };
@@ -117,7 +117,7 @@ export function NewProjectDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Creating..." : "Create Project"}
+              {submitting ? 'Creating...' : 'Create Project'}
             </Button>
           </div>
         </form>

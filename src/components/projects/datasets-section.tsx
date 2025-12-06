@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { FileUploader } from "@/components/file-upload/file-uploader";
-import { formatBytes } from "@/lib/utils";
-import { useProjects } from "@/components/providers/projects-provider";
-import { useDatasets } from "@/lib/queries/datasets";
-import { reconcileDatasets } from "@/lib/reconcile-datasets";
-import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/toast-provider";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Download, Trash2 } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import { FileUploader } from '@/components/file-upload/file-uploader';
+import { formatBytes } from '@/lib/utils';
+import { useProjects } from '@/components/providers/projects-provider';
+import { useDatasets } from '@/lib/queries/datasets';
+import { reconcileDatasets } from '@/lib/reconcile-datasets';
+import { useState, useEffect } from 'react';
+import { useToast } from '@/components/ui/toast-provider';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Download, Trash2 } from 'lucide-react';
 import {
   useUploadDatasetMutation,
   useDeleteDatasetMutation,
-} from "@/lib/queries/dataset-mutations";
+} from '@/lib/queries/dataset-mutations';
 
 interface DatasetsSectionProps {
   projectId: string;
@@ -35,7 +35,7 @@ export function DatasetsSection({
     limit: pageSize,
   });
   const remoteDatasets = datasetsQuery.data as
-    | import("@/types/project").ProjectDataset[]
+    | import('@/types/project').ProjectDataset[]
     | undefined; // flattened array per hook contract (paginated=false default)
   const remoteLoading = datasetsQuery.isLoading;
   const nextCursor = (datasetsQuery as { nextCursor?: string }).nextCursor;
@@ -45,7 +45,7 @@ export function DatasetsSection({
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
 
   const optimistic = (project?.datasets || []).filter((d) =>
-    d.id.startsWith("optimistic-")
+    d.id.startsWith('optimistic-')
   );
   const combined = reconcileDatasets({
     remote: remoteDatasets,
@@ -73,7 +73,7 @@ export function DatasetsSection({
       <div className="space-y-4">
         <p className="text-sm text-gray-600">
           {(project.datasetCount ?? 0) === 0
-            ? "No datasets found."
+            ? 'No datasets found.'
             : `This project has ${project.datasetCount} dataset(s).`}
         </p>
         {remoteLoading && (
@@ -95,7 +95,7 @@ export function DatasetsSection({
                 <li
                   key={d.id}
                   className={`flex items-center justify-between px-4 py-3 text-sm bg-white hover:bg-gray-50 ${
-                    d.id?.startsWith("optimistic-") ? "opacity-70 italic" : ""
+                    d.id?.startsWith('optimistic-') ? 'opacity-70 italic' : ''
                   }`}
                 >
                   <div className="flex-1 min-w-0 pr-4">
@@ -113,7 +113,7 @@ export function DatasetsSection({
                       className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
                       onClick={() => {
                         // Temporary stub for download action; logs for test instrumentation
-                        console.log("Download dataset", d.id);
+                        console.log('Download dataset', d.id);
                       }}
                       aria-label={`Download ${d.filename}`}
                     >
@@ -131,22 +131,22 @@ export function DatasetsSection({
                         updateProject(project.id, {
                           datasets: newDatasets,
                           datasetCount: newDatasets.length,
-                          lastActivity: "dataset deleted",
+                          lastActivity: 'dataset deleted',
                         });
                         setPendingDeleteIds((prev) => [...prev, d.id]);
                         deleteMutation.mutate(d.id, {
                           onSuccess: () => {
                             push({
-                              title: "Dataset deleted",
+                              title: 'Dataset deleted',
                               description: `${d.filename} was removed successfully.`,
-                              variant: "default",
+                              variant: 'default',
                             });
                           },
                           onError: () => {
                             push({
-                              title: "Deletion failed",
+                              title: 'Deletion failed',
                               description: `Could not delete ${d.filename}. Please retry.`,
-                              variant: "destructive",
+                              variant: 'destructive',
                             });
                           },
                           onSettled: () => {
@@ -187,16 +187,16 @@ export function DatasetsSection({
                 uploadMutation.mutate(f, {
                   onSuccess: () => {
                     push({
-                      title: "Upload complete",
+                      title: 'Upload complete',
                       description: `${f.name} was uploaded successfully.`,
-                      variant: "default",
+                      variant: 'default',
                     });
                   },
                   onError: () => {
                     push({
-                      title: "Upload failed",
+                      title: 'Upload failed',
                       description: `Could not upload ${f.name}. Please try again.`,
-                      variant: "destructive",
+                      variant: 'destructive',
                     });
                   },
                 });

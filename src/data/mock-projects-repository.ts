@@ -1,6 +1,6 @@
-import { mockProjects } from "@/lib/mock-data";
-import { Project, ProjectDataset } from "@/types/project";
-import { ProjectsRepository, DatasetPage } from "./projects-repository";
+import { mockProjects } from '@/lib/mock-data';
+import { Project, ProjectDataset } from '@/types/project';
+import { ProjectsRepository, DatasetPage } from './projects-repository';
 
 // In-memory mutable clone so that repository operations don't mutate original export unintentionally
 let store: Project[] = mockProjects.map((p) => ({
@@ -28,17 +28,17 @@ export class MockProjectsRepository implements ProjectsRepository {
       id: crypto.randomUUID(),
       name: input.name.trim(),
       description: input.description.trim(),
-      status: "setup",
+      status: 'setup',
       createdAt: now,
       updatedAt: now,
       datasetCount: 0,
-      lastActivity: "just now",
+      lastActivity: 'just now',
       datasets: [],
       activities: [
         {
           id: crypto.randomUUID(),
-          type: "created",
-          message: "Project created",
+          type: 'created',
+          message: 'Project created',
           at: now,
         },
       ],
@@ -64,7 +64,7 @@ export class MockProjectsRepository implements ProjectsRepository {
     file: { name: string; size: number }
   ): Promise<ProjectDataset> {
     const project = findProject(id);
-    if (!project) throw new Error("Project not found");
+    if (!project) throw new Error('Project not found');
     const dataset: ProjectDataset = {
       id: crypto.randomUUID(),
       filename: file.name,
@@ -74,7 +74,7 @@ export class MockProjectsRepository implements ProjectsRepository {
     project.datasets = [...(project.datasets || []), dataset];
     project.datasetCount = project.datasets.length;
     project.updatedAt = new Date();
-    project.lastActivity = "dataset uploaded";
+    project.lastActivity = 'dataset uploaded';
     return dataset;
   }
 
@@ -87,7 +87,7 @@ export class MockProjectsRepository implements ProjectsRepository {
     );
     project.datasetCount = project.datasets.length;
     project.updatedAt = new Date();
-    project.lastActivity = "dataset deleted";
+    project.lastActivity = 'dataset deleted';
     return project.datasets.length < before;
   }
 

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   createContext,
@@ -7,8 +7,8 @@ import {
   useEffect,
   ReactNode,
   useCallback,
-} from "react";
-import { logger } from "@/lib/logger";
+} from 'react';
+import { logger } from '@/lib/logger';
 
 interface TokenContextValue {
   accessToken: string | null;
@@ -25,7 +25,7 @@ const TokenContext = createContext<TokenContextValue | undefined>(undefined);
 export const TokenProvider = ({ children }: { children: ReactNode }) => {
   logger.debug(
     { windowType: typeof window },
-    "TokenProvider function body executing"
+    'TokenProvider function body executing'
   );
 
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -41,7 +41,7 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
       authLoading,
       hasAccessToken: !!accessToken,
     },
-    "TokenProvider component render"
+    'TokenProvider component render'
   );
 
   // Check authentication by calling the server-side API
@@ -50,28 +50,28 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
     let cancelled = false;
 
     async function checkAuthStatus() {
-      logger.debug("CLIENT: Checking auth status");
+      logger.debug('CLIENT: Checking auth status');
 
       try {
-        const res = await fetch("/api/logto/user", { credentials: "include" });
+        const res = await fetch('/api/logto/user', { credentials: 'include' });
         if (cancelled) return;
 
         if (res.ok) {
           const data = await res.json();
           const authenticated = Boolean(data?.isAuthenticated);
-          logger.debug({ authenticated }, "CLIENT: Auth status received");
+          logger.debug({ authenticated }, 'CLIENT: Auth status received');
           setIsAuthenticated(authenticated);
         } else {
-          logger.warn({ status: res.status }, "CLIENT: Auth check failed");
+          logger.warn({ status: res.status }, 'CLIENT: Auth check failed');
           setIsAuthenticated(false);
         }
       } catch (err) {
         if (cancelled) return;
-        logger.error({ error: err }, "CLIENT: Auth check error");
+        logger.error({ error: err }, 'CLIENT: Auth check error');
         setIsAuthenticated(false);
       } finally {
         if (!cancelled) {
-          logger.debug("CLIENT: Setting authLoading to false");
+          logger.debug('CLIENT: Setting authLoading to false');
           setAuthLoading(false);
         }
       }
@@ -85,17 +85,17 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
   }, []); // Run once on mount
 
   const fetchToken = useCallback(async (): Promise<string | null> => {
-    logger.debug({ isAuthenticated, authLoading }, "fetchToken called");
+    logger.debug({ isAuthenticated, authLoading }, 'fetchToken called');
 
     // Wait for auth to finish loading
     if (authLoading) {
-      logger.debug("Auth still loading, skipping token fetch");
+      logger.debug('Auth still loading, skipping token fetch');
       return null;
     }
 
     // Clear token if not authenticated
     if (!isAuthenticated) {
-      logger.debug("Not authenticated, clearing token");
+      logger.debug('Not authenticated, clearing token');
       setAccessToken(null);
       setError(null);
       setIsLoading(false);
@@ -106,11 +106,11 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
 
     try {
-      logger.debug("Fetching access token from server");
+      logger.debug('Fetching access token from server');
 
       // Fetch token from server-side API route
       // This route will use @logto/next to get the token from the server session
-      const response = await fetch("/api/logto/token");
+      const response = await fetch('/api/logto/token');
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -124,15 +124,15 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
 
       if (!data.accessToken) {
         throw new Error(
-          "No access token returned. This may be due to either: (1) the M2M application not being configured correctly, or (2) the API resource not being assigned to the M2M app in Logto Console. Please check both settings."
+          'No access token returned. This may be due to either: (1) the M2M application not being configured correctly, or (2) the API resource not being assigned to the M2M app in Logto Console. Please check both settings.'
         );
       }
 
-      logger.info("Access token obtained from server");
+      logger.info('Access token obtained from server');
       setAccessToken(data.accessToken);
       return data.accessToken;
     } catch (err) {
-      logger.error({ error: err }, "Token fetch failed");
+      logger.error({ error: err }, 'Token fetch failed');
       setError(err instanceof Error ? err : new Error(String(err)));
       setAccessToken(null);
       return null;
@@ -143,7 +143,7 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
 
   // Fetch token when authentication state changes
   useEffect(() => {
-    logger.debug("useEffect triggered - calling fetchToken");
+    logger.debug('useEffect triggered - calling fetchToken');
     fetchToken();
   }, [fetchToken]);
 
@@ -168,7 +168,7 @@ export const TokenProvider = ({ children }: { children: ReactNode }) => {
 export function useAccessToken() {
   const ctx = useContext(TokenContext);
   if (!ctx) {
-    throw new Error("useAccessToken must be used within a TokenProvider");
+    throw new Error('useAccessToken must be used within a TokenProvider');
   }
   return ctx;
 }

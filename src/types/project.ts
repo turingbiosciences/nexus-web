@@ -1,7 +1,7 @@
-export type ProjectStatus = "complete" | "running" | "setup";
+export type ProjectStatus = 'complete' | 'running' | 'setup';
 
 // Define status order for consistent iteration across the application
-export const STATUS_ORDER = ["complete", "running", "setup"] as const;
+export const STATUS_ORDER = ['complete', 'running', 'setup'] as const;
 
 export interface Project {
   id: string;
@@ -32,7 +32,7 @@ export interface ProjectDataset {
 
 export interface ProjectActivity {
   id: string;
-  type: "created" | "updated" | "upload" | "delete" | "status_change";
+  type: 'created' | 'updated' | 'upload' | 'delete' | 'status_change';
   message: string;
   at: Date;
 }

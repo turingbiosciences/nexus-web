@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
 interface LoadingCardProps {
   message?: string;
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export function LoadingCard({
-  message = "Loading...",
-  size = "md",
+  message = 'Loading...',
+  size = 'md',
 }: LoadingCardProps) {
   const sizeClasses = {
-    sm: "h-8 w-8 border-2",
-    md: "h-12 w-12 border-b-2",
-    lg: "h-16 w-16 border-b-3",
+    sm: 'h-8 w-8 border-2',
+    md: 'h-12 w-12 border-b-2',
+    lg: 'h-16 w-16 border-b-3',
   };
 
   return (

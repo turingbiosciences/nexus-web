@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { installGlobalFetchInterceptor } from "@/lib/global-fetch-handler";
+import { useEffect } from 'react';
+import { installGlobalFetchInterceptor } from '@/lib/global-fetch-handler';
 
 /**
  * Component that installs the global fetch interceptor on mount.

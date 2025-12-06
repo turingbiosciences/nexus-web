@@ -1,5 +1,5 @@
-import { Suspense } from "react";
-import { ProjectDetailsClient } from "./project-details-client";
+import { Suspense } from 'react';
+import { ProjectDetailsClient } from './project-details-client';
 
 export default async function ProjectPage({
   params,

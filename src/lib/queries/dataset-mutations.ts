@@ -1,6 +1,6 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { datasetsKey } from "@/lib/queries/keys";
-import { ProjectDataset } from "@/types/project";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { datasetsKey } from '@/lib/queries/keys';
+import { ProjectDataset } from '@/types/project';
 
 interface UploadArgs {
   projectId: string;
@@ -35,7 +35,7 @@ async function apiDeleteDataset({
 export function useUploadDatasetMutation(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationKey: ["upload", projectId],
+    mutationKey: ['upload', projectId],
     mutationFn: (file: File) => apiUploadDataset({ projectId, file }),
     onMutate: async () => {
       // Cancel in-flight queries to prevent race conditions
@@ -57,7 +57,7 @@ export function useUploadDatasetMutation(projectId: string) {
 export function useDeleteDatasetMutation(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationKey: ["delete", projectId],
+    mutationKey: ['delete', projectId],
     mutationFn: (datasetId: string) =>
       apiDeleteDataset({ projectId, datasetId }),
     onMutate: async () => {

@@ -29,7 +29,7 @@ The exposed DSN could allow unauthorized parties to:
 ```typescript
 // Before (INSECURE)
 Sentry.init({
-  dsn: "https://ee2162f3d4bc7ded395adb3f7e3980dc@o4510358306357248.ingest.us.sentry.io/4510358306553856",
+  dsn: 'https://ee2162f3d4bc7ded395adb3f7e3980dc@o4510358306357248.ingest.us.sentry.io/4510358306553856',
   // ...
 });
 
@@ -49,7 +49,6 @@ Sentry.init({
    ```
 
 2. **For Production/Staging:**
-
    - Add `NEXT_PUBLIC_SENTRY_DSN` to environment variables in deployment platform (Vercel, DigitalOcean, etc.)
    - Never commit actual DSN values to version control
 

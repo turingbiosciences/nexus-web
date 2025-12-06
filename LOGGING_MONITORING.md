@@ -12,34 +12,34 @@ This project uses a dual approach for logging and error tracking:
 ### Usage
 
 ```typescript
-import { logger } from "@/lib/logger";
+import { logger } from '@/lib/logger';
 
 // Info logs (general application flow)
-logger.info({ userId: "123", action: "upload" }, "User uploaded file");
+logger.info({ userId: '123', action: 'upload' }, 'User uploaded file');
 
 // Warning logs (non-critical issues)
-logger.warn({ projectId: "abc" }, "Project approaching storage limit");
+logger.warn({ projectId: 'abc' }, 'Project approaching storage limit');
 
 // Error logs (critical issues - automatically sent to Sentry)
-logger.error({ error, userId, context }, "Failed to process dataset");
+logger.error({ error, userId, context }, 'Failed to process dataset');
 
 // Debug logs (development only)
-logger.debug({ data }, "Processing intermediate results");
+logger.debug({ data }, 'Processing intermediate results');
 ```
 
 ### Helper Functions
 
 ```typescript
-import { logApiRequest, logComponentError } from "@/lib/logger";
+import { logApiRequest, logComponentError } from '@/lib/logger';
 
 // Log API calls with timing
-logApiRequest("POST", "/api/datasets", {
+logApiRequest('POST', '/api/datasets', {
   status: 200,
   duration: 1250,
 });
 
 // Log React component errors
-logComponentError("FileUploader", error, errorInfo);
+logComponentError('FileUploader', error, errorInfo);
 ```
 
 ### Log Levels
@@ -71,14 +71,14 @@ Sentry automatically captures:
 ### Manual Error Tracking
 
 ```typescript
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 // Capture exception with context
 try {
   await processDataset(data);
 } catch (error) {
   Sentry.captureException(error, {
-    tags: { component: "dataset-processor" },
+    tags: { component: 'dataset-processor' },
     contexts: {
       dataset: { id: datasetId, size: data.length },
     },
@@ -87,13 +87,13 @@ try {
 }
 
 // Capture message
-Sentry.captureMessage("User completed onboarding", "info");
+Sentry.captureMessage('User completed onboarding', 'info');
 
 // Add breadcrumbs
 Sentry.addBreadcrumb({
-  category: "upload",
-  message: "Started file upload",
-  level: "info",
+  category: 'upload',
+  message: 'Started file upload',
+  level: 'info',
   data: { fileSize: file.size },
 });
 ```
@@ -101,19 +101,19 @@ Sentry.addBreadcrumb({
 ### Performance Monitoring
 
 ```typescript
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 // Trace a long-running operation
 const transaction = Sentry.startTransaction({
-  op: "process-dataset",
-  name: "Dataset Processing Pipeline",
+  op: 'process-dataset',
+  name: 'Dataset Processing Pipeline',
 });
 
 try {
   await processDataset();
-  transaction.setStatus("ok");
+  transaction.setStatus('ok');
 } catch (error) {
-  transaction.setStatus("internal_error");
+  transaction.setStatus('internal_error');
   throw error;
 } finally {
   transaction.finish();
@@ -123,7 +123,7 @@ try {
 ### User Context
 
 ```typescript
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 // Set user context after authentication
 Sentry.setUser({
@@ -178,7 +178,7 @@ SENTRY_PROJECT=javascript-nextjs
 ❌ **Bad:**
 
 ```typescript
-console.log("User uploaded file with size:", fileSize);
+console.log('User uploaded file with size:', fileSize);
 ```
 
 ✅ **Good:**
@@ -191,7 +191,7 @@ logger.info(
     fileName: file.name,
     fileSize: file.size,
   },
-  "User uploaded file"
+  'User uploaded file'
 );
 ```
 
@@ -264,7 +264,7 @@ Sentry.setUser(null);
 Sentry.init({
   beforeSend(event, hint) {
     // Drop errors from bots
-    if (event.request?.headers?.["user-agent"]?.includes("bot")) {
+    if (event.request?.headers?.['user-agent']?.includes('bot')) {
       return null;
     }
     return event;

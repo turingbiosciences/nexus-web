@@ -22,17 +22,17 @@ export function getRelativeTime(date: Date): string {
   const diffDays = Math.floor(diffMs / 86400000);
 
   if (diffMins < 1) {
-    return "just now";
+    return 'just now';
   } else if (diffMins < 60) {
-    return `${diffMins} min${diffMins === 1 ? "" : "s"} ago`;
+    return `${diffMins} min${diffMins === 1 ? '' : 's'} ago`;
   } else if (diffHours < 24) {
-    return `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
+    return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
   } else if (diffDays < 7) {
-    return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
+    return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
   } else {
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
     });
   }
 }

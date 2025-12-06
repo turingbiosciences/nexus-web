@@ -1,4 +1,4 @@
-import type { ProjectDataset } from "@/types/project";
+import type { ProjectDataset } from '@/types/project';
 
 /**
  * Reconcile remote datasets with optimistic local ones.
@@ -14,7 +14,7 @@ export function reconcileDatasets(opts: {
 }): ProjectDataset[] {
   const remote = opts.remote || [];
   const optimistic = (opts.optimistic || []).filter((d) =>
-    d.id.startsWith("optimistic-")
+    d.id.startsWith('optimistic-')
   );
   const pendingDeleteIds = new Set(opts.pendingDeleteIds || []);
 

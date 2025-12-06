@@ -5,7 +5,7 @@
  * at application startup, preventing runtime errors.
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 // Server-side environment variables (not exposed to client)
 const serverEnvSchema = z.object({
@@ -28,8 +28,8 @@ const serverEnvSchema = z.object({
 
   // Node environment
   NODE_ENV: z
-    .enum(["development", "production", "test"])
-    .default("development"),
+    .enum(['development', 'production', 'test'])
+    .default('development'),
 });
 
 // Client-side environment variables (exposed via NEXT_PUBLIC_ prefix)
@@ -44,8 +44,8 @@ const clientEnvSchema = z.object({
  * Only call this on the server side (API routes, server components, etc.)
  */
 export function getServerEnv() {
-  if (typeof window !== "undefined") {
-    throw new Error("getServerEnv() can only be called on the server side");
+  if (typeof window !== 'undefined') {
+    throw new Error('getServerEnv() can only be called on the server side');
   }
 
   try {
@@ -53,8 +53,8 @@ export function getServerEnv() {
   } catch (error) {
     if (error instanceof z.ZodError) {
       const missingVars = error.issues
-        .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
-        .join("\n");
+        .map((issue) => `  - ${issue.path.join('.')}: ${issue.message}`)
+        .join('\n');
       throw new Error(
         `❌ Invalid or missing server environment variables:\n${missingVars}\n\nPlease check your .env.local file.`
       );
@@ -73,8 +73,8 @@ export function getClientEnv() {
   } catch (error) {
     if (error instanceof z.ZodError) {
       const missingVars = error.issues
-        .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
-        .join("\n");
+        .map((issue) => `  - ${issue.path.join('.')}: ${issue.message}`)
+        .join('\n');
       throw new Error(
         `❌ Invalid or missing client environment variables:\n${missingVars}\n\nPlease check your .env.local file.`
       );

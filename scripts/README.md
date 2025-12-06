@@ -125,13 +125,11 @@ npm run test:token
 This is the main issue! Follow the suggestions in the test output:
 
 1. **Configure API Resource in Logto Console**
-
    - Go to https://q98adz.logto.app/
    - Navigate to API Resources
    - Create resource: `https://nexus-api-xxo8b.ondigitalocean.app`
 
 2. **Assign to Application**
-
    - Go to Applications → Your App
    - API Resources tab
    - Add the resource

@@ -11,16 +11,16 @@
  *   logger.debug({ data }, 'Processing dataset');
  */
 
-import pino from "pino";
-import * as Sentry from "@sentry/nextjs";
+import pino from 'pino';
+import * as Sentry from '@sentry/nextjs';
 
-const isDevelopment = process.env.NODE_ENV === "development";
-const isServer = typeof window === "undefined";
+const isDevelopment = process.env.NODE_ENV === 'development';
+const isServer = typeof window === 'undefined';
 const isBrowser = !isServer;
 
 // Pino configuration
 const pinoConfig: pino.LoggerOptions = {
-  level: process.env.LOG_LEVEL || (isDevelopment ? "debug" : "info"),
+  level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
 
   // Browser configuration - required for client-side usage
   browser: {
@@ -44,11 +44,11 @@ const pinoConfig: pino.LoggerOptions = {
   ...(isDevelopment && isServer && !isBrowser
     ? {
         transport: {
-          target: "pino-pretty",
+          target: 'pino-pretty',
           options: {
             colorize: true,
-            translateTime: "HH:MM:ss",
-            ignore: "pid,hostname",
+            translateTime: 'HH:MM:ss',
+            ignore: 'pid,hostname',
           },
         },
       }
@@ -68,7 +68,7 @@ const createLogger = () => {
      * Log informational messages
      */
     info: (obj: object | string, msg?: string) => {
-      if (typeof obj === "string") {
+      if (typeof obj === 'string') {
         baseLogger.info(obj);
       } else {
         baseLogger.info(obj, msg);
@@ -79,7 +79,7 @@ const createLogger = () => {
      * Log warning messages
      */
     warn: (obj: object | string, msg?: string) => {
-      if (typeof obj === "string") {
+      if (typeof obj === 'string') {
         baseLogger.warn(obj);
       } else {
         baseLogger.warn(obj, msg);
@@ -91,10 +91,10 @@ const createLogger = () => {
      */
     error: (obj: object | string, msg?: string) => {
       // Log with Pino
-      if (typeof obj === "string") {
+      if (typeof obj === 'string') {
         baseLogger.error(obj);
         // Send to Sentry
-        Sentry.captureMessage(obj, "error");
+        Sentry.captureMessage(obj, 'error');
       } else {
         baseLogger.error(obj, msg);
         // Send to Sentry with context
@@ -106,8 +106,8 @@ const createLogger = () => {
             extra: obj as Record<string, unknown>,
           });
         } else {
-          Sentry.captureMessage(msg || "Error occurred", {
-            level: "error",
+          Sentry.captureMessage(msg || 'Error occurred', {
+            level: 'error',
             extra: obj as Record<string, unknown>,
           });
         }
@@ -120,7 +120,7 @@ const createLogger = () => {
     debug: (obj: object | string, msg?: string) => {
       if (!isDevelopment) return;
 
-      if (typeof obj === "string") {
+      if (typeof obj === 'string') {
         baseLogger.debug(obj);
       } else {
         baseLogger.debug(obj, msg);
@@ -133,7 +133,7 @@ const createLogger = () => {
     trace: (obj: object | string, msg?: string) => {
       if (!isDevelopment) return;
 
-      if (typeof obj === "string") {
+      if (typeof obj === 'string') {
         baseLogger.trace(obj);
       } else {
         baseLogger.trace(obj, msg);
@@ -168,11 +168,11 @@ export const logApiRequest = (
   };
 
   if (options?.error) {
-    logger.error({ ...logData, error: options.error }, "API request failed");
+    logger.error({ ...logData, error: options.error }, 'API request failed');
   } else if (options?.status && options.status >= 400) {
-    logger.warn(logData, "API request returned error status");
+    logger.warn(logData, 'API request returned error status');
   } else {
-    logger.info(logData, "API request completed");
+    logger.info(logData, 'API request completed');
   }
 };
 

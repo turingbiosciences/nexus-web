@@ -5,7 +5,7 @@
  * without needing to wrap every fetch call in try-catch blocks.
  */
 
-import { logger } from "@/lib/logger";
+import { logger } from '@/lib/logger';
 
 /**
  * Check if a fetch response indicates an expired token
@@ -18,21 +18,21 @@ export async function checkTokenExpiration(response: Response): Promise<void> {
     try {
       const errorText = await clonedResponse.text();
       const isExpired =
-        errorText.includes("Signature has expired") ||
-        errorText.includes("token expired") ||
-        errorText.includes("Invalid token") ||
-        errorText.includes("Unauthorized");
+        errorText.includes('Signature has expired') ||
+        errorText.includes('token expired') ||
+        errorText.includes('Invalid token') ||
+        errorText.includes('Unauthorized');
 
       if (isExpired) {
-        logger.warn("Token expired detected, redirecting to sign out");
+        logger.warn('Token expired detected, redirecting to sign out');
 
         // Use setTimeout to avoid interrupting the current execution flow
         setTimeout(() => {
-          window.location.href = "/api/logto/sign-out";
+          window.location.href = '/api/logto/sign-out';
         }, 100);
       }
     } catch (err) {
-      logger.error({ error: err }, "Error checking token expiration");
+      logger.error({ error: err }, 'Error checking token expiration');
     }
   }
 }
@@ -60,7 +60,7 @@ export async function fetchWithTokenCheck(
  * Only enable this if you want automatic token expiration handling everywhere.
  */
 export function installGlobalFetchInterceptor() {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
 
   const originalFetch = window.fetch;
 
@@ -76,7 +76,7 @@ export function installGlobalFetchInterceptor() {
     return response;
   };
 
-  logger.debug("Global fetch interceptor installed");
+  logger.debug('Global fetch interceptor installed');
 }
 
 /**
@@ -84,5 +84,5 @@ export function installGlobalFetchInterceptor() {
  */
 export function uninstallGlobalFetchInterceptor() {
   // This is a placeholder - in practice, you'd need to store the original fetch
-  logger.debug("Global fetch interceptor uninstalled");
+  logger.debug('Global fetch interceptor uninstalled');
 }

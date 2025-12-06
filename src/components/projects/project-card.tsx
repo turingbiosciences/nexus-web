@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { Project } from "@/types/project";
-import { Clock, Database, CheckCircle, Play, Settings2 } from "lucide-react";
+import Link from 'next/link';
+import { Project } from '@/types/project';
+import { Clock, Database, CheckCircle, Play, Settings2 } from 'lucide-react';
 
 interface ProjectCardProps {
   project: Project;
@@ -11,24 +11,24 @@ interface ProjectCardProps {
 const statusConfig = {
   complete: {
     icon: CheckCircle,
-    label: "Complete",
-    color: "text-green-600",
-    bg: "bg-green-50",
-    border: "border-green-200",
+    label: 'Complete',
+    color: 'text-green-600',
+    bg: 'bg-green-50',
+    border: 'border-green-200',
   },
   running: {
     icon: Play,
-    label: "Running",
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
+    label: 'Running',
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
   },
   setup: {
     icon: Settings2,
-    label: "Setup",
-    color: "text-yellow-600",
-    bg: "bg-yellow-50",
-    border: "border-yellow-200",
+    label: 'Setup',
+    color: 'text-yellow-600',
+    bg: 'bg-yellow-50',
+    border: 'border-yellow-200',
   },
 };
 
@@ -39,7 +39,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
   // Use project data directly - it now comes from the API with file_count and last_activity
   const datasetCount = project.datasetCount ?? 0;
-  const lastActivity = project.lastActivity ?? "No recent activity";
+  const lastActivity = project.lastActivity ?? 'No recent activity';
 
   return (
     <Link href={`/projects/${project.id}`}>
@@ -64,7 +64,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
           <div className="flex items-center gap-1">
             <Database className="h-3.5 w-3.5" />
             <span>
-              {datasetCount} dataset{datasetCount === 1 ? "" : "s"}
+              {datasetCount} dataset{datasetCount === 1 ? '' : 's'}
             </span>
           </div>
           <div className="flex items-center gap-1">

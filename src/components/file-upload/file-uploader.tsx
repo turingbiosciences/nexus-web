@@ -1,23 +1,23 @@
-"use client";
+'use client';
 
-import { useCallback, useState, useEffect, memo } from "react";
-import { useDropzone } from "react-dropzone";
-import * as tus from "tus-js-client";
-import { Upload, X, CheckCircle, AlertCircle, Pause, Play } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn, formatBytes, formatUploadProgress } from "@/lib/utils";
-import { useAccessToken } from "@/components/providers/token-provider";
-import { logger } from "@/lib/logger";
+import { useCallback, useState, useEffect, memo } from 'react';
+import { useDropzone } from 'react-dropzone';
+import * as tus from 'tus-js-client';
+import { Upload, X, CheckCircle, AlertCircle, Pause, Play } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn, formatBytes, formatUploadProgress } from '@/lib/utils';
+import { useAccessToken } from '@/components/providers/token-provider';
+import { logger } from '@/lib/logger';
 
 interface FileUploadItem {
   file: File;
   id: string;
   progress: number;
-  status: "pending" | "uploading" | "paused" | "completed" | "error";
+  status: 'pending' | 'uploading' | 'paused' | 'completed' | 'error';
   error?: string;
   xhr?: XMLHttpRequest;
   tusUpload?: tus.Upload;
-  uploadMethod?: "tus" | "xhr"; // Track which method is being used
+  uploadMethod?: 'tus' | 'xhr'; // Track which method is being used
 }
 
 interface FileUploaderProps {
@@ -44,7 +44,7 @@ export function FileUploader({
       file,
       id: crypto.randomUUID(),
       progress: 0,
-      status: "pending",
+      status: 'pending',
     }));
     setUploads((prev) => [...prev, ...newUploads]);
   }, []);
@@ -54,11 +54,11 @@ export function FileUploader({
     maxSize,
     multiple: true,
     accept: {
-      "application/pdf": [".pdf"],
-      "image/*": [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"],
-      "video/*": [".mp4", ".avi", ".mov", ".wmv", ".flv", ".webm"],
-      "text/*": [".txt", ".csv", ".json", ".xml"],
-      "application/*": [".zip", ".rar", ".7z", ".tar", ".gz"],
+      'application/pdf': ['.pdf'],
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'],
+      'video/*': ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm'],
+      'text/*': ['.txt', '.csv', '.json', '.xml'],
+      'application/*': ['.zip', '.rar', '.7z', '.tar', '.gz'],
     },
   });
 
@@ -71,12 +71,12 @@ export function FileUploader({
 
     // Use standard FormData upload (fallback method)
     const formData = new FormData();
-    formData.append("file", upload.file);
+    formData.append('file', upload.file);
 
     const xhr = new XMLHttpRequest();
 
     // Track progress
-    xhr.upload.addEventListener("progress", (e) => {
+    xhr.upload.addEventListener('progress', (e) => {
       if (e.lengthComputable) {
         const percentage = Math.round((e.loaded / e.total) * 100);
         setUploads((prev) =>
@@ -89,12 +89,12 @@ export function FileUploader({
     });
 
     // Handle completion
-    xhr.addEventListener("load", () => {
+    xhr.addEventListener('load', () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         setUploads((prev) =>
           prev.map((u) =>
             u.id === upload.id
-              ? { ...u, status: "completed", progress: 100 }
+              ? { ...u, status: 'completed', progress: 100 }
               : u
           )
         );
@@ -103,31 +103,31 @@ export function FileUploader({
         // Check if token expired
         const errorText = xhr.responseText;
         const isTokenExpired =
-          errorText.includes("Signature has expired") ||
-          errorText.includes("token expired") ||
-          errorText.includes("Invalid token");
+          errorText.includes('Signature has expired') ||
+          errorText.includes('token expired') ||
+          errorText.includes('Invalid token');
 
         if (isTokenExpired) {
           logger.error(
             { uploadId: upload.id },
-            "Upload failed: Token expired, redirecting to sign out"
+            'Upload failed: Token expired, redirecting to sign out'
           );
-          window.location.href = "/api/logto/sign-out";
+          window.location.href = '/api/logto/sign-out';
           return;
         }
 
         const errorMsg = errorText || `Upload failed with status ${xhr.status}`;
         logger.error(
           { uploadId: upload.id, status: xhr.status, errorMsg },
-          "XHR upload error"
+          'XHR upload error'
         );
         setUploads((prev) =>
           prev.map((u) =>
             u.id === upload.id
               ? {
                   ...u,
-                  status: "error",
-                  error: "Authentication expired. Please sign in again.",
+                  status: 'error',
+                  error: 'Authentication expired. Please sign in again.',
                 }
               : u
           )
@@ -137,14 +137,14 @@ export function FileUploader({
           xhr.responseText || `Upload failed with status ${xhr.status}`;
         logger.error(
           { uploadId: upload.id, status: xhr.status, errorMsg },
-          "XHR upload error"
+          'XHR upload error'
         );
         setUploads((prev) =>
           prev.map((u) =>
             u.id === upload.id
               ? {
                   ...u,
-                  status: "error",
+                  status: 'error',
                   error: errorMsg,
                 }
               : u
@@ -154,15 +154,15 @@ export function FileUploader({
     });
 
     // Handle errors
-    xhr.addEventListener("error", () => {
-      logger.error({ uploadId: upload.id }, "XHR upload network error");
+    xhr.addEventListener('error', () => {
+      logger.error({ uploadId: upload.id }, 'XHR upload network error');
       setUploads((prev) =>
         prev.map((u) =>
           u.id === upload.id
             ? {
                 ...u,
-                status: "error",
-                error: "Network error during upload",
+                status: 'error',
+                error: 'Network error during upload',
               }
             : u
         )
@@ -170,46 +170,46 @@ export function FileUploader({
     });
 
     // Handle abort
-    xhr.addEventListener("abort", () => {
+    xhr.addEventListener('abort', () => {
       setUploads((prev) =>
-        prev.map((u) => (u.id === upload.id ? { ...u, status: "paused" } : u))
+        prev.map((u) => (u.id === upload.id ? { ...u, status: 'paused' } : u))
       );
     });
 
     // Store XHR instance and method for pause/resume functionality
     setUploads((prev) =>
       prev.map((u) =>
-        u.id === upload.id ? { ...u, xhr, uploadMethod: "xhr" } : u
+        u.id === upload.id ? { ...u, xhr, uploadMethod: 'xhr' } : u
       )
     );
 
     // Start the upload
-    xhr.open("POST", `${apiEndpoint}/projects/${currentProjectId}/files`);
-    xhr.setRequestHeader("Authorization", `Bearer ${currentAccessToken}`);
+    xhr.open('POST', `${apiEndpoint}/projects/${currentProjectId}/files`);
+    xhr.setRequestHeader('Authorization', `Bearer ${currentAccessToken}`);
     xhr.send(formData);
   };
 
   const startUpload = async (upload: FileUploadItem) => {
     // Block if auth not ready; don't mutate upload status yet
     if (authLoading) {
-      setAuthError("Authentication loading. Please wait.");
+      setAuthError('Authentication loading. Please wait.');
       return;
     }
     if (!isAuthenticated) {
-      setAuthError("You must sign in before uploading.");
+      setAuthError('You must sign in before uploading.');
       return;
     }
 
     try {
       // Validate resource identifier
       if (!resource) {
-        throw new Error("Missing NEXT_PUBLIC_TURING_API environment variable.");
+        throw new Error('Missing NEXT_PUBLIC_TURING_API environment variable.');
       }
 
       // Use M2M access token from TokenProvider
       if (!accessToken) {
         throw new Error(
-          "Failed to obtain access token. Try signing out and back in."
+          'Failed to obtain access token. Try signing out and back in.'
         );
       }
 
@@ -217,25 +217,25 @@ export function FileUploader({
       const apiEndpoint = resource;
 
       if (!apiEndpoint) {
-        throw new Error("Upload endpoint not configured");
+        throw new Error('Upload endpoint not configured');
       }
 
       // Validate projectId is provided
       if (!projectId) {
-        throw new Error("Project ID is required for file uploads");
+        throw new Error('Project ID is required for file uploads');
       }
 
       // Set status to uploading
       setUploads((prev) =>
         prev.map((u) =>
-          u.id === upload.id ? { ...u, status: "uploading" } : u
+          u.id === upload.id ? { ...u, status: 'uploading' } : u
         )
       );
 
       // Try TUS protocol first
       logger.debug(
         { uploadId: upload.id, filename: upload.file.name },
-        "Attempting TUS upload"
+        'Attempting TUS upload'
       );
       const tusUpload = new tus.Upload(upload.file, {
         endpoint: `${apiEndpoint}/projects/${projectId}/files`,
@@ -248,35 +248,35 @@ export function FileUploader({
           Authorization: `Bearer ${accessToken}`,
         },
         onError: (error) => {
-          logger.error({ uploadId: upload.id, error }, "TUS upload error");
+          logger.error({ uploadId: upload.id, error }, 'TUS upload error');
 
           // Check if it's a 401 error (token expired)
           const is401Error =
-            error.message?.includes("401") ||
-            error.message?.includes("Unauthorized") ||
-            error.message?.includes("Signature has expired") ||
-            error.message?.includes("token expired") ||
-            error.message?.includes("Invalid token");
+            error.message?.includes('401') ||
+            error.message?.includes('Unauthorized') ||
+            error.message?.includes('Signature has expired') ||
+            error.message?.includes('token expired') ||
+            error.message?.includes('Invalid token');
 
           if (is401Error) {
             logger.error(
               { uploadId: upload.id },
-              "TUS upload failed: Token expired, redirecting to sign out"
+              'TUS upload failed: Token expired, redirecting to sign out'
             );
-            window.location.href = "/api/logto/sign-out";
+            window.location.href = '/api/logto/sign-out';
             return;
           }
 
           // Check if it's a 422 error (TUS not supported) or other client error
           const is422Error =
-            error.message?.includes("422") ||
-            error.message?.includes("Unprocessable Entity") ||
-            error.message?.includes("Field required");
+            error.message?.includes('422') ||
+            error.message?.includes('Unprocessable Entity') ||
+            error.message?.includes('Field required');
 
           if (is422Error) {
             logger.info(
               { uploadId: upload.id },
-              "TUS not supported (422 error), falling back to XHR upload"
+              'TUS not supported (422 error), falling back to XHR upload'
             );
             // Fallback to standard XHR upload - pass current values to avoid stale closure
             startUploadWithXHR(upload, accessToken, projectId!);
@@ -287,8 +287,8 @@ export function FileUploader({
                 u.id === upload.id
                   ? {
                       ...u,
-                      status: "error",
-                      error: error.message || "Upload failed",
+                      status: 'error',
+                      error: error.message || 'Upload failed',
                     }
                   : u
               )
@@ -307,12 +307,12 @@ export function FileUploader({
         onSuccess: () => {
           logger.info(
             { uploadId: upload.id, filename: upload.file.name },
-            "TUS upload completed successfully"
+            'TUS upload completed successfully'
           );
           setUploads((prev) =>
             prev.map((u) =>
               u.id === upload.id
-                ? { ...u, status: "completed", progress: 100 }
+                ? { ...u, status: 'completed', progress: 100 }
                 : u
             )
           );
@@ -323,7 +323,7 @@ export function FileUploader({
       // Store TUS upload instance for pause/resume functionality
       setUploads((prev) =>
         prev.map((u) =>
-          u.id === upload.id ? { ...u, tusUpload, uploadMethod: "tus" } : u
+          u.id === upload.id ? { ...u, tusUpload, uploadMethod: 'tus' } : u
         )
       );
 
@@ -332,16 +332,16 @@ export function FileUploader({
     } catch (error) {
       logger.error(
         { uploadId: upload.id, error },
-        "Upload initialization error"
+        'Upload initialization error'
       );
       if (!isAuthenticated) {
-        setAuthError("Not authenticated. Please sign in.");
+        setAuthError('Not authenticated. Please sign in.');
       } else if (
         error instanceof Error &&
         /access token/i.test(error.message)
       ) {
         setAuthError(
-          "Access token unavailable. Re-authenticate if problem persists."
+          'Access token unavailable. Re-authenticate if problem persists.'
         );
       }
       setUploads((prev) =>
@@ -349,8 +349,8 @@ export function FileUploader({
           u.id === upload.id
             ? {
                 ...u,
-                status: "error",
-                error: error instanceof Error ? error.message : "Upload failed",
+                status: 'error',
+                error: error instanceof Error ? error.message : 'Upload failed',
               }
             : u
         )
@@ -364,12 +364,12 @@ export function FileUploader({
       setUploads((prev) =>
         prev.map((u) => {
           if (
-            u.status === "error" &&
+            u.status === 'error' &&
             u.error &&
             (/sign in/i.test(u.error) ||
               /Authentication still loading/i.test(u.error))
           ) {
-            return { ...u, status: "pending", error: undefined };
+            return { ...u, status: 'pending', error: undefined };
           }
           return u;
         })
@@ -380,35 +380,35 @@ export function FileUploader({
   }, [isAuthenticated]);
 
   const pauseUpload = (upload: FileUploadItem) => {
-    if (upload.uploadMethod === "tus" && upload.tusUpload) {
+    if (upload.uploadMethod === 'tus' && upload.tusUpload) {
       upload.tusUpload.abort();
-    } else if (upload.uploadMethod === "xhr" && upload.xhr) {
+    } else if (upload.uploadMethod === 'xhr' && upload.xhr) {
       upload.xhr.abort();
     }
 
     setUploads((prev) =>
-      prev.map((u) => (u.id === upload.id ? { ...u, status: "paused" } : u))
+      prev.map((u) => (u.id === upload.id ? { ...u, status: 'paused' } : u))
     );
   };
 
   const resumeUpload = async (upload: FileUploadItem) => {
-    if (upload.uploadMethod === "tus" && upload.tusUpload) {
+    if (upload.uploadMethod === 'tus' && upload.tusUpload) {
       // TUS supports true resumable uploads
       logger.debug(
         { uploadId: upload.id },
-        "Resuming TUS upload from where it left off"
+        'Resuming TUS upload from where it left off'
       );
       upload.tusUpload.start();
       setUploads((prev) =>
         prev.map((u) =>
-          u.id === upload.id ? { ...u, status: "uploading" } : u
+          u.id === upload.id ? { ...u, status: 'uploading' } : u
         )
       );
     } else {
       // XHR uploads cannot be resumed - need to restart
       logger.warn(
-        { uploadId: upload.id, method: "xhr" },
-        "XHR upload cannot be resumed, restarting from beginning"
+        { uploadId: upload.id, method: 'xhr' },
+        'XHR upload cannot be resumed, restarting from beginning'
       );
       startUpload(upload);
     }
@@ -418,42 +418,42 @@ export function FileUploader({
     const uploadToRemove = uploads.find((u) => u.id === uploadId);
 
     // Abort TUS or XHR upload if it exists
-    if (uploadToRemove?.uploadMethod === "tus" && uploadToRemove.tusUpload) {
+    if (uploadToRemove?.uploadMethod === 'tus' && uploadToRemove.tusUpload) {
       uploadToRemove.tusUpload.abort();
-    } else if (uploadToRemove?.uploadMethod === "xhr" && uploadToRemove.xhr) {
+    } else if (uploadToRemove?.uploadMethod === 'xhr' && uploadToRemove.xhr) {
       uploadToRemove.xhr.abort();
     }
 
     setUploads((prev) => prev.filter((u) => u.id !== uploadId));
   };
 
-  const getStatusIcon = (status: FileUploadItem["status"]) => {
+  const getStatusIcon = (status: FileUploadItem['status']) => {
     switch (status) {
-      case "completed":
+      case 'completed':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case "error":
+      case 'error':
         return <AlertCircle className="h-4 w-4 text-red-500" />;
-      case "uploading":
+      case 'uploading':
         return <Upload className="h-4 w-4 text-blue-500 animate-pulse" />;
-      case "paused":
+      case 'paused':
         return <Pause className="h-4 w-4 text-yellow-500" />;
       default:
         return <Upload className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  const getStatusColor = (status: FileUploadItem["status"]) => {
+  const getStatusColor = (status: FileUploadItem['status']) => {
     switch (status) {
-      case "completed":
-        return "border-green-200 bg-green-50";
-      case "error":
-        return "border-red-200 bg-red-50";
-      case "uploading":
-        return "border-blue-200 bg-blue-50";
-      case "paused":
-        return "border-yellow-200 bg-yellow-50";
+      case 'completed':
+        return 'border-green-200 bg-green-50';
+      case 'error':
+        return 'border-red-200 bg-red-50';
+      case 'uploading':
+        return 'border-blue-200 bg-blue-50';
+      case 'paused':
+        return 'border-yellow-200 bg-yellow-50';
       default:
-        return "border-gray-200 bg-gray-50";
+        return 'border-gray-200 bg-gray-50';
     }
   };
 
@@ -495,7 +495,7 @@ export function FileUploader({
     return (
       <div
         className={cn(
-          "border rounded-lg p-4 transition-colors",
+          'border rounded-lg p-4 transition-colors',
           getStatusColor(item.status)
         )}
       >
@@ -529,7 +529,7 @@ export function FileUploader({
               {formatUploadProgress(item.progress, 100)}
             </span>
             <div className="flex space-x-1">
-              {item.status === "pending" && isAuthed && (
+              {item.status === 'pending' && isAuthed && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -540,7 +540,7 @@ export function FileUploader({
                   <Play className="h-3 w-3" />
                 </Button>
               )}
-              {item.status === "uploading" && (
+              {item.status === 'uploading' && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -550,7 +550,7 @@ export function FileUploader({
                   <Pause className="h-3 w-3" />
                 </Button>
               )}
-              {item.status === "paused" && (
+              {item.status === 'paused' && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -593,11 +593,11 @@ export function FileUploader({
       <div
         {...getRootProps()}
         className={cn(
-          "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
-          isDragActive ? "border-blue-400 bg-blue-50" : "border-gray-300",
+          'border-2 border-dashed rounded-lg p-8 text-center transition-colors',
+          isDragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300',
           !isAuthenticated || authLoading
-            ? "opacity-50 cursor-not-allowed"
-            : "cursor-pointer hover:border-gray-400"
+            ? 'opacity-50 cursor-not-allowed'
+            : 'cursor-pointer hover:border-gray-400'
         )}
       >
         <input
@@ -606,14 +606,14 @@ export function FileUploader({
         />
         <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
         <p className="text-lg font-medium text-gray-900 mb-2">
-          {isDragActive ? "Drop files here" : "Drag & drop files here"}
+          {isDragActive ? 'Drop files here' : 'Drag & drop files here'}
         </p>
         <p className="text-sm text-gray-500">
           {authLoading
-            ? "Checking authentication..."
+            ? 'Checking authentication...'
             : !isAuthenticated
-            ? "Please sign in to enable uploads"
-            : `or click to select files (max ${formatBytes(maxSize)})`}
+              ? 'Please sign in to enable uploads'
+              : `or click to select files (max ${formatBytes(maxSize)})`}
         </p>
       </div>
 

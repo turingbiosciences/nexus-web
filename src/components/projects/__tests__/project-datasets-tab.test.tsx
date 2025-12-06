@@ -1,16 +1,16 @@
-import React from "react";
-import { render } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ProjectDatasetsTab } from "../project-datasets-tab";
-import { useDatasets } from "@/lib/queries/datasets";
-import { useAccessToken } from "@/components/providers/token-provider";
-import { useProjects } from "@/components/providers/projects-provider";
+import React from 'react';
+import { render } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ProjectDatasetsTab } from '../project-datasets-tab';
+import { useDatasets } from '@/lib/queries/datasets';
+import { useAccessToken } from '@/components/providers/token-provider';
+import { useProjects } from '@/components/providers/projects-provider';
 
 // Mock dependencies
-jest.mock("@/lib/queries/datasets");
-jest.mock("@/components/providers/token-provider");
-jest.mock("@/components/providers/projects-provider");
-jest.mock("@/lib/queries/dataset-mutations", () => ({
+jest.mock('@/lib/queries/datasets');
+jest.mock('@/components/providers/token-provider');
+jest.mock('@/components/providers/projects-provider');
+jest.mock('@/lib/queries/dataset-mutations', () => ({
   useUploadDatasetMutation: jest.fn(() => ({
     mutate: jest.fn(),
     isPending: false,
@@ -20,7 +20,7 @@ jest.mock("@/lib/queries/dataset-mutations", () => ({
     isPending: false,
   })),
 }));
-jest.mock("@/components/ui/toast-provider", () => ({
+jest.mock('@/components/ui/toast-provider', () => ({
   useToast: jest.fn(() => ({
     toast: jest.fn(),
   })),
@@ -32,11 +32,11 @@ const mockUseAccessToken = useAccessToken as jest.MockedFunction<
 >;
 const mockUseProjects = useProjects as jest.MockedFunction<typeof useProjects>;
 
-describe("ProjectDatasetsTab", () => {
+describe('ProjectDatasetsTab', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseAccessToken.mockReturnValue({
-      accessToken: "mock-token",
+      accessToken: 'mock-token',
       isLoading: false,
       error: null,
       refreshToken: jest.fn(),
@@ -78,22 +78,22 @@ describe("ProjectDatasetsTab", () => {
     );
   };
 
-  it("renders DatasetsSection", () => {
+  it('renders DatasetsSection', () => {
     renderWithQueryClient(<ProjectDatasetsTab projectId="test-project-123" />);
 
     expect(mockUseDatasets).toHaveBeenCalledWith(
-      "test-project-123",
+      'test-project-123',
       expect.any(Object)
     );
   });
 
-  it("passes projectId prop to DatasetsSection", () => {
+  it('passes projectId prop to DatasetsSection', () => {
     renderWithQueryClient(
       <ProjectDatasetsTab projectId="another-project-456" />
     );
 
     expect(mockUseDatasets).toHaveBeenCalledWith(
-      "another-project-456",
+      'another-project-456',
       expect.any(Object)
     );
   });
