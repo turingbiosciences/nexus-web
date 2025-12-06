@@ -1,83 +1,14 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { useAccessToken } from "@/components/providers/token-provider";
-import { authFetch } from "@/lib/auth-fetch";
-import { logger } from "@/lib/logger";
-
-interface ProjectResult {
-  id: string;
-  name: string;
-  type: string;
-  createdAt: string;
-  // Add other result properties as needed
-}
+import { useResults } from "@/lib/queries/results";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ResultsSectionProps {
   projectId: string;
 }
 
-async function fetchResults(
-  projectId: string,
-  accessToken: string,
-  onTokenRefresh: () => Promise<string | null>
-): Promise<ProjectResult[]> {
-  const base = process.env.NEXT_PUBLIC_TURING_API;
-  if (!base) throw new Error("Missing NEXT_PUBLIC_TURING_API env var");
-
-  const url = `${base}/projects/${projectId}/results`;
-  logger.debug({ projectId, url }, "Fetching results");
-
-  const res = await authFetch(url, {
-    method: "GET",
-    token: accessToken,
-    onTokenRefresh,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    logger.error(
-      { projectId, status: res.status, errorText },
-      "Failed to fetch results"
-    );
-    throw new Error(`Failed to fetch results (${res.status})`);
-  }
-
-  const json = await res.json();
-  logger.debug(
-    {
-      projectId,
-      count: json.items?.length || json.results?.length || json.length || 0,
-    },
-    "Results response received"
-  );
-
-  // Support both array and object with items/results property
-  const items: ProjectResult[] = Array.isArray(json)
-    ? json
-    : json.items || json.results || [];
-
-  return items;
-}
-
 export function ResultsSection({ projectId }: ResultsSectionProps) {
-  const { accessToken, isAuthenticated, refreshToken } = useAccessToken();
-
-  const resultsQuery = useQuery({
-    queryKey: ["results", projectId],
-    queryFn: () => {
-      if (!accessToken) {
-        throw new Error("Access token not available");
-      }
-      return fetchResults(projectId, accessToken, refreshToken);
-    },
-    enabled: !!projectId && isAuthenticated && !!accessToken,
-    staleTime: 30_000,
-  });
-
+  const resultsQuery = useResults(projectId);
   const results = resultsQuery.data || [];
   const resultsLoading = resultsQuery.isLoading;
 
@@ -86,11 +17,11 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
       <h3 className="card-title">Analysis Results</h3>
       <div className="space-y-4">
         {resultsLoading && (
-          <div className="animate-pulse space-y-3">
+          <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="border rounded-lg p-4">
-                <div className="h-4 w-2/3 bg-gray-200 rounded mb-2" />
-                <div className="h-3 w-1/2 bg-gray-100 rounded" />
+                <Skeleton width="66%" height="1rem" className="mb-2" />
+                <Skeleton width="50%" height="0.75rem" />
               </div>
             ))}
           </div>
@@ -131,7 +62,7 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                     <p className="text-sm text-gray-500 mt-1">{result.type}</p>
                   </div>
                   <div className="text-xs text-gray-400">
-                    {new Date(result.createdAt).toLocaleDateString()}
+                    {result.createdAt.toLocaleDateString()}
                   </div>
                 </div>
               </li>

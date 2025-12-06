@@ -10,7 +10,6 @@ import { useAccessToken } from "@/components/providers/token-provider";
 import { SignInPrompt } from "@/components/auth/sign-in-prompt";
 import { LoadingCard } from "@/components/ui/loading-card";
 import { Button } from "@/components/ui/button";
-import { ProjectOverviewTab } from "@/components/projects/project-overview-tab";
 import { ProjectResultsTab } from "@/components/projects/project-results-tab";
 import { ProjectActivityTab } from "@/components/projects/project-activity-tab";
 import { ProjectDatasetsTab } from "@/components/projects/project-datasets-tab";
@@ -31,7 +30,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     useAccessToken();
   const { push: pushToast } = useToast();
   const [activeTab, setActiveTab] = useState<
-    "overview" | "results" | "activity" | "datasets" | "settings"
+    "overview" | "activity" | "datasets" | "settings"
   >("overview");
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
@@ -205,16 +204,6 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
               Overview
             </button>
             <button
-              onClick={() => setActiveTab("results")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "results"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Results
-            </button>
-            <button
               onClick={() => setActiveTab("activity")}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === "activity"
@@ -249,8 +238,6 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
 
         {/* Tab Content */}
         {activeTab === "overview" ? (
-          <ProjectOverviewTab projectId={project.id} />
-        ) : activeTab === "results" ? (
           <ProjectResultsTab projectId={project.id} />
         ) : activeTab === "activity" ? (
           <ProjectActivityTab projectId={project.id} />
