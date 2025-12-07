@@ -137,11 +137,9 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         );
         setProjects(fetchedProjects);
       } catch (err) {
-        logger.error(
-          { error: err },
-          "ProjectsProvider failed to fetch projects"
-        );
-        setError(err instanceof Error ? err : new Error("Unknown error"));
+        const errorMessage = err instanceof Error ? err.message : String(err) || "Unknown error";
+        logger.error(errorMessage, "ProjectsProvider failed to fetch projects");
+        setError(err instanceof Error ? err : new Error(errorMessage));
         setProjects([]);
       } finally {
         setLoading(false);
