@@ -62,7 +62,7 @@ async function testTokenExchange() {
   console.log(`  Endpoint: ${endpoint}`);
   console.log(`  App ID: ${appId}`);
   console.log(
-    `  App Secret: ${appSecret ? '***' + appSecret.slice(-4) : 'NOT SET'}`
+    `  App Secret: ${appSecret ? 'SET' : 'NOT SET'}`
   );
   console.log(`  API Resource: ${apiResource}`);
   console.log('\n');
