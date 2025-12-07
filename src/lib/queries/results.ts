@@ -49,19 +49,17 @@ async function fetchResultsViaApi(
   }
 
   const json = await res.json();
-  logger.debug(
-    {
-      projectId,
-      count: json.items?.length || json.results?.length || json.length || 0,
-    },
-    "Results API response received"
-  );
-
   // Support both array and object with items/results property
   const items: ApiResult[] = Array.isArray(json)
     ? json
     : json.items || json.results || [];
-
+  logger.debug(
+    {
+      projectId,
+      count: items.length,
+    },
+    "Results API response received"
+  );
   const mapped: ProjectResult[] = items.map((r) => ({
     id: r.id,
     name: r.name,
