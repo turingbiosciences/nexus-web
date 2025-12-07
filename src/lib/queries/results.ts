@@ -49,10 +49,19 @@ async function fetchResultsViaApi(
   }
 
   const json = await res.json();
+  logger.debug(
+    {
+      projectId,
+      rawResponse: json,
+    },
+    "Raw results API response"
+  );
+
   // Support both array and object with items/results property
   const items: ApiResult[] = Array.isArray(json)
     ? json
     : json.items || json.results || [];
+
   logger.debug(
     {
       projectId,
@@ -60,6 +69,8 @@ async function fetchResultsViaApi(
     },
     "Results API response received"
   );
+
+  // Map to ProjectResult but preserve all original data
   const mapped: ProjectResult[] = items.map((r) => ({
     id: r.id,
     name: r.name,
@@ -67,6 +78,8 @@ async function fetchResultsViaApi(
     createdAt: new Date(r.created_at),
     size: r.size,
     url: r.url,
+    // Preserve all raw data for analysis
+    ...(r as any),
   }));
 
   logger.debug(
