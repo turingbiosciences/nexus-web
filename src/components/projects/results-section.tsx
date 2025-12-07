@@ -51,9 +51,9 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
         )}
         {!resultsLoading && results && results.length > 0 && (
           <ul className="space-y-3">
-            {results.map((result) => (
+            {results.map((result, index) => (
               <li
-                key={result.id}
+                key={result.id || `result-${index}`}
                 className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-start justify-between">
