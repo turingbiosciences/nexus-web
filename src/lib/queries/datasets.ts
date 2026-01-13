@@ -6,6 +6,7 @@ import { projectsRepository } from "@/data";
 import { useAccessToken } from "@/components/providers/token-provider";
 import { authFetch } from "@/lib/auth-fetch";
 import { logger } from "@/lib/logger";
+import { getApiBaseUrl } from "@/lib/api/get-api-base";
 
 interface UseDatasetsOptions {
   enabled?: boolean;
@@ -28,15 +29,13 @@ async function fetchDatasetsViaApi(
   onTokenRefresh: () => Promise<string | null>,
   opts?: { cursor?: string; limit?: number }
 ) {
-  const base = process.env.NEXT_PUBLIC_TURING_API;
-  if (!base) throw new Error("Missing NEXT_PUBLIC_TURING_API env var");
+  const base = getApiBaseUrl();
   const params = new URLSearchParams();
   if (opts?.cursor) params.set("cursor", opts.cursor);
   if (opts?.limit) params.set("limit", String(opts.limit));
   // Updated endpoint to match backend API: /projects/[id]/files instead of /datasets
-  const url = `${base}/projects/${projectId}/files${
-    params.size ? `?${params.toString()}` : ""
-  }`;
+  const url = `${base}/projects/${projectId}/files${params.size ? `?${params.toString()}` : ""
+    }`;
 
   logger.info({ projectId, url }, "Fetching datasets");
 

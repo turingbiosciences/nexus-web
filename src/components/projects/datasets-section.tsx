@@ -191,6 +191,8 @@ export function DatasetsSection({
                       description: `${f.name} was uploaded successfully.`,
                       variant: "default",
                     });
+                    // Refetch datasets list from API after successful upload
+                    datasetsQuery.refetch();
                   },
                   onError: () => {
                     push({

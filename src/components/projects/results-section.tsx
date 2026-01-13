@@ -2,37 +2,55 @@
 
 import { useResults } from "@/lib/queries/results";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
-import { FeatureImportanceChart } from "./feature-importance-chart";
+import { useState, useEffect, useMemo } from "react";
+import { ModelPerformanceTable } from "./model-performance-table";
+import { FeatureImportanceSection } from "./feature-importance-section";
+// import { NormalizedFeatureImportanceChart } from "./normalized-feature-importance-chart";
+import { FeatureComparisonChart } from "./feature-comparison-chart";
+import { AggregateFeatureImportanceTable } from "./aggregate-feature-importance-table";
+import { ModelFeatureImportanceCharts } from "./model-feature-importance-charts";
+import { ModelConfig } from "@/types/model-config";
 
 interface ResultsSectionProps {
   projectId: string;
 }
 
-interface ModelConfig {
-  best_config?: string;
-  test_metrics?: {
-    roc?: number;
-    [key: string]: any;
-  };
-  configs?: Record<string, {
-    config: Record<string, any>;
-    features?: Array<{
-      name: string;
-      importance: number;
-    }> | Record<string, number>;
-  }>;
-}
-
 export function ResultsSection({ projectId }: ResultsSectionProps) {
   const resultsQuery = useResults(projectId);
-  const results = resultsQuery.data || [];
+  const results = useMemo(() => {
+    const data = resultsQuery.data || [];
+    // Sort by createdAt in descending order (newest first)
+    return [...data].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
+  }, [resultsQuery.data]);
   const resultsLoading = resultsQuery.isLoading;
   const [showRawData, setShowRawData] = useState(false);
+  const [expandedResults, setExpandedResults] = useState<Set<string>>(
+    new Set()
+  );
 
-  // Extract all_model_configs from the first result (assuming single training result)
-  const allModelConfigs: Record<string, ModelConfig> | undefined =
-    results[0]?.data?.all_model_configs;
+  // Initialize expanded state with the first result when results load
+  useEffect(() => {
+    if (results.length > 0 && expandedResults.size === 0) {
+      const firstResultKey = results[0]?.id || "result-0";
+      setExpandedResults(new Set([firstResultKey]));
+    }
+  }, [results, expandedResults.size]);
+
+  const toggleExpand = (resultId: string) => {
+    setExpandedResults((prev) => {
+      const next = new Set(prev);
+      if (next.has(resultId)) {
+        next.delete(resultId);
+      } else {
+        next.add(resultId);
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="card">
@@ -110,164 +128,184 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
               </div>
             )}
 
-            {/* AUROC Metrics Table */}
-            {allModelConfigs && Object.keys(allModelConfigs).length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Model Performance (AUROC)
-                </h3>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full border border-gray-200 rounded-lg">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 border-b">
-                          Model
-                        </th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 border-b">
-                          AUROC Score
-                        </th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 border-b">
-                          Best Configuration
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {Object.entries(allModelConfigs)
-                        .filter(
-                          ([_, config]) =>
-                            config.test_metrics?.roc !== undefined
-                        )
-                        .sort(
-                          ([_, a], [__, b]) =>
-                            (b.test_metrics?.roc || 0) -
-                            (a.test_metrics?.roc || 0)
-                        )
-                        .slice(0, 10)
-                        .map(([modelName, config]) => {
-                          const auroc = config.test_metrics?.roc || 0;
-                          const formattedModelName = modelName
-                            .split("_")
-                            .map(
-                              (word) =>
-                                word.charAt(0).toUpperCase() + word.slice(1)
-                            )
-                            .join(" ");
-
-                          return (
-                            <tr
-                              key={modelName}
-                              className="hover:bg-gray-50 transition-colors"
-                            >
-                              <td className="px-4 py-3 text-sm text-gray-900">
-                                {formattedModelName}
-                              </td>
-                              <td className="px-4 py-3 text-sm">
-                                <span
-                                  className={
-                                    auroc >= 0.9
-                                      ? "text-green-700 font-semibold"
-                                      : auroc >= 0.8
-                                        ? "text-blue-700 font-medium"
-                                        : "text-gray-700"
-                                  }
-                                >
-                                  {auroc.toFixed(4)}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-600 font-mono">
-                                {config.best_config || "N/A"}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Feature Importance Charts */}
-            {allModelConfigs && Object.keys(allModelConfigs).length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Feature Importance by Model
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.entries(allModelConfigs).map(
-                    ([modelName, modelConfig]) => {
-                      // Get the best config name
-                      const bestConfigName = modelConfig.best_config;
-                      if (!bestConfigName || !modelConfig.configs) {
-                        return null;
-                      }
-
-                      const configData =
-                        modelConfig.configs[bestConfigName];
-                      if (!configData) {
-                        return null;
-                      }
-
-                      // Extract feature importance from the model level (not config level)
-                      const featureImportance =
-                        modelConfig.feature_importance;
-                      if (
-                        !featureImportance ||
-                        (typeof featureImportance === "object" &&
-                          Object.keys(featureImportance).length === 0)
-                      ) {
-                        return null;
-                      }
-
-                      return (
-                        <FeatureImportanceChart
-                          key={modelName}
-                          modelName={modelName}
-                          bestConfig={bestConfigName}
-                          featureImportance={featureImportance}
-                        />
-                      );
-                    }
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Results List */}
             <ul className="space-y-3">
-              {results.map((result, index) => (
-                <li
-                  key={result.id || `result-${index}`}
-                  className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">
-                        {result.name}
-                      </h4>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {result.type}
-                      </p>
-                    </div>
-                    <div className="text-xs text-gray-400">
-                      {result.createdAt.toLocaleDateString()}
-                    </div>
-                  </div>
+              {results.map((result, index) => {
+                const resultKey = result.id || `result-${index}`;
+                const isExpanded = expandedResults.has(resultKey);
+                const modelConfigs = (
+                  result as {
+                    data?: { all_model_configs?: Record<string, ModelConfig> };
+                  }
+                ).data?.all_model_configs;
 
-                  {/* Display all properties from the result */}
-                  <details className="mt-3">
-                    <summary className="text-sm text-gray-600 cursor-pointer hover:text-gray-900">
-                      View Details
-                    </summary>
-                    <div className="mt-2 p-3 bg-gray-900 rounded border border-gray-700">
-                      <pre className="overflow-auto text-xs font-mono">
-                        <code className="text-gray-100">
-                          {JSON.stringify(result, null, 2)}
-                        </code>
-                      </pre>
+                return (
+                  <li
+                    key={resultKey}
+                    className="border rounded-lg overflow-hidden bg-white"
+                  >
+                    {/* Header - Always Visible */}
+                    <div
+                      className="flex items-start justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => toggleExpand(resultKey)}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium text-gray-900">
+                            {result.name}
+                          </h4>
+                          {index === 0 && (
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                              Latest
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {result.type}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-xs text-gray-400">
+                          {result.createdAt.toLocaleDateString()}{" "}
+                          {result.createdAt.toLocaleTimeString()}
+                        </div>
+                        <svg
+                          className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""
+                            }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
                     </div>
-                  </details>
-                </li>
-              ))}
+
+                    {/* Expanded Content */}
+                    {isExpanded && (
+                      <div className="border-t p-4 bg-gray-50 space-y-6">
+                        {modelConfigs &&
+                          Object.keys(modelConfigs).length > 0 ? (
+                          <>
+                            <ModelPerformanceTable
+                              modelConfigs={modelConfigs}
+                            />
+                            <FeatureImportanceSection
+                              modelConfigs={modelConfigs}
+                            />
+                            {/* Aggregate Feature Importance Table */}
+                            {(
+                              result as unknown as {
+                                data?: {
+                                  aggregate_feature_importance?: {
+                                    top_features: Array<{
+                                      feature: string;
+                                      mean_importance: number;
+                                      sum_importance: number;
+                                      max_importance: number;
+                                      min_importance: number;
+                                      std_importance: number;
+                                      weighted_score: number;
+                                      num_models: number;
+                                      models: string[];
+                                    }>;
+                                  };
+                                };
+                              }
+                            ).data?.aggregate_feature_importance && (
+                                <AggregateFeatureImportanceTable
+                                  data={
+                                    (
+                                      result as unknown as {
+                                        data: {
+                                          aggregate_feature_importance: {
+                                            top_features: Array<{
+                                              feature: string;
+                                              mean_importance: number;
+                                              sum_importance: number;
+                                              max_importance: number;
+                                              min_importance: number;
+                                              std_importance: number;
+                                              weighted_score: number;
+                                              num_models: number;
+                                              models: string[];
+                                            }>;
+                                          };
+                                        };
+                                      }
+                                    ).data.aggregate_feature_importance
+                                  }
+                                />
+                              )}
+                            {/* Normalized Feature Importance - COMMENTED OUT FOR NOW */}
+                            {/* {(
+                              result as {
+                                data?: {
+                                  normalized_feature_importances?: Record<
+                                    string,
+                                    unknown
+                                  >;
+                                };
+                              }
+                            ).data?.normalized_feature_importances && (
+                              <NormalizedFeatureImportanceChart
+                                data={
+                                  (
+                                    result as {
+                                      data?: {
+                                        normalized_feature_importances?: Record<
+                                          string,
+                                          unknown
+                                        >;
+                                      };
+                                    }
+                                  ).data!.normalized_feature_importances!
+                                }
+                              />
+                            )} */}
+                            {/* Feature Importance by Rank Charts */}
+                            <ModelFeatureImportanceCharts
+                              modelConfigs={modelConfigs}
+                            />
+                            {/* Feature Comparison Chart */}
+                            {(
+                              result as {
+                                data?: {
+                                  feature_comparison?: Record<string, unknown>;
+                                };
+                              }
+                            ).data?.feature_comparison && (
+                                <FeatureComparisonChart
+                                  data={
+                                    (
+                                      result as {
+                                        data?: {
+                                          feature_comparison?: Record<
+                                            string,
+                                            unknown
+                                          >;
+                                        };
+                                      }
+                                    ).data!.feature_comparison!
+                                  }
+                                />
+                              )}
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            No model performance data available for this result.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </>
         )}

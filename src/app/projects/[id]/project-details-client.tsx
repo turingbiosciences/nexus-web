@@ -19,6 +19,7 @@ import { RunModelModal } from "@/components/projects/run-model-modal";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/toast-provider";
 import { authFetch } from "@/lib/auth-fetch";
+import { useResults } from "@/lib/queries/results";
 
 interface ProjectDetailsClientProps {
   projectId: string;
@@ -44,6 +45,10 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     projects,
   } = useProjects();
   const project = getProjectById(projectId);
+
+  // Fetch results to get the latest result date
+  const resultsQuery = useResults(projectId);
+  const latestResult = resultsQuery.data?.[0];
 
   // Determine if we're in an initial loading state
   // Show loading if: auth loading, projects loading, OR (no projects data yet AND authenticated)
@@ -75,7 +80,11 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     setIsRunModalOpen(true);
   };
 
-  const handleConfirmRun = async (datasetId: string, targetColumn: string) => {
+  const handleConfirmRun = async (
+    datasetId: string,
+    targetColumn: string,
+    excludeColumns: string[]
+  ) => {
     if (!project || !accessToken) return;
 
     setIsRunning(true);
@@ -93,7 +102,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
           body: JSON.stringify({
             file_id: datasetId,
             target_column: targetColumn,
-            exclude_columns: [],
+            exclude_columns: excludeColumns,
             exclude_rows: [],
           }),
         }
@@ -188,6 +197,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
           project={project}
           isRunning={isRunning}
           onRun={handleRun}
+          latestResultDate={latestResult?.createdAt}
         />
 
         {/* Tabs */}

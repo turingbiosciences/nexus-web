@@ -5,6 +5,7 @@ import { projectsRepository } from "@/data";
 import { useAccessToken } from "@/components/providers/token-provider";
 import { authFetch } from "@/lib/auth-fetch";
 import { logger } from "@/lib/logger";
+import { getApiBaseUrl } from "@/lib/api/get-api-base";
 
 interface UseActivitiesOptions {
   enabled?: boolean;
@@ -51,15 +52,13 @@ async function fetchActivitiesViaApi(
   onTokenRefresh: () => Promise<string | null>,
   opts?: { limit?: number }
 ) {
-  const base = process.env.NEXT_PUBLIC_TURING_API;
-  if (!base) throw new Error("Missing NEXT_PUBLIC_TURING_API env var");
+  const base = getApiBaseUrl();
 
   const params = new URLSearchParams();
   if (opts?.limit) params.set("limit", String(opts.limit));
 
-  const url = `${base}/projects/${projectId}/activities${
-    params.size ? `?${params.toString()}` : ""
-  }`;
+  const url = `${base}/projects/${projectId}/activities${params.size ? `?${params.toString()}` : ""
+    }`;
 
   logger.info({ projectId, url }, "Fetching activities");
 

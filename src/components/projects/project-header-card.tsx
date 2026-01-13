@@ -15,6 +15,7 @@ interface ProjectHeaderCardProps {
   project: Project;
   isRunning: boolean;
   onRun: () => void;
+  latestResultDate?: Date;
 }
 
 const statusConfig = {
@@ -45,6 +46,7 @@ export function ProjectHeaderCard({
   project,
   isRunning,
   onRun,
+  latestResultDate,
 }: ProjectHeaderCardProps) {
   const config = statusConfig[project.status] || statusConfig.setup;
   const StatusIcon = config.icon;
@@ -72,11 +74,25 @@ export function ProjectHeaderCard({
               <Calendar className="h-4 w-4 text-gray-400" />
               <span>
                 {project.completedAt
-                  ? project.completedAt.toLocaleDateString("en-US", {
+                  ? `${project.completedAt.toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
-                    })
+                    })} ${project.completedAt.toLocaleTimeString("en-US", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}`
+                  : latestResultDate
+                  ? `${latestResultDate.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })} ${latestResultDate.toLocaleTimeString("en-US", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}`
                   : "Never run"}
               </span>
             </div>

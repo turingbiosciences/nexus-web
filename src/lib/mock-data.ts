@@ -1,9 +1,4 @@
-import {
-  Project,
-  ProjectStatusCount,
-  ProjectResult,
-  STATUS_ORDER,
-} from "@/types/project";
+import { Project, ProjectStatusCount, STATUS_ORDER } from "@/types/project";
 
 // Helper function to create dates relative to now
 function daysAgo(days: number): Date {

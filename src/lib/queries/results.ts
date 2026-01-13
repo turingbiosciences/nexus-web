@@ -5,6 +5,7 @@ import { projectsRepository } from "@/data";
 import { useAccessToken } from "@/components/providers/token-provider";
 import { authFetch } from "@/lib/auth-fetch";
 import { logger } from "@/lib/logger";
+import { getApiBaseUrl } from "@/lib/api/get-api-base";
 
 interface UseResultsOptions {
   enabled?: boolean;
@@ -24,8 +25,7 @@ async function fetchResultsViaApi(
   accessToken: string,
   onTokenRefresh: () => Promise<string | null>
 ): Promise<ProjectResult[]> {
-  const base = process.env.NEXT_PUBLIC_TURING_API;
-  if (!base) throw new Error("Missing NEXT_PUBLIC_TURING_API env var");
+  const base = getApiBaseUrl();
 
   const url = `${base}/projects/${projectId}/results`;
   logger.debug({ projectId, url }, "Fetching results from API");
@@ -79,7 +79,7 @@ async function fetchResultsViaApi(
     size: r.size,
     url: r.url,
     // Preserve all raw data for analysis
-    ...(r as any),
+    ...(r as unknown as Record<string, unknown>),
   }));
 
   logger.debug(

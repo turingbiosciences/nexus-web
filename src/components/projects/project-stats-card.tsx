@@ -1,6 +1,7 @@
 "use client";
 
 import { useProjects } from "@/components/providers/projects-provider";
+import { formatDate } from "@/lib/utils/format-date";
 import {
   CheckCircle,
   Play,
@@ -52,11 +53,7 @@ export function ProjectStatsCard({ projectId }: ProjectStatsCardProps) {
 
   // Format last run date
   const lastRunDate = project.completedAt
-    ? project.completedAt.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
+    ? formatDate(project.completedAt)
     : "Never";
 
   // Placeholder for run count (will be populated from API)
@@ -130,11 +127,7 @@ export function ProjectStatsCard({ projectId }: ProjectStatsCardProps) {
             </span>
           </div>
           <span className="text-sm text-gray-900 font-medium">
-            {project.updatedAt.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
+            {formatDate(project.updatedAt)}
           </span>
         </div>
 
@@ -145,11 +138,7 @@ export function ProjectStatsCard({ projectId }: ProjectStatsCardProps) {
             <span className="text-sm font-medium text-gray-700">Created</span>
           </div>
           <span className="text-sm text-gray-900 font-medium">
-            {project.createdAt.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
+            {formatDate(project.createdAt)}
           </span>
         </div>
       </div>
