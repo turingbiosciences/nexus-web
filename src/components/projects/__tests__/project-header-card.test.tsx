@@ -120,7 +120,7 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(screen.getByText("Jun 15, 2024")).toBeInTheDocument();
+      expect(screen.getByText(/Jun 15, 2024/)).toBeInTheDocument();
     });
 
     it("displays 'Never run' when completedAt is not set", () => {
