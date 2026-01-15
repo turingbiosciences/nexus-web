@@ -59,18 +59,23 @@ describe("ProjectList", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Mock useProjectMetadata to return loading state
+    // Mock useProjectMetadata to return proper query result structure
     mockUseProjectMetadata.mockReturnValue({
-      datasetCount: undefined,
-      lastActivity: undefined,
+      data: { datasetCount: undefined, lastActivity: undefined },
       isLoading: false,
-    });
+      isPending: false,
+      isSuccess: true,
+      isError: false,
+      error: null,
+      status: "success",
+      refetch: jest.fn(),
+    } as unknown as ReturnType<typeof useProjectMetadata>);
   });
 
   const renderWithProviders = (ui: React.ReactElement) => {
     return render(
       <TokenProvider>
-        <ProjectsProvider initialProjects={mockProjects}>{ui}</ProjectsProvider>
+        <ProjectsProvider>{ui}</ProjectsProvider>
       </TokenProvider>
     );
   };

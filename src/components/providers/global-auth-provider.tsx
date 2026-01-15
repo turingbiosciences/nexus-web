@@ -46,70 +46,9 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
     "GlobalAuthProvider component render"
   );
 
-  // Initial auth check - moved before refreshAuth to avoid circular dependency
-  useEffect(() => {
-    logger.debug(
-      {
-        logtoIsAuthenticated: logto.isAuthenticated,
-        logtoIsLoading: logto.isLoading,
-      },
-      "GlobalAuthProvider useEffect triggered"
-    );
-
-    async function checkAuth() {
-      logger.debug("GlobalAuthProvider checkAuth called");
-      setIsLoading(true);
-      setError(null);
-      try {
-        // Fetch from server-side /api/logto/user to check real auth state
-        const response = await fetch("/api/logto/user", {
-          credentials: "include",
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const authenticated = Boolean(data?.isAuthenticated);
-          logger.debug(
-            {
-              authenticated,
-              hasClaims: !!data?.claims,
-            },
-            "GlobalAuthProvider API response"
-          );
-          setIsAuthenticated(authenticated);
-
-          if (authenticated && data?.claims) {
-            setClaims(data.claims);
-          } else {
-            setClaims(null);
-          }
-        } else {
-          logger.warn(
-            { status: response.status },
-            "GlobalAuthProvider API response not OK"
-          );
-          setIsAuthenticated(false);
-          setClaims(null);
-        }
-      } catch (err) {
-        logger.error(
-          { error: err },
-          "GlobalAuthProvider failed to fetch auth state"
-        );
-        setError(err instanceof Error ? err : new Error(String(err)));
-        setIsAuthenticated(false);
-        setClaims(null);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    checkAuth();
-  }, [logto.isAuthenticated, logto.isLoading]);
-
-  const refreshAuth = useCallback(async () => {
-    logger.debug("GlobalAuthProvider refreshAuth called manually");
-
+  // Shared auth check logic - used by both initial check and manual refresh
+  const checkAuthState = useCallback(async () => {
+    logger.debug("GlobalAuthProvider checkAuthState called");
     setIsLoading(true);
     setError(null);
     try {
@@ -155,6 +94,25 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
   }, []);
+
+  // Initial auth check
+  useEffect(() => {
+    logger.debug(
+      {
+        logtoIsAuthenticated: logto.isAuthenticated,
+        logtoIsLoading: logto.isLoading,
+      },
+      "GlobalAuthProvider useEffect triggered"
+    );
+
+    checkAuthState();
+  }, [logto.isAuthenticated, logto.isLoading, checkAuthState]);
+
+  // Public refresh function for manual auth refresh
+  const refreshAuth = useCallback(async () => {
+    logger.debug("GlobalAuthProvider refreshAuth called manually");
+    await checkAuthState();
+  }, [checkAuthState]);
 
   const value: GlobalAuthContextType = {
     isAuthenticated,

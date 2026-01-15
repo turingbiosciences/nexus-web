@@ -113,6 +113,7 @@ describe("DatasetsSection", () => {
     ],
     isLoading: false,
     nextCursor: undefined,
+    refetch: jest.fn(),
   };
 
   beforeEach(() => {

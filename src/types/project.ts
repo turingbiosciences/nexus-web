@@ -15,6 +15,7 @@ export interface Project {
   lastActivity?: string;
   datasets?: ProjectDataset[]; // in-memory list of uploaded dataset files (placeholder until backend integration)
   activities?: ProjectActivity[]; // timeline of events (uploads, edits)
+  results?: ProjectResult[]; // analysis results and outputs
 }
 
 export interface ProjectStatusCount {
@@ -35,4 +36,13 @@ export interface ProjectActivity {
   type: "created" | "updated" | "upload" | "delete" | "status_change";
   message: string;
   at: Date;
+}
+
+export interface ProjectResult {
+  id: string;
+  name: string;
+  type: string;
+  createdAt: Date;
+  size?: number;
+  url?: string;
 }
