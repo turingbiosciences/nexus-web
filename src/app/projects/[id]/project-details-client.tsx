@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -16,10 +16,14 @@ import { ProjectDatasetsTab } from "@/components/projects/project-datasets-tab";
 import { ProjectSettingsTab } from "@/components/projects/project-settings-tab";
 import { ProjectHeaderCard } from "@/components/projects/project-header-card";
 import { RunModelModal } from "@/components/projects/run-model-modal";
+import { JobProgressCard } from "@/components/projects/job-progress-card";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/toast-provider";
 import { authFetch } from "@/lib/auth-fetch";
 import { useResults } from "@/lib/queries/results";
+import { useJobStatus } from "@/hooks/use-job-status";
+import { Job } from "@/types/job";
+import { IS_MOCK } from "@/config/flags";
 
 interface ProjectDetailsClientProps {
   projectId: string;
@@ -36,6 +40,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [isRunModalOpen, setIsRunModalOpen] = useState(false);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
 
   const {
     getProjectById,
@@ -49,6 +54,49 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
   // Fetch results to get the latest result date
   const resultsQuery = useResults(projectId);
   const latestResult = resultsQuery.data?.[0];
+
+  // Callbacks for job completion - defined before useJobStatus
+  const handleJobComplete = useCallback(
+    (completedJob: Job) => {
+      pushToast({
+        title: "Training Complete!",
+        description: `Model ${completedJob.best_model || "trained"} successfully. Refreshing results...`,
+        variant: "default",
+      });
+      // Refresh results after job completes
+      resultsQuery.refetch();
+      setIsRunning(false);
+    },
+    [pushToast, resultsQuery]
+  );
+
+  const handleJobError = useCallback(
+    (error: string) => {
+      pushToast({
+        title: "Training Failed",
+        description: error,
+        variant: "destructive",
+        duration: 0,
+      });
+      setIsRunning(false);
+    },
+    [pushToast]
+  );
+
+  // Subscribe to job status updates via SSE
+  const {
+    job: activeJob,
+    isConnected: isJobConnected,
+    isLoading: isJobLoading,
+    error: jobError,
+    disconnect: disconnectJob,
+  } = useJobStatus(projectId, activeJobId, {
+    accessToken,
+    enabled: !!activeJobId,
+    onComplete: handleJobComplete,
+    onError: handleJobError,
+    useMock: IS_MOCK,
+  });
 
   // Determine if we're in an initial loading state
   // Show loading if: auth loading, projects loading, OR (no projects data yet AND authenticated)
@@ -68,8 +116,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     } catch (err) {
       console.error("Failed to delete project:", err);
       alert(
-        `Failed to delete project: ${
-          err instanceof Error ? err.message : "Unknown error"
+        `Failed to delete project: ${err instanceof Error ? err.message : "Unknown error"
         }`
       );
       setIsDeleting(false);
@@ -110,26 +157,39 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
 
       const data = await response.json();
 
-      // Display response in toast that must be manually closed (duration: 0)
-      pushToast({
-        title: response.ok ? "Training Started" : "Training Error",
-        description: JSON.stringify(data, null, 2),
-        variant: response.ok ? "default" : "destructive",
-        duration: 0, // Must be manually closed
-      });
+      if (response.ok && data.job_id) {
+        // Start tracking the job via SSE
+        setActiveJobId(data.job_id);
+        pushToast({
+          title: "Training Started",
+          description: "Tracking job progress...",
+          variant: "default",
+        });
+      } else {
+        pushToast({
+          title: "Training Error",
+          description: data.message || JSON.stringify(data),
+          variant: "destructive",
+          duration: 0,
+        });
+        setIsRunning(false);
+      }
     } catch (err) {
       pushToast({
         title: "Request Failed",
-        description: `Error: ${
-          err instanceof Error ? err.message : "Unknown error"
-        }`,
+        description: `Error: ${err instanceof Error ? err.message : "Unknown error"}`,
         variant: "destructive",
         duration: 0,
       });
-    } finally {
       setIsRunning(false);
     }
   };
+
+  // Dismiss job progress card
+  const handleDismissJob = useCallback(() => {
+    setActiveJobId(null);
+    disconnectJob();
+  }, [disconnectJob]);
 
   // Show loading state while initially loading
   if (isInitialLoading) {
@@ -200,46 +260,53 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
           latestResultDate={latestResult?.createdAt}
         />
 
+        {/* Job Progress Card - shown when a job is active */}
+        {activeJobId && (
+          <JobProgressCard
+            job={activeJob}
+            isConnected={isJobConnected}
+            isLoading={isJobLoading}
+            error={jobError}
+            onDismiss={handleDismissJob}
+          />
+        )}
+
         {/* Tabs */}
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab("overview")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "overview"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "overview"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
             >
               Overview
             </button>
             <button
               onClick={() => setActiveTab("activity")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "activity"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "activity"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
             >
               Activity
             </button>
             <button
               onClick={() => setActiveTab("datasets")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "datasets"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "datasets"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
             >
               Datasets
             </button>
             <button
               onClick={() => setActiveTab("settings")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "settings"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "settings"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
             >
               Settings
             </button>
