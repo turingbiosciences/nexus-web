@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle,
@@ -50,6 +51,23 @@ export function ProjectHeaderCard({
 }: ProjectHeaderCardProps) {
   const config = statusConfig[project.status] || statusConfig.setup;
   const StatusIcon = config.icon;
+  
+  // State for keyboard-controlled tooltip visibility
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const tooltipId = `tooltip-${project.id}`;
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setIsTooltipVisible(true);
+    } else if (e.key === "Escape") {
+      setIsTooltipVisible(false);
+    }
+  };
+
+  const handleBlur = () => {
+    setIsTooltipVisible(false);
+  };
 
   return (
     <div className="card">
@@ -57,12 +75,30 @@ export function ProjectHeaderCard({
         <div className="flex-1">
           {/* Project name with description tooltip */}
           <div className="group relative inline-block">
-            <h1 className="text-xl font-bold text-gray-900 cursor-help inline-flex items-center gap-2">
+            <h1 className="text-xl font-bold text-gray-900 inline-flex items-center gap-2">
               {project.name}
-              <Info className="h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+              <button
+                type="button"
+                aria-describedby={tooltipId}
+                aria-label="Project description"
+                className="cursor-help focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                onKeyDown={handleKeyDown}
+                onBlur={handleBlur}
+                onFocus={() => setIsTooltipVisible(true)}
+              >
+                <Info className="h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+              </button>
             </h1>
             {/* Tooltip popup */}
-            <div className="absolute left-0 top-full mt-2 w-80 bg-gray-900 text-white text-sm rounded-lg p-3 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+            <div
+              id={tooltipId}
+              role="tooltip"
+              className={`absolute left-0 top-full mt-2 w-80 bg-gray-900 text-white text-sm rounded-lg p-3 shadow-lg transition-all duration-200 z-10 ${
+                isTooltipVisible
+                  ? "opacity-100 visible"
+                  : "opacity-0 invisible group-hover:opacity-100 group-hover:visible"
+              }`}
+            >
               {project.description}
               <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 transform rotate-45"></div>
             </div>
