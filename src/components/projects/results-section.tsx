@@ -146,8 +146,16 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                   >
                     {/* Header - Always Visible */}
                     <div
-                      className="flex items-start justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                      role="button"
+                      tabIndex={0}
+                      className="flex items-start justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
                       onClick={() => toggleExpand(resultKey)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          toggleExpand(resultKey);
+                        }
+                      }}
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
