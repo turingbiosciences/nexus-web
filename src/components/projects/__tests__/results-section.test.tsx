@@ -68,13 +68,13 @@ describe("ResultsSection", () => {
         id: "1",
         name: "Result 1",
         type: "Analysis Type A",
-        createdAt: "2024-01-01T10:00:00Z",
+        createdAt: new Date("2024-01-01T10:00:00Z"),
       },
       {
         id: "2",
         name: "Result 2",
         type: "Analysis Type B",
-        createdAt: "2024-01-02T11:00:00Z",
+        createdAt: new Date("2024-01-02T11:00:00Z"),
       },
     ];
 
@@ -99,7 +99,7 @@ describe("ResultsSection", () => {
         id: "1",
         name: "Result 1",
         type: "Analysis",
-        createdAt: "2024-01-15T10:00:00Z",
+        createdAt: new Date("2024-01-15T10:00:00Z"),
       },
     ];
 
@@ -123,7 +123,7 @@ describe("ResultsSection", () => {
         id: "1",
         name: "Result 1",
         type: "Analysis",
-        createdAt: "2024-01-01T10:00:00Z",
+        createdAt: new Date("2024-01-01T10:00:00Z"),
       },
     ];
 
@@ -250,7 +250,7 @@ describe("ResultsSection", () => {
       id: `${i}`,
       name: `Result ${i}`,
       type: "Analysis",
-      createdAt: "2024-01-01T10:00:00Z",
+      createdAt: new Date("2024-01-01T10:00:00Z"),
     }));
 
     mockUseQuery.mockReturnValue({

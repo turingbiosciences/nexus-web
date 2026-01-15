@@ -46,7 +46,7 @@ describe("ProjectHeaderCard", () => {
       expect(screen.getByRole("button", { name: /run/i })).toBeInTheDocument();
     });
 
-    it("renders all three metadata sections", () => {
+    it("renders project metadata inline", () => {
       render(
         <ProjectHeaderCard
           project={baseProject}
@@ -55,9 +55,9 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(screen.getByText("Status")).toBeInTheDocument();
-      expect(screen.getByText("Last Run")).toBeInTheDocument();
-      expect(screen.getByText("Datasets")).toBeInTheDocument();
+      // New component shows status label inline and dataset count
+      expect(screen.getByText("Setup")).toBeInTheDocument();
+      expect(screen.getByText(/3 datasets/)).toBeInTheDocument();
     });
   });
 
@@ -123,7 +123,7 @@ describe("ProjectHeaderCard", () => {
       expect(screen.getByText("Jun 15, 2024")).toBeInTheDocument();
     });
 
-    it("displays 'Never' when completedAt is not set", () => {
+    it("displays 'Never run' when completedAt is not set", () => {
       const projectWithoutCompletion = {
         ...baseProject,
         completedAt: undefined,
@@ -137,7 +137,7 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(screen.getByText("Never")).toBeInTheDocument();
+      expect(screen.getByText("Never run")).toBeInTheDocument();
     });
   });
 
@@ -156,7 +156,7 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(screen.getByText("5")).toBeInTheDocument();
+      expect(screen.getByText(/5 datasets/)).toBeInTheDocument();
     });
 
     it("displays 0 when datasetCount is undefined", () => {
@@ -173,9 +173,7 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      // Find the "0" that's associated with Datasets
-      const datasetsSection = screen.getByText("Datasets").parentElement;
-      expect(datasetsSection).toHaveTextContent("0");
+      expect(screen.getByText(/0 datasets/)).toBeInTheDocument();
     });
 
     it("displays 0 when datasetCount is 0", () => {
@@ -192,8 +190,7 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      const datasetsSection = screen.getByText("Datasets").parentElement;
-      expect(datasetsSection).toHaveTextContent("0");
+      expect(screen.getByText(/0 datasets/)).toBeInTheDocument();
     });
   });
 
@@ -360,7 +357,7 @@ describe("ProjectHeaderCard", () => {
       ).toBeInTheDocument();
     });
 
-    it("renders correctly with maximum dataset count", () => {
+    it("renders correctly with large dataset count", () => {
       const projectWithManyDatasets = {
         ...baseProject,
         datasetCount: 9999,
@@ -374,7 +371,7 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(screen.getByText("9999")).toBeInTheDocument();
+      expect(screen.getByText(/9999 datasets/)).toBeInTheDocument();
     });
   });
 
@@ -433,7 +430,7 @@ describe("ProjectHeaderCard", () => {
   });
 
   describe("Metadata Grid Layout", () => {
-    it("renders metadata in grid layout", () => {
+    it("renders with correct layout", () => {
       const { container } = render(
         <ProjectHeaderCard
           project={baseProject}
@@ -442,9 +439,9 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      const gridElement = container.querySelector(".grid");
-      expect(gridElement).toBeInTheDocument();
-      expect(gridElement).toHaveClass("grid-cols-1", "md:grid-cols-3");
+      // Check for the main card container
+      const cardElement = container.querySelector(".card");
+      expect(cardElement).toBeInTheDocument();
     });
 
     it("renders all metadata items with icons", () => {
