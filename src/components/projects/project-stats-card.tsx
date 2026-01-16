@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
-import { useProjects } from '@/components/providers/projects-provider';
+import { useProjects } from "@/components/providers/projects-provider";
+import { formatDate } from "@/lib/utils/format-date";
 import {
   CheckCircle,
   Play,
@@ -9,7 +10,7 @@ import {
   Database,
   Hash,
   Clock,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface ProjectStatsCardProps {
   projectId: string;
@@ -18,24 +19,24 @@ interface ProjectStatsCardProps {
 const statusConfig = {
   complete: {
     icon: CheckCircle,
-    label: 'Complete',
-    color: 'text-green-600',
-    bg: 'bg-green-50',
-    border: 'border-green-200',
+    label: "Complete",
+    color: "text-green-600",
+    bg: "bg-green-50",
+    border: "border-green-200",
   },
   running: {
     icon: Play,
-    label: 'Running',
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
+    label: "Running",
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+    border: "border-blue-200",
   },
   setup: {
     icon: Settings2,
-    label: 'Setup',
-    color: 'text-yellow-600',
-    bg: 'bg-yellow-50',
-    border: 'border-yellow-200',
+    label: "Setup",
+    color: "text-yellow-600",
+    bg: "bg-yellow-50",
+    border: "border-yellow-200",
   },
 };
 
@@ -52,12 +53,8 @@ export function ProjectStatsCard({ projectId }: ProjectStatsCardProps) {
 
   // Format last run date
   const lastRunDate = project.completedAt
-    ? project.completedAt.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
-    : 'Never';
+    ? formatDate(project.completedAt)
+    : "Never";
 
   // Placeholder for run count (will be populated from API)
   const runCount = 0;
@@ -130,11 +127,7 @@ export function ProjectStatsCard({ projectId }: ProjectStatsCardProps) {
             </span>
           </div>
           <span className="text-sm text-gray-900 font-medium">
-            {project.updatedAt.toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
+            {formatDate(project.updatedAt)}
           </span>
         </div>
 
@@ -145,11 +138,7 @@ export function ProjectStatsCard({ projectId }: ProjectStatsCardProps) {
             <span className="text-sm font-medium text-gray-700">Created</span>
           </div>
           <span className="text-sm text-gray-900 font-medium">
-            {project.createdAt.toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
+            {formatDate(project.createdAt)}
           </span>
         </div>
       </div>

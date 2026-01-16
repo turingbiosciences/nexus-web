@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   createContext,
@@ -7,16 +7,16 @@ import {
   useCallback,
   useEffect,
   ReactNode,
-} from 'react';
-import { logger } from '@/lib/logger';
-import { Project, ProjectStatusCount, STATUS_ORDER } from '@/types/project';
+} from "react";
+import { logger } from "@/lib/logger";
+import { Project, ProjectStatusCount, STATUS_ORDER } from "@/types/project";
 import {
   fetchProjects,
   createProject as createProjectAPI,
   deleteProject as deleteProjectAPI,
-} from '@/lib/api/projects';
-import { getTokenErrorMessage } from '@/lib/api/utils';
-import { useAccessToken } from './token-provider';
+} from "@/lib/api/projects";
+import { getTokenErrorMessage } from "@/lib/api/utils";
+import { useAccessToken } from "./token-provider";
 
 interface ProjectsContextValue {
   projects: Project[];
@@ -63,7 +63,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       tokenLoading,
       error: error?.message,
     },
-    'ProjectsProvider component render'
+    "ProjectsProvider component render"
   );
 
   // Track authentication state (boolean) to detect user switching, not token refresh
@@ -89,7 +89,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         hasFetched,
         tokenError: tokenError?.message,
       },
-      'ProjectsProvider useEffect triggered'
+      "ProjectsProvider useEffect triggered"
     );
 
     // Don't fetch if no token, token still loading, or already attempted fetch
@@ -97,12 +97,12 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       logger.debug(
         {
           reason: !accessToken
-            ? 'no token'
+            ? "no token"
             : tokenLoading
-              ? 'token loading'
-              : 'already fetched',
+            ? "token loading"
+            : "already fetched",
         },
-        'ProjectsProvider skipping fetch'
+        "ProjectsProvider skipping fetch"
       );
       // If we're not going to fetch and not waiting for token, stop loading
       if (hasFetched || (!accessToken && !tokenLoading)) {
@@ -115,7 +115,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     if (tokenError) {
       logger.error(
         { error: tokenError },
-        'ProjectsProvider token error detected'
+        "ProjectsProvider token error detected"
       );
       setError(tokenError);
       setHasFetched(true); // Mark as attempted to prevent retry loop
@@ -123,25 +123,24 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    logger.debug('ProjectsProvider starting fetch');
+    logger.debug("ProjectsProvider starting fetch");
     setLoading(true);
     setError(null);
 
     (async () => {
       try {
-        logger.debug('Fetching projects with cached token');
+        logger.debug("Fetching projects with cached token");
         const fetchedProjects = await fetchProjects(accessToken);
         logger.info(
           { count: fetchedProjects.length },
-          'ProjectsProvider fetch successful'
+          "ProjectsProvider fetch successful"
         );
         setProjects(fetchedProjects);
       } catch (err) {
-        logger.error(
-          { error: err },
-          'ProjectsProvider failed to fetch projects'
-        );
-        setError(err instanceof Error ? err : new Error('Unknown error'));
+        const errorMessage =
+          err instanceof Error ? err.message : String(err) || "Unknown error";
+        logger.error(errorMessage, "ProjectsProvider failed to fetch projects");
+        setError(err instanceof Error ? err : new Error(errorMessage));
         setProjects([]);
       } finally {
         setLoading(false);
@@ -159,7 +158,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
           tokenLoading,
           tokenError: tokenError?.message,
         },
-        'ProjectsProvider createProject called'
+        "ProjectsProvider createProject called"
       );
 
       // Check if token is available
@@ -170,18 +169,18 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       }
 
       if (tokenLoading) {
-        throw new Error('Authentication loading. Please wait and try again.');
+        throw new Error("Authentication loading. Please wait and try again.");
       }
 
       try {
-        logger.debug({ name: data.name }, 'Creating project with cached token');
+        logger.debug({ name: data.name }, "Creating project with cached token");
         const newProject = await createProjectAPI(accessToken, data);
         setProjects((prev) => [newProject, ...prev]);
         return newProject;
       } catch (err) {
         logger.error(
           { error: err },
-          'ProjectsProvider failed to create project'
+          "ProjectsProvider failed to create project"
         );
         throw err;
       }
@@ -213,7 +212,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
           tokenLoading,
           tokenError: tokenError?.message,
         },
-        'ProjectsProvider deleteProject called'
+        "ProjectsProvider deleteProject called"
       );
 
       // Check if token is available
@@ -224,17 +223,17 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       }
 
       if (tokenLoading) {
-        throw new Error('Authentication loading. Please wait and try again.');
+        throw new Error("Authentication loading. Please wait and try again.");
       }
 
       try {
-        logger.debug({ projectId: id }, 'Deleting project with cached token');
+        logger.debug({ projectId: id }, "Deleting project with cached token");
         await deleteProjectAPI(accessToken, id);
         // Remove from local state after successful deletion
         setProjects((prev) => prev.filter((p) => p.id !== id));
-        logger.info({ projectId: id }, 'Project deleted successfully');
+        logger.info({ projectId: id }, "Project deleted successfully");
       } catch (err) {
-        logger.error({ error: err, projectId: id }, 'Failed to delete project');
+        logger.error({ error: err, projectId: id }, "Failed to delete project");
         throw err;
       }
     },
@@ -251,7 +250,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
           ...p,
           datasetCount: (p.datasetCount || 0) + 1,
           updatedAt: now,
-          lastActivity: 'just now',
+          lastActivity: "just now",
         };
       })
     );
@@ -296,6 +295,6 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 export function useProjects() {
   const ctx = useContext(ProjectsContext);
   if (!ctx)
-    throw new Error('useProjects must be used within a ProjectsProvider');
+    throw new Error("useProjects must be used within a ProjectsProvider");
   return ctx;
 }
