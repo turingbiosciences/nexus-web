@@ -3,19 +3,19 @@
  * Provides reusable data generators for tests
  */
 
-import { Project, ProjectActivity, ProjectDataset } from "@/types/project";
+import { Project, ProjectActivity, ProjectDataset } from '@/types/project';
 
 /**
  * Creates a mock Project with sensible defaults
  */
 export function createMockProject(overrides?: Partial<Project>): Project {
   return {
-    id: "project-1",
-    name: "Test Project",
-    description: "Test Description",
-    status: "setup",
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-02"),
+    id: 'project-1',
+    name: 'Test Project',
+    description: 'Test Description',
+    status: 'setup',
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-02'),
     datasetCount: 3,
     ...overrides,
   };
@@ -24,7 +24,10 @@ export function createMockProject(overrides?: Partial<Project>): Project {
 /**
  * Creates multiple mock Projects
  */
-export function createMockProjects(count: number, template?: Partial<Project>): Project[] {
+export function createMockProjects(
+  count: number,
+  template?: Partial<Project>
+): Project[] {
   return Array.from({ length: count }, (_, i) =>
     createMockProject({
       id: `project-${i + 1}`,
@@ -37,12 +40,14 @@ export function createMockProjects(count: number, template?: Partial<Project>): 
 /**
  * Creates a mock ProjectDataset with sensible defaults
  */
-export function createMockDataset(overrides?: Partial<ProjectDataset>): ProjectDataset {
+export function createMockDataset(
+  overrides?: Partial<ProjectDataset>
+): ProjectDataset {
   return {
-    id: "ds-1",
-    filename: "test.csv",
+    id: 'ds-1',
+    filename: 'test.csv',
     size: 1024,
-    uploadedAt: new Date("2024-06-15T10:00:00Z"),
+    uploadedAt: new Date('2024-06-15T10:00:00Z'),
     ...overrides,
   };
 }
@@ -50,7 +55,10 @@ export function createMockDataset(overrides?: Partial<ProjectDataset>): ProjectD
 /**
  * Creates multiple mock ProjectDatasets
  */
-export function createMockDatasets(count: number, template?: Partial<ProjectDataset>): ProjectDataset[] {
+export function createMockDatasets(
+  count: number,
+  template?: Partial<ProjectDataset>
+): ProjectDataset[] {
   return Array.from({ length: count }, (_, i) =>
     createMockDataset({
       id: `ds-${i + 1}`,
@@ -65,12 +73,14 @@ export function createMockDatasets(count: number, template?: Partial<ProjectData
 /**
  * Creates a mock ProjectActivity with sensible defaults
  */
-export function createMockActivity(overrides?: Partial<ProjectActivity>): ProjectActivity {
+export function createMockActivity(
+  overrides?: Partial<ProjectActivity>
+): ProjectActivity {
   return {
-    id: "act-1",
-    type: "upload",
-    message: "Dataset uploaded",
-    at: new Date("2024-06-15T10:00:00Z"),
+    id: 'act-1',
+    type: 'upload',
+    message: 'Dataset uploaded',
+    at: new Date('2024-06-15T10:00:00Z'),
     ...overrides,
   };
 }
@@ -82,8 +92,12 @@ export function createMockActivities(
   count: number,
   template?: Partial<ProjectActivity>
 ): ProjectActivity[] {
-  const types: ProjectActivity["type"][] = ["upload", "status_change", "created"];
-  
+  const types: ProjectActivity['type'][] = [
+    'upload',
+    'status_change',
+    'created',
+  ];
+
   return Array.from({ length: count }, (_, i) =>
     createMockActivity({
       id: `act-${i + 1}`,

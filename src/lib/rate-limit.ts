@@ -7,7 +7,7 @@
  * - Redis/Memcached
  */
 
-import { logger } from "@/lib/logger";
+import { logger } from '@/lib/logger';
 
 interface RateLimitEntry {
   count: number;
@@ -18,14 +18,17 @@ interface RateLimitEntry {
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
 // Cleanup old entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitStore.entries()) {
-    if (entry.resetAt < now) {
-      rateLimitStore.delete(key);
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, entry] of rateLimitStore.entries()) {
+      if (entry.resetAt < now) {
+        rateLimitStore.delete(key);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  },
+  5 * 60 * 1000
+);
 
 export interface RateLimitConfig {
   /** Maximum number of requests allowed in the window */
@@ -101,7 +104,7 @@ export function checkRateLimit(
         count: entry.count,
         limit: config.maxRequests,
       },
-      "Rate limit exceeded"
+      'Rate limit exceeded'
     );
 
     return {
@@ -127,13 +130,13 @@ export function getRateLimitHeaders(
   result: RateLimitResult
 ): Record<string, string> {
   return {
-    "X-RateLimit-Limit": result.limit.toString(),
-    "X-RateLimit-Remaining": result.remaining.toString(),
-    "X-RateLimit-Reset": new Date(result.reset).toISOString(),
+    'X-RateLimit-Limit': result.limit.toString(),
+    'X-RateLimit-Remaining': result.remaining.toString(),
+    'X-RateLimit-Reset': new Date(result.reset).toISOString(),
     ...(result.success
       ? {}
       : {
-          "Retry-After": Math.ceil(
+          'Retry-After': Math.ceil(
             (result.reset - Date.now()) / 1000
           ).toString(),
         }),

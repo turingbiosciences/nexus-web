@@ -3,117 +3,117 @@
  */
 
 import {
-    CHART_COLORS,
-    TOOLTIP_STYLE,
-    TOOLTIP_LABEL_STYLE,
-    getChartColor,
-    formatTooltipValue,
-} from "../chart-config";
+  CHART_COLORS,
+  TOOLTIP_STYLE,
+  TOOLTIP_LABEL_STYLE,
+  getChartColor,
+  formatTooltipValue,
+} from '../chart-config';
 
-describe("chart-config", () => {
-    describe("CHART_COLORS", () => {
-        it("exports blueGradient color array with 5 colors", () => {
-            expect(CHART_COLORS.blueGradient).toHaveLength(5);
-            expect(CHART_COLORS.blueGradient[0]).toBe("#3b82f6");
-        });
-
-        it("exports blueGradientReverse color array with 5 colors", () => {
-            expect(CHART_COLORS.blueGradientReverse).toHaveLength(5);
-            expect(CHART_COLORS.blueGradientReverse[0]).toBe("#93c5fd");
-        });
-
-        it("exports multiModel color array with 8 colors", () => {
-            expect(CHART_COLORS.multiModel).toHaveLength(8);
-            expect(CHART_COLORS.multiModel[0]).toBe("#3b82f6");
-            expect(CHART_COLORS.multiModel[1]).toBe("#10b981");
-        });
-
-        it("all colors are valid hex codes", () => {
-            const hexRegex = /^#[0-9a-f]{6}$/i;
-
-            CHART_COLORS.blueGradient.forEach((color) => {
-                expect(color).toMatch(hexRegex);
-            });
-
-            CHART_COLORS.multiModel.forEach((color) => {
-                expect(color).toMatch(hexRegex);
-            });
-        });
+describe('chart-config', () => {
+  describe('CHART_COLORS', () => {
+    it('exports blueGradient color array with 5 colors', () => {
+      expect(CHART_COLORS.blueGradient).toHaveLength(5);
+      expect(CHART_COLORS.blueGradient[0]).toBe('#3b82f6');
     });
 
-    describe("getChartColor", () => {
-        it("returns correct color for valid index", () => {
-            const result = getChartColor(CHART_COLORS.blueGradient, 0);
-            expect(result).toBe("#3b82f6");
-        });
-
-        it("returns correct color for middle index", () => {
-            const result = getChartColor(CHART_COLORS.blueGradient, 2);
-            expect(result).toBe("#93c5fd");
-        });
-
-        it("cycles through colors when index exceeds array length", () => {
-            // blueGradient has 5 colors, index 5 should wrap to index 0
-            const result = getChartColor(CHART_COLORS.blueGradient, 5);
-            expect(result).toBe(CHART_COLORS.blueGradient[0]);
-        });
-
-        it("cycles correctly for large index", () => {
-            // Index 12 with 5 colors = index 2
-            const result = getChartColor(CHART_COLORS.blueGradient, 12);
-            expect(result).toBe(CHART_COLORS.blueGradient[2]);
-        });
-
-        it("works with multiModel palette", () => {
-            const result = getChartColor(CHART_COLORS.multiModel, 3);
-            expect(result).toBe("#ef4444"); // red
-        });
+    it('exports blueGradientReverse color array with 5 colors', () => {
+      expect(CHART_COLORS.blueGradientReverse).toHaveLength(5);
+      expect(CHART_COLORS.blueGradientReverse[0]).toBe('#93c5fd');
     });
 
-    describe("formatTooltipValue", () => {
-        it("formats number with default 4 decimal places", () => {
-            const result = formatTooltipValue(0.123456789);
-            expect(result).toBe("0.1235");
-        });
-
-        it("formats number with custom decimal places", () => {
-            const result = formatTooltipValue(0.123456789, 2);
-            expect(result).toBe("0.12");
-        });
-
-        it("formats whole numbers correctly", () => {
-            const result = formatTooltipValue(42);
-            expect(result).toBe("42.0000");
-        });
-
-        it("handles zero", () => {
-            const result = formatTooltipValue(0);
-            expect(result).toBe("0.0000");
-        });
-
-        it("handles negative numbers", () => {
-            const result = formatTooltipValue(-1.5, 2);
-            expect(result).toBe("-1.50");
-        });
+    it('exports multiModel color array with 8 colors', () => {
+      expect(CHART_COLORS.multiModel).toHaveLength(8);
+      expect(CHART_COLORS.multiModel[0]).toBe('#3b82f6');
+      expect(CHART_COLORS.multiModel[1]).toBe('#10b981');
     });
 
-    describe("TOOLTIP_STYLE", () => {
-        it("has expected backgroundColor", () => {
-            expect(TOOLTIP_STYLE.backgroundColor).toBe("#fff");
-        });
+    it('all colors are valid hex codes', () => {
+      const hexRegex = /^#[0-9a-f]{6}$/i;
 
-        it("has expected border", () => {
-            expect(TOOLTIP_STYLE.border).toBe("1px solid #e5e7eb");
-        });
+      CHART_COLORS.blueGradient.forEach((color) => {
+        expect(color).toMatch(hexRegex);
+      });
 
-        it("has expected borderRadius", () => {
-            expect(TOOLTIP_STYLE.borderRadius).toBe("0.375rem");
-        });
+      CHART_COLORS.multiModel.forEach((color) => {
+        expect(color).toMatch(hexRegex);
+      });
+    });
+  });
+
+  describe('getChartColor', () => {
+    it('returns correct color for valid index', () => {
+      const result = getChartColor(CHART_COLORS.blueGradient, 0);
+      expect(result).toBe('#3b82f6');
     });
 
-    describe("TOOLTIP_LABEL_STYLE", () => {
-        it("has expected color", () => {
-            expect(TOOLTIP_LABEL_STYLE.color).toBe("#374151");
-        });
+    it('returns correct color for middle index', () => {
+      const result = getChartColor(CHART_COLORS.blueGradient, 2);
+      expect(result).toBe('#93c5fd');
     });
+
+    it('cycles through colors when index exceeds array length', () => {
+      // blueGradient has 5 colors, index 5 should wrap to index 0
+      const result = getChartColor(CHART_COLORS.blueGradient, 5);
+      expect(result).toBe(CHART_COLORS.blueGradient[0]);
+    });
+
+    it('cycles correctly for large index', () => {
+      // Index 12 with 5 colors = index 2
+      const result = getChartColor(CHART_COLORS.blueGradient, 12);
+      expect(result).toBe(CHART_COLORS.blueGradient[2]);
+    });
+
+    it('works with multiModel palette', () => {
+      const result = getChartColor(CHART_COLORS.multiModel, 3);
+      expect(result).toBe('#ef4444'); // red
+    });
+  });
+
+  describe('formatTooltipValue', () => {
+    it('formats number with default 4 decimal places', () => {
+      const result = formatTooltipValue(0.123456789);
+      expect(result).toBe('0.1235');
+    });
+
+    it('formats number with custom decimal places', () => {
+      const result = formatTooltipValue(0.123456789, 2);
+      expect(result).toBe('0.12');
+    });
+
+    it('formats whole numbers correctly', () => {
+      const result = formatTooltipValue(42);
+      expect(result).toBe('42.0000');
+    });
+
+    it('handles zero', () => {
+      const result = formatTooltipValue(0);
+      expect(result).toBe('0.0000');
+    });
+
+    it('handles negative numbers', () => {
+      const result = formatTooltipValue(-1.5, 2);
+      expect(result).toBe('-1.50');
+    });
+  });
+
+  describe('TOOLTIP_STYLE', () => {
+    it('has expected backgroundColor', () => {
+      expect(TOOLTIP_STYLE.backgroundColor).toBe('#fff');
+    });
+
+    it('has expected border', () => {
+      expect(TOOLTIP_STYLE.border).toBe('1px solid #e5e7eb');
+    });
+
+    it('has expected borderRadius', () => {
+      expect(TOOLTIP_STYLE.borderRadius).toBe('0.375rem');
+    });
+  });
+
+  describe('TOOLTIP_LABEL_STYLE', () => {
+    it('has expected color', () => {
+      expect(TOOLTIP_LABEL_STYLE.color).toBe('#374151');
+    });
+  });
 });

@@ -1,11 +1,11 @@
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * Width of the skeleton. Can be a CSS value or "full" for 100%.
    * @default "full"
    */
-  width?: string | "full";
+  width?: string | 'full';
   /**
    * Height of the skeleton. Can be a CSS value.
    * @default "1rem"
@@ -15,7 +15,7 @@ interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
    * Shape of the skeleton.
    * @default "rectangle"
    */
-  variant?: "rectangle" | "circle" | "rounded";
+  variant?: 'rectangle' | 'circle' | 'rounded';
   /**
    * Number of skeleton lines to render (for text loading states).
    * If provided, renders multiple skeleton lines with gap.
@@ -43,27 +43,27 @@ interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
  * <Skeleton width="200px" height="24px" variant="rounded" />
  */
 export function Skeleton({
-  width = "full",
-  height = "1rem",
-  variant = "rectangle",
+  width = 'full',
+  height = '1rem',
+  variant = 'rectangle',
   count,
   className,
   style,
   ...props
 }: SkeletonProps) {
-  const baseStyles = "animate-pulse bg-gray-200";
+  const baseStyles = 'animate-pulse bg-gray-200';
 
   const variantStyles = {
-    rectangle: "rounded-none",
-    rounded: "rounded",
-    circle: "rounded-full",
+    rectangle: 'rounded-none',
+    rounded: 'rounded',
+    circle: 'rounded-full',
   };
 
-  const widthStyle = width === "full" ? "w-full" : "";
+  const widthStyle = width === 'full' ? 'w-full' : '';
 
   const inlineStyles = {
     ...style,
-    ...(width !== "full" && { width }),
+    ...(width !== 'full' && { width }),
     height,
   };
 
@@ -107,10 +107,10 @@ export function SkeletonText({
   lines?: number;
   className?: string;
 }) {
-  const widths = ["100%", "95%", "85%", "90%", "80%"];
+  const widths = ['100%', '95%', '85%', '90%', '80%'];
 
   return (
-    <div className={cn("space-y-2", className)} {...props}>
+    <div className={cn('space-y-2', className)} {...props}>
       {Array.from({ length: lines }).map((_, index) => (
         <Skeleton
           key={index}
@@ -128,7 +128,7 @@ export function SkeletonText({
  */
 export function SkeletonCard({ className, ...props }: { className?: string }) {
   return (
-    <div className={cn("card", className)} {...props}>
+    <div className={cn('card', className)} {...props}>
       {/* Title */}
       <Skeleton width="60%" height="1.25rem" className="mb-3" />
 
@@ -161,13 +161,13 @@ export function SkeletonTable({
   className?: string;
 }) {
   return (
-    <div className={cn("space-y-3", className)} {...props}>
+    <div className={cn('space-y-3', className)} {...props}>
       {Array.from({ length: rows }).map((_, rowIndex) => (
         <div key={rowIndex} className="flex items-center gap-4">
           {Array.from({ length: columns }).map((_, colIndex) => (
             <Skeleton
               key={colIndex}
-              width={colIndex === 0 ? "30%" : "20%"}
+              width={colIndex === 0 ? '30%' : '20%'}
               height="1rem"
             />
           ))}

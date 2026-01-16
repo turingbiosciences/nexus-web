@@ -1,12 +1,12 @@
-import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
 import {
   GlobalAuthProvider,
   useGlobalAuth,
-} from "@/components/providers/global-auth-provider";
+} from '@/components/providers/global-auth-provider';
 
 // Mock @logto/react hook
-jest.mock("@logto/react", () => ({
+jest.mock('@logto/react', () => ({
   useLogto: () => ({
     isAuthenticated: true,
     isLoading: false,
@@ -14,7 +14,7 @@ jest.mock("@logto/react", () => ({
     signOut: jest.fn(),
     fetchUserInfo: jest.fn(),
     getIdTokenClaims: jest.fn(),
-    getAccessToken: jest.fn().mockResolvedValue("token123"),
+    getAccessToken: jest.fn().mockResolvedValue('token123'),
   }),
 }));
 
@@ -23,12 +23,12 @@ function Consumer() {
   const { isAuthenticated, isLoading, getAccessToken } = useGlobalAuth();
   return (
     <div>
-      <span data-testid="auth">{isAuthenticated ? "yes" : "no"}</span>
-      <span data-testid="loading">{isLoading ? "loading" : "ready"}</span>
+      <span data-testid="auth">{isAuthenticated ? 'yes' : 'no'}</span>
+      <span data-testid="loading">{isLoading ? 'loading' : 'ready'}</span>
       <button
         onClick={async () => {
           const token = await getAccessToken();
-          console.log("token", token);
+          console.log('token', token);
         }}
       >
         token
@@ -37,12 +37,12 @@ function Consumer() {
   );
 }
 
-describe("GlobalAuthProvider", () => {
-  it("provides auth context values (authenticated)", async () => {
+describe('GlobalAuthProvider', () => {
+  it('provides auth context values (authenticated)', async () => {
     // Polyfill fetch for provider's refreshAuth call
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ isAuthenticated: true, claims: { sub: "123" } }),
+      json: async () => ({ isAuthenticated: true, claims: { sub: '123' } }),
     });
     render(
       <GlobalAuthProvider>
@@ -50,12 +50,12 @@ describe("GlobalAuthProvider", () => {
       </GlobalAuthProvider>
     );
     await waitFor(() => {
-      expect(screen.getByTestId("auth")).toHaveTextContent("yes");
-      expect(screen.getByTestId("loading")).toHaveTextContent("ready");
+      expect(screen.getByTestId('auth')).toHaveTextContent('yes');
+      expect(screen.getByTestId('loading')).toHaveTextContent('ready');
     });
   });
 
-  it("reports unauthenticated when server responds non-ok", async () => {
+  it('reports unauthenticated when server responds non-ok', async () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: false });
     render(
       <GlobalAuthProvider>
@@ -63,19 +63,19 @@ describe("GlobalAuthProvider", () => {
       </GlobalAuthProvider>
     );
     await waitFor(() => {
-      expect(screen.getByTestId("auth")).toHaveTextContent("no");
+      expect(screen.getByTestId('auth')).toHaveTextContent('no');
     });
   });
 
-  it("handles fetch rejection gracefully", async () => {
-    global.fetch = jest.fn().mockRejectedValue(new Error("fail"));
+  it('handles fetch rejection gracefully', async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error('fail'));
     render(
       <GlobalAuthProvider>
         <Consumer />
       </GlobalAuthProvider>
     );
     await waitFor(() => {
-      expect(screen.getByTestId("auth")).toHaveTextContent("no");
+      expect(screen.getByTestId('auth')).toHaveTextContent('no');
     });
   });
 });

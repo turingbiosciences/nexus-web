@@ -1,5 +1,5 @@
-import LogtoClient from "@logto/next/edge";
-import { logtoConfig } from "@/lib/auth";
+import LogtoClient from '@logto/next/edge';
+import { logtoConfig } from '@/lib/auth';
 
 const logto = new LogtoClient(logtoConfig);
 

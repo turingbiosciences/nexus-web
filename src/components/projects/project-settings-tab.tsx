@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Project } from "@/types/project";
-import { useAccessToken } from "@/components/providers/token-provider";
-import { authFetch } from "@/lib/auth-fetch";
-import { useToast } from "@/components/ui/toast-provider";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Project } from '@/types/project';
+import { useAccessToken } from '@/components/providers/token-provider';
+import { authFetch } from '@/lib/auth-fetch';
+import { useToast } from '@/components/ui/toast-provider';
 
 interface ProjectSettingsTabProps {
   project: Project;
@@ -21,16 +21,16 @@ export function ProjectSettingsTab({
   isDeleting,
 }: ProjectSettingsTabProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [name, setName] = useState(project.name || "");
-  const [description, setDescription] = useState(project.description || "");
+  const [name, setName] = useState(project.name || '');
+  const [description, setDescription] = useState(project.description || '');
   const [isSaving, setIsSaving] = useState(false);
   const { accessToken, refreshToken } = useAccessToken();
   const { push: pushToast } = useToast();
 
   // Check if there are unsaved changes
   const hasChanges =
-    name !== (project.name || "") ||
-    description !== (project.description || "");
+    name !== (project.name || '') ||
+    description !== (project.description || '');
 
   const handleSave = async () => {
     if (!accessToken || !hasChanges) return;
@@ -39,11 +39,11 @@ export function ProjectSettingsTab({
     try {
       const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
       const response = await authFetch(`${baseUrl}/projects/${project.id}`, {
-        method: "PUT",
+        method: 'PUT',
         token: accessToken,
         onTokenRefresh: refreshToken,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           name,
@@ -53,7 +53,7 @@ export function ProjectSettingsTab({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update project");
+        throw new Error(errorData.message || 'Failed to update project');
       }
 
       const updatedProject = await response.json();
@@ -65,17 +65,17 @@ export function ProjectSettingsTab({
       });
 
       pushToast({
-        title: "Project Updated",
-        description: "Your changes have been saved successfully.",
-        variant: "default",
+        title: 'Project Updated',
+        description: 'Your changes have been saved successfully.',
+        variant: 'default',
       });
     } catch (err) {
       pushToast({
-        title: "Update Failed",
+        title: 'Update Failed',
         description: `Error: ${
-          err instanceof Error ? err.message : "Unknown error"
+          err instanceof Error ? err.message : 'Unknown error'
         }`,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsSaving(false);
@@ -114,7 +114,7 @@ export function ProjectSettingsTab({
         </div>
         <div className="pt-4 border-t">
           <Button onClick={handleSave} disabled={!hasChanges || isSaving}>
-            {isSaving ? "Saving..." : "Save Changes"}
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
 
@@ -158,7 +158,7 @@ export function ProjectSettingsTab({
                   disabled={isDeleting}
                   className="bg-red-600 hover:bg-red-700 text-white"
                 >
-                  {isDeleting ? "Deleting..." : "Yes, Delete Project"}
+                  {isDeleting ? 'Deleting...' : 'Yes, Delete Project'}
                 </Button>
               </div>
             </div>

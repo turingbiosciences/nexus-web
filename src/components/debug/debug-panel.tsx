@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 interface UserData {
   id?: string;
@@ -38,7 +38,7 @@ export function DebugPanel() {
 
   useEffect(() => {
     // Check if debug mode is enabled
-    setIsDebugMode(process.env.NEXT_PUBLIC_TBIO_DEBUG === "true");
+    setIsDebugMode(process.env.NEXT_PUBLIC_TBIO_DEBUG === 'true');
   }, []);
 
   useEffect(() => {
@@ -53,19 +53,19 @@ export function DebugPanel() {
       setIsResizing(false);
     };
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isResizing]);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch("/api/logto/user");
+        const response = await fetch('/api/logto/user');
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -81,7 +81,7 @@ export function DebugPanel() {
           setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error("Auth check error:", error);
+        console.error('Auth check error:', error);
         setIsAuthenticated(false);
         setUserData(null);
         setError(error as Error);
@@ -101,7 +101,7 @@ export function DebugPanel() {
   return (
     <div
       className="fixed bottom-0 left-0 right-0 bg-gray-900 text-white border-t border-gray-700 z-50 flex flex-col"
-      style={{ height: isMinimized ? "auto" : `${height}px` }}
+      style={{ height: isMinimized ? 'auto' : `${height}px` }}
     >
       {/* Resize Handle */}
       {!isMinimized && (
@@ -118,13 +118,13 @@ export function DebugPanel() {
         </h3>
         <div className="flex items-center gap-3">
           <div className="text-sm text-gray-300">
-            TBIO_DEBUG: {isDebugMode ? "ENABLED" : "DISABLED"}
+            TBIO_DEBUG: {isDebugMode ? 'ENABLED' : 'DISABLED'}
           </div>
           <button
             onClick={() => setIsMinimized(!isMinimized)}
             className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded transition-colors"
           >
-            {isMinimized ? "Expand ▲" : "Minimize ▼"}
+            {isMinimized ? 'Expand ▲' : 'Minimize ▼'}
           </button>
         </div>
       </div>
@@ -144,20 +144,20 @@ export function DebugPanel() {
                     <span>Authenticated:</span>
                     <span
                       className={
-                        isAuthenticated ? "text-green-400" : "text-red-400"
+                        isAuthenticated ? 'text-green-400' : 'text-red-400'
                       }
                     >
-                      {isAuthenticated ? "YES" : "NO"}
+                      {isAuthenticated ? 'YES' : 'NO'}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Loading:</span>
                     <span
                       className={
-                        isLoading ? "text-yellow-400" : "text-gray-400"
+                        isLoading ? 'text-yellow-400' : 'text-gray-400'
                       }
                     >
-                      {isLoading ? "YES" : "NO"}
+                      {isLoading ? 'YES' : 'NO'}
                     </span>
                   </div>
                   {error && (
@@ -220,11 +220,11 @@ export function DebugPanel() {
                         <span
                           className={
                             userData.emailVerified
-                              ? "text-green-400"
-                              : "text-red-400"
+                              ? 'text-green-400'
+                              : 'text-red-400'
                           }
                         >
-                          {userData.emailVerified ? "YES" : "NO"}
+                          {userData.emailVerified ? 'YES' : 'NO'}
                         </span>
                       </div>
                     )}

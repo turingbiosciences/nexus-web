@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useGlobalAuth } from "@/components/providers/global-auth-provider";
-import { useEffect, useState } from "react";
+import { useGlobalAuth } from '@/components/providers/global-auth-provider';
+import { useEffect, useState } from 'react';
 
 export function Dummy() {
   const { isAuthenticated, isLoading } = useGlobalAuth();
@@ -25,9 +25,9 @@ export function Dummy() {
       let cancelled = false;
       (async () => {
         try {
-          const resp = await fetch("/api/logto/user", {
-            credentials: "include",
-            headers: { "cache-control": "no-store" },
+          const resp = await fetch('/api/logto/user', {
+            credentials: 'include',
+            headers: { 'cache-control': 'no-store' },
           });
           if (!cancelled) {
             setResolvedAuth(resp.ok);
@@ -50,5 +50,5 @@ export function Dummy() {
     return <div>Loading authentication…</div>;
   }
 
-  return <div>{resolvedAuth ? "Authenticated" : "Not authenticated"}</div>;
+  return <div>{resolvedAuth ? 'Authenticated' : 'Not authenticated'}</div>;
 }

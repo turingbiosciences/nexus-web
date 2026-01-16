@@ -5,16 +5,19 @@
 The sign-out was not working because of a **port mismatch** in the environment configuration.
 
 ### The Problem
+
 - Server was running on `localhost:3001`
 - `NEXTAUTH_URL` was set to `localhost:3000` in `.env.local`
 - Logto was redirecting to the wrong port after sign-out
 
 ### The Solution
+
 ✅ **Fixed**: Updated `NEXTAUTH_URL=http://localhost:3001` in `.env.local`
 
 ## Verification
 
 The sign-out endpoint now correctly redirects to:
+
 ```
 https://q98adz.logto.app/oidc/session/end?client_id=h28vlbexr7nmgjk5f2qdg&post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3001
 ```
@@ -24,6 +27,7 @@ Notice the `post_logout_redirect_uri` now points to `localhost:3001` ✅
 ## Next Steps
 
 ### 1. **Logto Dashboard Configuration**
+
 You need to ensure your Logto application has the correct redirect URLs configured:
 
 1. Go to your [Logto Dashboard](https://cloud.logto.io)
@@ -37,6 +41,7 @@ You need to ensure your Logto application has the correct redirect URLs configur
    - `http://localhost:3001`
 
 ### 2. **Test the Complete Flow**
+
 1. Start the server: `npm run dev`
 2. Open `http://localhost:3001`
 3. Sign in with your Logto account
@@ -47,6 +52,7 @@ You need to ensure your Logto application has the correct redirect URLs configur
 ## Environment Variables Status
 
 ✅ **Correctly Set:**
+
 ```env
 NEXTAUTH_URL=http://localhost:3001  # ← This was the fix!
 LOGTO_ENDPOINT=https://q98adz.logto.app/

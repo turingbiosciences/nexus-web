@@ -6,9 +6,9 @@
  * Default date format options used throughout the application
  */
 const DEFAULT_DATE_OPTIONS: Intl.DateTimeFormatOptions = {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
 };
 
 /**
@@ -19,8 +19,8 @@ const DEFAULT_DATE_OPTIONS: Intl.DateTimeFormatOptions = {
  * @param locale Locale to use for formatting (defaults to en-US)
  * @returns Formatted date string
  */
-export function formatDate(date: Date, locale: string = "en-US"): string {
-    return date.toLocaleDateString(locale, DEFAULT_DATE_OPTIONS);
+export function formatDate(date: Date, locale: string = 'en-US'): string {
+  return date.toLocaleDateString(locale, DEFAULT_DATE_OPTIONS);
 }
 
 /**
@@ -31,12 +31,12 @@ export function formatDate(date: Date, locale: string = "en-US"): string {
  * @param locale Locale to use for formatting (defaults to en-US)
  * @returns Formatted date and time string
  */
-export function formatDateTime(date: Date, locale: string = "en-US"): string {
-    return date.toLocaleDateString(locale, {
-        ...DEFAULT_DATE_OPTIONS,
-        hour: "numeric",
-        minute: "2-digit",
-    });
+export function formatDateTime(date: Date, locale: string = 'en-US'): string {
+  return date.toLocaleDateString(locale, {
+    ...DEFAULT_DATE_OPTIONS,
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 
 /**
@@ -46,5 +46,5 @@ export function formatDateTime(date: Date, locale: string = "en-US"): string {
  * @returns ISO date string
  */
 export function formatISODate(date: Date): string {
-    return date.toISOString().split("T")[0];
+  return date.toISOString().split('T')[0];
 }

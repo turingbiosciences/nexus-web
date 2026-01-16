@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { LogtoProvider } from "@logto/react";
-import { ReactNode } from "react";
-import { logtoClientConfig } from "@/lib/auth";
+import { LogtoProvider } from '@logto/react';
+import { ReactNode } from 'react';
+import { logtoClientConfig } from '@/lib/auth';
 
 interface AuthProviderProps {
   children: ReactNode;

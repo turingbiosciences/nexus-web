@@ -1,7 +1,9 @@
 # Sign-Out Button Fix
 
 ## Problem
+
 The sign-out button was not functioning properly due to:
+
 1. Incorrect redirect URL (pointing to localhost:3000 instead of 3001)
 2. Missing or incorrect `NEXTAUTH_URL` environment variable
 3. Potential issues with Logto session handling
@@ -9,16 +11,19 @@ The sign-out button was not functioning properly due to:
 ## Solution Implemented
 
 ### 1. **Fixed API Routes**
+
 - Reverted to simple Logto client configuration
 - Added fallback for `NEXTAUTH_URL` environment variable
 - Simplified the sign-out and sign-in API routes
 
 ### 2. **Enhanced Auth Button**
+
 - Added robust error handling for sign-out
 - Implemented fallback mechanism with manual sign-out
 - Improved user experience with immediate state clearing
 
 ### 3. **Manual Sign-Out Fallback**
+
 - Created `/api/logto/manual-sign-out` endpoint
 - Clears all authentication cookies manually
 - Provides backup when standard Logto sign-out fails
@@ -69,5 +74,5 @@ If sign-out still doesn't work:
 
 - `src/components/auth/auth-button.tsx` - Enhanced sign-out logic
 - `src/app/api/logto/sign-out/route.ts` - Simplified API route
-- `src/app/api/logto/sign-in/route.ts` - Simplified API route  
+- `src/app/api/logto/sign-in/route.ts` - Simplified API route
 - `src/app/api/logto/manual-sign-out/route.ts` - New fallback endpoint

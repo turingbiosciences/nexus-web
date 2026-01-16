@@ -3,11 +3,11 @@
  * Handles fetching and managing projects from the backend API
  */
 
-import { Project } from "@/types/project";
-import { mockProjects } from "@/lib/mock-data";
-import { logger } from "@/lib/logger";
-import { getRelativeTime } from "@/lib/utils/date-utils";
-import { getApiUrl, API_STATUS_MAP } from "@/lib/api/utils";
+import { Project } from '@/types/project';
+import { mockProjects } from '@/lib/mock-data';
+import { logger } from '@/lib/logger';
+import { getRelativeTime } from '@/lib/utils/date-utils';
+import { getApiUrl, API_STATUS_MAP } from '@/lib/api/utils';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RawProject = any;
@@ -30,8 +30,8 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
   // Check if mock mode is enabled
   const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
 
-  if (dataMode === "mock") {
-    logger.debug("Using mock data (NEXT_PUBLIC_DATA_MODE=mock)");
+  if (dataMode === 'mock') {
+    logger.debug('Using mock data (NEXT_PUBLIC_DATA_MODE=mock)');
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 300));
     return mockProjects;
@@ -39,18 +39,18 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
 
   const apiUrl = getApiUrl();
 
-  logger.debug({ url: `${apiUrl}/projects` }, "Fetching projects from API");
+  logger.debug({ url: `${apiUrl}/projects` }, 'Fetching projects from API');
 
   const response = await fetch(`${apiUrl}/projects`, {
-    method: "GET",
+    method: 'GET',
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
 
   if (!response.ok) {
-    const errorText = await response.text().catch(() => "Unknown error");
+    const errorText = await response.text().catch(() => 'Unknown error');
     throw new Error(
       `Failed to fetch projects: ${response.status} ${response.statusText} - ${errorText}`
     );
@@ -63,16 +63,16 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
     {
       responseType: typeof data,
       isArray: Array.isArray(data),
-      hasProjectsProperty: "projects" in (data || {}),
+      hasProjectsProperty: 'projects' in (data || {}),
     },
-    "Projects API response received"
+    'Projects API response received'
   );
 
   // Handle both array response and object with projects property
   const projectsArray: RawProject[] = Array.isArray(data)
     ? data
     : data?.projects || [];
-  logger.debug({ count: projectsArray.length }, "Projects array extracted");
+  logger.debug({ count: projectsArray.length }, 'Projects array extracted');
 
   // Normalize projects to ensure valid status values and convert date strings to Date objects
   const projects = projectsArray.map((project: RawProject) => {
@@ -86,11 +86,11 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
         updated_at: project.updated_at,
         last_activity: project.last_activity,
       },
-      "Raw project data from API"
+      'Raw project data from API'
     );
 
     // Map API status to internal status
-    const status = API_STATUS_MAP[project.status] || "setup";
+    const status = API_STATUS_MAP[project.status] || 'setup';
 
     // Use last_activity.created_at for relative time calculation
     const lastActivityDate = project.last_activity?.created_at
@@ -112,7 +112,7 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
     };
   });
 
-  logger.info({ count: projects.length }, "Returning normalized projects");
+  logger.info({ count: projects.length }, 'Returning normalized projects');
   return projects;
 }
 
@@ -129,8 +129,8 @@ export async function deleteProject(
   // Check if mock mode is enabled
   const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
 
-  if (dataMode === "mock") {
-    logger.debug({ projectId }, "Mock deletion (NEXT_PUBLIC_DATA_MODE=mock)");
+  if (dataMode === 'mock') {
+    logger.debug({ projectId }, 'Mock deletion (NEXT_PUBLIC_DATA_MODE=mock)');
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 300));
     return;
@@ -140,25 +140,25 @@ export async function deleteProject(
 
   logger.info(
     { projectId, url: `${apiUrl}/projects/${projectId}` },
-    "Deleting project via API"
+    'Deleting project via API'
   );
 
   const response = await fetch(`${apiUrl}/projects/${projectId}`, {
-    method: "DELETE",
+    method: 'DELETE',
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
 
   if (!response.ok) {
-    const errorText = await response.text().catch(() => "Unknown error");
+    const errorText = await response.text().catch(() => 'Unknown error');
     throw new Error(
       `Failed to delete project: ${response.status} ${response.statusText} - ${errorText}`
     );
   }
 
-  logger.info({ projectId }, "Successfully deleted project");
+  logger.info({ projectId }, 'Successfully deleted project');
 }
 
 /**
@@ -174,10 +174,10 @@ export async function createProject(
   // Check if mock mode is enabled
   const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
 
-  if (dataMode === "mock") {
+  if (dataMode === 'mock') {
     logger.debug(
       { name: data.name },
-      "Using mock data (NEXT_PUBLIC_DATA_MODE=mock)"
+      'Using mock data (NEXT_PUBLIC_DATA_MODE=mock)'
     );
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -186,12 +186,12 @@ export async function createProject(
       id: `mock-${Date.now()}`,
       name: data.name,
       description: data.description,
-      status: "setup",
+      status: 'setup',
       createdAt: new Date(),
       updatedAt: new Date(),
       datasets: [],
       datasetCount: 0,
-      lastActivity: "just now",
+      lastActivity: 'just now',
     };
     return newProject;
   }
@@ -200,20 +200,20 @@ export async function createProject(
 
   logger.info(
     { name: data.name, url: `${apiUrl}/projects` },
-    "Creating project via API"
+    'Creating project via API'
   );
 
   const response = await fetch(`${apiUrl}/projects`, {
-    method: "POST",
+    method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
   });
 
   if (!response.ok) {
-    const errorText = await response.text().catch(() => "Unknown error");
+    const errorText = await response.text().catch(() => 'Unknown error');
     throw new Error(
       `Failed to create project: ${response.status} ${response.statusText} - ${errorText}`
     );
@@ -224,11 +224,11 @@ export async function createProject(
   // Debug: Log full API response for created project
   logger.debug(
     { projectId: project.id, name: project.name },
-    "Project created via API"
+    'Project created via API'
   );
 
   // Map API status to internal status
-  const status = API_STATUS_MAP[project.status] || "setup";
+  const status = API_STATUS_MAP[project.status] || 'setup';
 
   // Use last_activity.created_at for relative time calculation
   const lastActivityDate = project.last_activity?.created_at

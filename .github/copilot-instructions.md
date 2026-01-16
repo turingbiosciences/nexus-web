@@ -25,15 +25,15 @@ const logto = new LogtoClient({
   appSecret: process.env.LOGTO_APP_SECRET!,
   baseUrl: process.env.NEXTAUTH_URL!,
   cookieSecret: process.env.NEXTAUTH_SECRET!,
-  cookieSecure: process.env.NODE_ENV === "production",
-  scopes: ["openid", "profile", "email", "offline_access"],
+  cookieSecure: process.env.NODE_ENV === 'production',
+  scopes: ['openid', 'profile', 'email', 'offline_access'],
 });
 
 // Client-side auth provider pattern
 const config = {
   endpoint: process.env.NEXT_PUBLIC_LOGTO_ENDPOINT!,
   appId: process.env.NEXT_PUBLIC_LOGTO_APP_ID!,
-  scopes: ["openid", "profile", "email", "offline_access"],
+  scopes: ['openid', 'profile', 'email', 'offline_access'],
   resources: [process.env.NEXT_PUBLIC_TURING_API!], // Required for API access tokens
 };
 ```
@@ -128,7 +128,7 @@ const { getAccessToken, isAuthenticated } = useLogto();
 
 // Check authentication first
 if (!isAuthenticated) {
-  throw new Error("Authentication required. Please sign in.");
+  throw new Error('Authentication required. Please sign in.');
 }
 
 // Get access token with API resource parameter

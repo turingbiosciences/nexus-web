@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { ProjectStatusCount, STATUS_ORDER } from "@/types/project";
-import { CheckCircle, Play, Settings2 } from "lucide-react";
+import { ProjectStatusCount, STATUS_ORDER } from '@/types/project';
+import { CheckCircle, Play, Settings2 } from 'lucide-react';
 
 interface ProjectStatusChartProps {
   statusCount: ProjectStatusCount;
@@ -9,18 +9,18 @@ interface ProjectStatusChartProps {
 
 const statusConfig = {
   complete: {
-    label: "Complete",
-    color: "#10b981",
+    label: 'Complete',
+    color: '#10b981',
     icon: CheckCircle,
   },
   running: {
-    label: "Running",
-    color: "#3b82f6",
+    label: 'Running',
+    color: '#3b82f6',
     icon: Play,
   },
   setup: {
-    label: "Setup",
-    color: "#f59e0b",
+    label: 'Setup',
+    color: '#f59e0b',
     icon: Settings2,
   },
 };
@@ -69,7 +69,7 @@ export function ProjectStatusChart({ statusCount }: ProjectStatusChartProps) {
           <div
             className="w-48 h-48 rounded-full"
             style={{
-              background: `conic-gradient(${gradientStops.join(", ")})`,
+              background: `conic-gradient(${gradientStops.join(', ')})`,
             }}
           />
           <div className="absolute inset-0 flex items-center justify-center">

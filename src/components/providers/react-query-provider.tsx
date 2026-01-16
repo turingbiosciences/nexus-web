@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactNode, useState } from "react";
-import { logger } from "@/lib/logger";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactNode, useState } from 'react';
+import { logger } from '@/lib/logger';
 
 interface ReactQueryProviderProps {
   children: ReactNode;
@@ -15,18 +15,18 @@ interface ReactQueryProviderProps {
 function handleQueryError(error: unknown) {
   if (error instanceof Error) {
     const is401Error =
-      error.message.includes("401") ||
-      error.message.includes("Unauthorized") ||
-      error.message.includes("Signature has expired") ||
-      error.message.includes("token expired") ||
-      error.message.includes("Invalid token");
+      error.message.includes('401') ||
+      error.message.includes('Unauthorized') ||
+      error.message.includes('Signature has expired') ||
+      error.message.includes('token expired') ||
+      error.message.includes('Invalid token');
 
     if (is401Error) {
       logger.error(
         { error: error.message },
-        "ReactQuery: Token expired, redirecting to sign out"
+        'ReactQuery: Token expired, redirecting to sign out'
       );
-      window.location.href = "/api/logto/sign-out";
+      window.location.href = '/api/logto/sign-out';
     }
   }
 }
@@ -43,11 +43,11 @@ export function ReactQueryProvider({ children }: ReactQueryProviderProps) {
               // Don't retry on 401 errors
               if (error instanceof Error) {
                 const is401 =
-                  error.message.includes("401") ||
-                  error.message.includes("Unauthorized") ||
-                  error.message.includes("Signature has expired") ||
-                  error.message.includes("token expired") ||
-                  error.message.includes("Invalid token");
+                  error.message.includes('401') ||
+                  error.message.includes('Unauthorized') ||
+                  error.message.includes('Signature has expired') ||
+                  error.message.includes('token expired') ||
+                  error.message.includes('Invalid token');
 
                 if (is401) {
                   return false; // Don't retry, let onError handle it

@@ -1,45 +1,45 @@
-import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
 import {
   ProjectsProvider,
   useProjects,
-} from "@/components/providers/projects-provider";
+} from '@/components/providers/projects-provider';
 
 // Mock TokenProvider - initially return default mock
 const mockUseAccessToken = jest.fn(() => ({
-  accessToken: "test-token" as string | null,
+  accessToken: 'test-token' as string | null,
   isLoading: false,
   error: null,
   refreshToken: jest.fn(),
 }));
 
-jest.mock("../token-provider", () => ({
+jest.mock('../token-provider', () => ({
   useAccessToken: () => mockUseAccessToken(),
 }));
 
 // Mock API
-jest.mock("@/lib/api/projects", () => ({
+jest.mock('@/lib/api/projects', () => ({
   fetchProjects: jest.fn().mockResolvedValue([
     {
-      id: "p1",
-      name: "Project 1",
-      description: "Desc",
-      status: "setup",
+      id: 'p1',
+      name: 'Project 1',
+      description: 'Desc',
+      status: 'setup',
       datasets: [],
       datasetCount: 0,
-      lastActivity: "just now",
+      lastActivity: 'just now',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
   ]),
   createProject: jest.fn().mockResolvedValue({
-    id: "new",
-    name: "New",
-    description: "New Desc",
-    status: "setup",
+    id: 'new',
+    name: 'New',
+    description: 'New Desc',
+    status: 'setup',
     datasets: [],
     datasetCount: 0,
-    lastActivity: "just now",
+    lastActivity: 'just now',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }),
@@ -58,7 +58,7 @@ function Consumer() {
       </ul>
       <button
         onClick={async () => {
-          await createProject({ name: "Created", description: "C" });
+          await createProject({ name: 'Created', description: 'C' });
         }}
       >
         create
@@ -75,97 +75,97 @@ function Consumer() {
       <button
         onClick={() => {
           if (projects[0]) {
-            updateProject(projects[0].id, { status: "running" });
+            updateProject(projects[0].id, { status: 'running' });
           }
         }}
       >
         update-status
       </button>
       <div data-testid="first-project-status">
-        {projects[0]?.status ?? "none"}
+        {projects[0]?.status ?? 'none'}
       </div>
     </div>
   );
 }
 
-describe("ProjectsProvider", () => {
-  it("loads initial projects", async () => {
+describe('ProjectsProvider', () => {
+  it('loads initial projects', async () => {
     render(
       <ProjectsProvider>
         <Consumer />
       </ProjectsProvider>
     );
-    expect(await screen.findByTestId("project-p1")).toBeInTheDocument();
+    expect(await screen.findByTestId('project-p1')).toBeInTheDocument();
   });
 
-  it("creates a project and appears in list", async () => {
+  it('creates a project and appears in list', async () => {
     render(
       <ProjectsProvider>
         <Consumer />
       </ProjectsProvider>
     );
-    await screen.findByTestId("project-p1");
+    await screen.findByTestId('project-p1');
     screen.getByText(/create/i).click();
     await waitFor(() => {
       // New project should be added (id 'new')
-      expect(screen.getByTestId("project-new")).toBeInTheDocument();
+      expect(screen.getByTestId('project-new')).toBeInTheDocument();
     });
   });
 
-  it("adds dataset and increments datasetCount", async () => {
+  it('adds dataset and increments datasetCount', async () => {
     render(
       <ProjectsProvider>
         <Consumer />
       </ProjectsProvider>
     );
-    const item = await screen.findByTestId("project-p1");
+    const item = await screen.findByTestId('project-p1');
     const before = item.textContent;
     screen.getByText(/add-dataset/i).click();
     await waitFor(() => {
-      const after = screen.getByTestId("project-p1").textContent;
+      const after = screen.getByTestId('project-p1').textContent;
       expect(after).not.toEqual(before);
       expect(after).toMatch(/:setup:1$/); // datasetCount 1
     });
   });
 
-  it("updates status and reflects change", async () => {
+  it('updates status and reflects change', async () => {
     render(
       <ProjectsProvider>
         <Consumer />
       </ProjectsProvider>
     );
-    await screen.findByTestId("project-p1");
-    expect(screen.getByTestId("first-project-status")).toHaveTextContent(
+    await screen.findByTestId('project-p1');
+    expect(screen.getByTestId('first-project-status')).toHaveTextContent(
       /setup/
     );
     screen.getByText(/update-status/i).click();
     await waitFor(() => {
-      expect(screen.getByTestId("first-project-status")).toHaveTextContent(
+      expect(screen.getByTestId('first-project-status')).toHaveTextContent(
         /running/
       );
     });
   });
 
-  it("refetches projects when accessToken changes (new user session)", async () => {
-    const { fetchProjects } = await import("@/lib/api/projects");
+  it('refetches projects when accessToken changes (new user session)', async () => {
+    const { fetchProjects } = await import('@/lib/api/projects');
     const mockFetchProjects = fetchProjects as jest.Mock;
 
     // User A signs in with token-a
     mockUseAccessToken.mockReturnValue({
-      accessToken: "token-a",
+      accessToken: 'token-a',
       isLoading: false,
       error: null,
       refreshToken: jest.fn(),
     });
     mockFetchProjects.mockResolvedValue([
       {
-        id: "user-a-project",
-        name: "User A Project",
+        id: 'user-a-project',
+        name: 'User A Project',
         description: "A's project",
-        status: "setup",
+        status: 'setup',
         datasets: [],
         datasetCount: 0,
-        lastActivity: "just now",
+        lastActivity: 'just now',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
@@ -179,7 +179,7 @@ describe("ProjectsProvider", () => {
 
     // User A's project should appear
     await waitFor(() => {
-      expect(screen.getByTestId("project-user-a-project")).toBeInTheDocument();
+      expect(screen.getByTestId('project-user-a-project')).toBeInTheDocument();
     });
 
     // User A signs out (token becomes null)
@@ -200,26 +200,26 @@ describe("ProjectsProvider", () => {
     // Wait for projects to clear after sign-out
     await waitFor(() => {
       expect(
-        screen.queryByTestId("project-user-a-project")
+        screen.queryByTestId('project-user-a-project')
       ).not.toBeInTheDocument();
     });
 
     // User B signs in with token-b
     mockUseAccessToken.mockReturnValue({
-      accessToken: "token-b",
+      accessToken: 'token-b',
       isLoading: false,
       error: null,
       refreshToken: jest.fn(),
     });
     mockFetchProjects.mockResolvedValue([
       {
-        id: "user-b-project",
-        name: "User B Project",
+        id: 'user-b-project',
+        name: 'User B Project',
         description: "B's project",
-        status: "running",
+        status: 'running',
         datasets: [],
         datasetCount: 0,
-        lastActivity: "just now",
+        lastActivity: 'just now',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
@@ -234,9 +234,9 @@ describe("ProjectsProvider", () => {
 
     // User B's project should appear, User A's should be gone
     await waitFor(() => {
-      expect(screen.getByTestId("project-user-b-project")).toBeInTheDocument();
+      expect(screen.getByTestId('project-user-b-project')).toBeInTheDocument();
       expect(
-        screen.queryByTestId("project-user-a-project")
+        screen.queryByTestId('project-user-a-project')
       ).not.toBeInTheDocument();
     });
   });

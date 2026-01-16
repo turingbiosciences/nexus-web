@@ -15,11 +15,13 @@ NEXT_PUBLIC_TBIO_DEBUG=true
 When enabled, the debug panel displays:
 
 ### Authentication Status
+
 - Whether the user is authenticated
 - Loading state
 - Any authentication errors
 
 ### User Data
+
 - User ID
 - Username
 - Primary email
@@ -27,9 +29,11 @@ When enabled, the debug panel displays:
 - Email verification status
 
 ### Complete User Data (JSON)
+
 - Full user object from Logto with all available properties
 
 ### Environment Information
+
 - Current environment (development/production)
 - Logto endpoint URL
 - Logto application ID
@@ -45,5 +49,6 @@ When enabled, the debug panel displays:
 **Important**: Only enable debug mode in development environments. The debug panel exposes sensitive authentication information that should not be visible in production.
 
 To disable debug mode, either:
+
 - Remove the `NEXT_PUBLIC_TBIO_DEBUG` environment variable
 - Set it to `'false'` or any value other than `'true'`

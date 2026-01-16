@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { ActivitiesSection } from "@/components/projects/activities-section";
+import { ActivitiesSection } from '@/components/projects/activities-section';
 
 interface ProjectActivityTabProps {
   projectId: string;

@@ -181,9 +181,9 @@ if (error) {
 When testing components that use `useAccessToken()`, mock it:
 
 ```typescript
-jest.mock("@/components/providers/token-provider", () => ({
+jest.mock('@/components/providers/token-provider', () => ({
   useAccessToken: () => ({
-    accessToken: "mock-token",
+    accessToken: 'mock-token',
     isLoading: false,
     error: null,
     refreshToken: jest.fn(),
@@ -234,7 +234,7 @@ The API resource is configured in `AuthProvider`:
 const config = {
   endpoint: process.env.NEXT_PUBLIC_LOGTO_ENDPOINT!,
   appId: process.env.NEXT_PUBLIC_LOGTO_APP_ID!,
-  scopes: ["openid", "profile", "email", "offline_access"],
+  scopes: ['openid', 'profile', 'email', 'offline_access'],
   resources: [process.env.NEXT_PUBLIC_TURING_API!], // ← API resource
 };
 ```

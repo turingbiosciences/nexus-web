@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Modal } from "@/components/ui/modal";
+import { Modal } from '@/components/ui/modal';
 
 interface ModelParametersModalProps {
   isOpen: boolean;
@@ -42,10 +42,10 @@ export function ModelParametersModal({
                 <span className="font-medium text-gray-700">{key}</span>
                 <span className="font-mono text-gray-900 text-right break-words">
                   {value === null
-                    ? "null"
-                    : typeof value === "number"
-                    ? value.toFixed(value % 1 === 0 ? 0 : 3)
-                    : String(value)}
+                    ? 'null'
+                    : typeof value === 'number'
+                      ? value.toFixed(value % 1 === 0 ? 0 : 3)
+                      : String(value)}
                 </span>
               </div>
             ))}

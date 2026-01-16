@@ -9,7 +9,7 @@
  * 5. Throws descriptive errors that React Query can catch globally
  */
 
-import { logger } from "./logger";
+import { logger } from './logger';
 
 interface AuthFetchOptions extends RequestInit {
   token: string;
@@ -19,7 +19,7 @@ interface AuthFetchOptions extends RequestInit {
 export class TokenExpiredError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "TokenExpiredError";
+    this.name = 'TokenExpiredError';
   }
 }
 
@@ -30,10 +30,10 @@ function isTokenExpiredError(status: number, body: string): boolean {
   if (status !== 401) return false;
 
   return (
-    body.includes("Signature has expired") ||
-    body.includes("token expired") ||
-    body.includes("Invalid token") ||
-    body.includes("Unauthorized")
+    body.includes('Signature has expired') ||
+    body.includes('token expired') ||
+    body.includes('Invalid token') ||
+    body.includes('Unauthorized')
   );
 }
 
@@ -62,7 +62,7 @@ export async function authFetch(
     const isExpired = isTokenExpiredError(response.status, errorText);
 
     if (isExpired) {
-      logger.info("Token expired, attempting refresh...");
+      logger.info('Token expired, attempting refresh...');
 
       // Try to refresh token if handler provided
       if (onTokenRefresh) {
@@ -70,7 +70,7 @@ export async function authFetch(
           const newToken = await onTokenRefresh();
 
           if (newToken) {
-            logger.info("Token refreshed, retrying request");
+            logger.info('Token refreshed, retrying request');
             // Retry with new token
             response = await fetch(url, {
               ...fetchOptions,
@@ -82,26 +82,26 @@ export async function authFetch(
 
             // If still 401 after refresh, give up and redirect
             if (response.status === 401) {
-              logger.error("Still unauthorized after token refresh");
-              window.location.href = "/api/logto/sign-out";
+              logger.error('Still unauthorized after token refresh');
+              window.location.href = '/api/logto/sign-out';
               throw new TokenExpiredError(
-                "Session expired. Please sign in again."
+                'Session expired. Please sign in again.'
               );
             }
 
             return response;
           }
         } catch (refreshError) {
-          logger.error({ error: refreshError }, "Token refresh error");
-          window.location.href = "/api/logto/sign-out";
-          throw new TokenExpiredError("Session expired. Please sign in again.");
+          logger.error({ error: refreshError }, 'Token refresh error');
+          window.location.href = '/api/logto/sign-out';
+          throw new TokenExpiredError('Session expired. Please sign in again.');
         }
       }
 
       // If no refresh handler or refresh failed, redirect to sign out
-      logger.error("Token expired and no refresh available, signing out");
-      window.location.href = "/api/logto/sign-out";
-      throw new TokenExpiredError("Session expired. Please sign in again.");
+      logger.error('Token expired and no refresh available, signing out');
+      window.location.href = '/api/logto/sign-out';
+      throw new TokenExpiredError('Session expired. Please sign in again.');
     }
   }
 
@@ -129,9 +129,9 @@ export async function simpleFetch(
   if (response.status === 401) {
     const errorText = await response.clone().text();
     if (isTokenExpiredError(response.status, errorText)) {
-      logger.error("Token expired, signing out");
-      window.location.href = "/api/logto/sign-out";
-      throw new TokenExpiredError("Session expired. Please sign in again.");
+      logger.error('Token expired, signing out');
+      window.location.href = '/api/logto/sign-out';
+      throw new TokenExpiredError('Session expired. Please sign in again.');
     }
   }
 

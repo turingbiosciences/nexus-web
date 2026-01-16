@@ -3,8 +3,8 @@
  * Provides common mock configurations and setup functions for tests
  */
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import React from "react";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
 
 /**
  * Standard beforeEach setup for tests
@@ -14,12 +14,13 @@ export function setupTestEnvironment(options?: {
   apiUrl?: string;
   clearMocks?: boolean;
 }) {
-  const { apiUrl = "https://api.example.com", clearMocks = true } = options || {};
-  
+  const { apiUrl = 'https://api.example.com', clearMocks = true } =
+    options || {};
+
   if (clearMocks) {
     jest.clearAllMocks();
   }
-  
+
   if (apiUrl) {
     process.env.NEXT_PUBLIC_TURING_API = apiUrl;
   }
@@ -28,11 +29,9 @@ export function setupTestEnvironment(options?: {
 /**
  * Standard afterEach cleanup for tests
  */
-export function cleanupTestEnvironment(options?: {
-  removeApiUrl?: boolean;
-}) {
+export function cleanupTestEnvironment(options?: { removeApiUrl?: boolean }) {
   const { removeApiUrl = true } = options || {};
-  
+
   if (removeApiUrl) {
     delete process.env.NEXT_PUBLIC_TURING_API;
   }
@@ -56,9 +55,7 @@ export function createQueryClientWrapper() {
 
   return function Wrapper({ children }: { children: React.ReactNode }) {
     return (
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
   };
 }
@@ -74,10 +71,10 @@ export function createMockAccessToken(overrides?: {
   authLoading?: boolean;
 }) {
   return {
-    accessToken: "mock-token",
+    accessToken: 'mock-token',
     isLoading: false,
     error: null,
-    refreshToken: jest.fn().mockResolvedValue("new-token"),
+    refreshToken: jest.fn().mockResolvedValue('new-token'),
     isAuthenticated: true,
     authLoading: false,
     ...overrides,
@@ -96,12 +93,15 @@ export function createMockToast() {
 /**
  * Creates a successful mock fetch response
  */
-export function createMockFetchResponse<T>(data: T, options?: {
-  ok?: boolean;
-  status?: number;
-}) {
+export function createMockFetchResponse<T>(
+  data: T,
+  options?: {
+    ok?: boolean;
+    status?: number;
+  }
+) {
   const { ok = true, status = 200 } = options || {};
-  
+
   return {
     ok,
     status,
@@ -117,8 +117,8 @@ export function createMockFetchError(options?: {
   status?: number;
   message?: string;
 }) {
-  const { status = 500, message = "Internal Server Error" } = options || {};
-  
+  const { status = 500, message = 'Internal Server Error' } = options || {};
+
   return {
     ok: false,
     status,

@@ -1,13 +1,13 @@
-import React from "react";
-import { render, waitFor } from "@testing-library/react";
-import { ReactQueryProvider } from "@/components/providers/react-query-provider";
-import { useQuery } from "@tanstack/react-query";
+import React from 'react';
+import { render, waitFor } from '@testing-library/react';
+import { ReactQueryProvider } from '@/components/providers/react-query-provider';
+import { useQuery } from '@tanstack/react-query';
 
-describe("ReactQueryProvider", () => {
+describe('ReactQueryProvider', () => {
   beforeEach(() => {
     // Mock window.location.href
-    Object.defineProperty(window, "location", {
-      value: { href: "" },
+    Object.defineProperty(window, 'location', {
+      value: { href: '' },
       writable: true,
     });
   });
@@ -16,22 +16,22 @@ describe("ReactQueryProvider", () => {
     jest.clearAllMocks();
   });
 
-  it("should render children", () => {
+  it('should render children', () => {
     const { getByText } = render(
       <ReactQueryProvider>
         <div>Test Child</div>
       </ReactQueryProvider>
     );
 
-    expect(getByText("Test Child")).toBeInTheDocument();
+    expect(getByText('Test Child')).toBeInTheDocument();
   });
 
-  it("should provide QueryClient to children", () => {
+  it('should provide QueryClient to children', () => {
     function TestComponent() {
       const query = useQuery({
-        queryKey: ["test"],
+        queryKey: ['test'],
         queryFn: async () => {
-          return { data: "test" };
+          return { data: 'test' };
         },
       });
 
@@ -48,11 +48,11 @@ describe("ReactQueryProvider", () => {
     expect(getByText(/Query Status:/)).toBeInTheDocument();
   });
 
-  it("should have staleTime configured to 60 seconds", async () => {
+  it('should have staleTime configured to 60 seconds', async () => {
     function TestComponent() {
       const query = useQuery({
-        queryKey: ["test"],
-        queryFn: async () => "data",
+        queryKey: ['test'],
+        queryFn: async () => 'data',
       });
 
       return <div>Status: {query.status}</div>;
@@ -69,15 +69,15 @@ describe("ReactQueryProvider", () => {
     });
   });
 
-  it("should redirect on 401 token expired error in mutation", async () => {
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+  it('should redirect on 401 token expired error in mutation', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
     function TestComponent() {
       const [trigger, setTrigger] = React.useState(false);
 
       React.useEffect(() => {
         if (trigger) {
-          throw new Error("401 - Invalid token: Signature has expired");
+          throw new Error('401 - Invalid token: Signature has expired');
         }
       }, [trigger]);
 
@@ -92,26 +92,26 @@ describe("ReactQueryProvider", () => {
 
     // This tests the provider setup, actual error handling would need
     // a mutation to be triggered which is tested in integration tests
-    expect(getByText("Trigger Error")).toBeInTheDocument();
+    expect(getByText('Trigger Error')).toBeInTheDocument();
 
     consoleErrorSpy.mockRestore();
   });
 
-  it("should not retry queries on 401 errors", async () => {
+  it('should not retry queries on 401 errors', async () => {
     const mockQueryFn = jest
       .fn()
-      .mockRejectedValue(new Error("401 - token expired"));
+      .mockRejectedValue(new Error('401 - token expired'));
 
     function TestComponent() {
       useQuery({
-        queryKey: ["test-401"],
+        queryKey: ['test-401'],
         queryFn: mockQueryFn,
         retry: (failureCount, error) => {
           // This tests the retry logic from the provider
           if (error instanceof Error) {
             const is401 =
-              error.message.includes("401") ||
-              error.message.includes("token expired");
+              error.message.includes('401') ||
+              error.message.includes('token expired');
 
             if (is401) {
               return false;
@@ -137,11 +137,11 @@ describe("ReactQueryProvider", () => {
     });
   });
 
-  it("should disable refetch on window focus", () => {
+  it('should disable refetch on window focus', () => {
     function TestComponent() {
       useQuery({
-        queryKey: ["test"],
-        queryFn: async () => "data",
+        queryKey: ['test'],
+        queryFn: async () => 'data',
       });
 
       // Just verify the provider works with queries
@@ -154,6 +154,6 @@ describe("ReactQueryProvider", () => {
       </ReactQueryProvider>
     );
 
-    expect(getByText("Refetch disabled by default config")).toBeInTheDocument();
+    expect(getByText('Refetch disabled by default config')).toBeInTheDocument();
   });
 });

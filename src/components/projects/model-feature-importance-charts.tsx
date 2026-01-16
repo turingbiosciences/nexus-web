@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   LineChart,
@@ -8,18 +8,18 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from "recharts";
+} from 'recharts';
 import {
   parseFeatureImportance,
   findElbowPoint,
   FeatureImportanceData,
-} from "@/lib/utils/parse-feature-importance";
+} from '@/lib/utils/parse-feature-importance';
 import {
   CHART_COLORS,
   formatTooltipValue,
   getChartColor,
-} from "@/lib/chart-config";
-import { ModelConfig } from "@/types/model-config";
+} from '@/lib/chart-config';
+import { ModelConfig } from '@/types/model-config';
 
 interface ModelFeatureImportanceChartsProps {
   modelConfigs: Record<string, ModelConfig>;
@@ -92,7 +92,7 @@ export function ModelFeatureImportanceCharts({
           return (
             <div key={chart.modelName} className="space-y-3">
               <h5 className="text-sm font-medium text-gray-700">
-                {chart.modelName.replace(/_/g, " ")}
+                {chart.modelName.replace(/_/g, ' ')}
               </h5>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart
@@ -103,16 +103,16 @@ export function ModelFeatureImportanceCharts({
                   <XAxis
                     dataKey="rank"
                     label={{
-                      value: "Rank",
-                      position: "insideBottom",
+                      value: 'Rank',
+                      position: 'insideBottom',
                       offset: -5,
                     }}
                   />
                   <YAxis
                     label={{
-                      value: "Importance",
+                      value: 'Importance',
                       angle: -90,
-                      position: "insideLeft",
+                      position: 'insideLeft',
                     }}
                   />
                   <Tooltip

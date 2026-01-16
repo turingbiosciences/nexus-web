@@ -1,12 +1,12 @@
-import { MockProjectsRepository } from "../mock-projects-repository";
+import { MockProjectsRepository } from '../mock-projects-repository';
 
 // Mock crypto.randomUUID for consistent test IDs
 const mockUUIDs = [
-  "test-uuid-1",
-  "test-uuid-2",
-  "test-uuid-3",
-  "test-uuid-4",
-  "test-uuid-5",
+  'test-uuid-1',
+  'test-uuid-2',
+  'test-uuid-3',
+  'test-uuid-4',
+  'test-uuid-5',
 ];
 let uuidIndex = 0;
 
@@ -18,7 +18,7 @@ beforeEach(() => {
   } as typeof global.crypto;
 });
 
-describe("MockProjectsRepository", () => {
+describe('MockProjectsRepository', () => {
   let repository: MockProjectsRepository;
 
   beforeEach(() => {
@@ -26,55 +26,55 @@ describe("MockProjectsRepository", () => {
     repository = new MockProjectsRepository();
   });
 
-  describe("list", () => {
-    it("returns an array of projects", async () => {
+  describe('list', () => {
+    it('returns an array of projects', async () => {
       const projects = await repository.list();
       expect(Array.isArray(projects)).toBe(true);
     });
 
-    it("returns projects with expected structure", async () => {
+    it('returns projects with expected structure', async () => {
       const projects = await repository.list();
       if (projects.length > 0) {
         const project = projects[0];
-        expect(project).toHaveProperty("id");
-        expect(project).toHaveProperty("name");
-        expect(project).toHaveProperty("description");
-        expect(project).toHaveProperty("status");
-        expect(project).toHaveProperty("createdAt");
-        expect(project).toHaveProperty("updatedAt");
-        expect(project).toHaveProperty("datasetCount");
+        expect(project).toHaveProperty('id');
+        expect(project).toHaveProperty('name');
+        expect(project).toHaveProperty('description');
+        expect(project).toHaveProperty('status');
+        expect(project).toHaveProperty('createdAt');
+        expect(project).toHaveProperty('updatedAt');
+        expect(project).toHaveProperty('datasetCount');
       }
     });
 
-    it("includes newly created projects", async () => {
+    it('includes newly created projects', async () => {
       const initialCount = (await repository.list()).length;
-      await repository.create({ name: "New Project", description: "Test" });
+      await repository.create({ name: 'New Project', description: 'Test' });
       const projects = await repository.list();
       expect(projects.length).toBe(initialCount + 1);
     });
   });
 
-  describe("get", () => {
-    it("returns a project by ID", async () => {
+  describe('get', () => {
+    it('returns a project by ID', async () => {
       const created = await repository.create({
-        name: "Get Test",
-        description: "Test",
+        name: 'Get Test',
+        description: 'Test',
       });
       const retrieved = await repository.get(created.id);
       expect(retrieved).toBeDefined();
       expect(retrieved?.id).toBe(created.id);
-      expect(retrieved?.name).toBe("Get Test");
+      expect(retrieved?.name).toBe('Get Test');
     });
 
-    it("returns undefined for non-existent ID", async () => {
-      const result = await repository.get("non-existent-id");
+    it('returns undefined for non-existent ID', async () => {
+      const result = await repository.get('non-existent-id');
       expect(result).toBeUndefined();
     });
 
-    it("returns the same project on multiple calls", async () => {
+    it('returns the same project on multiple calls', async () => {
       const created = await repository.create({
-        name: "Consistent",
-        description: "Test",
+        name: 'Consistent',
+        description: 'Test',
       });
       const first = await repository.get(created.id);
       const second = await repository.get(created.id);
@@ -82,49 +82,49 @@ describe("MockProjectsRepository", () => {
     });
   });
 
-  describe("create", () => {
-    it("creates a new project with provided name and description", async () => {
-      const input = { name: "Test Project", description: "Test Description" };
+  describe('create', () => {
+    it('creates a new project with provided name and description', async () => {
+      const input = { name: 'Test Project', description: 'Test Description' };
       const project = await repository.create(input);
 
-      expect(project.name).toBe("Test Project");
-      expect(project.description).toBe("Test Description");
+      expect(project.name).toBe('Test Project');
+      expect(project.description).toBe('Test Description');
     });
 
-    it("trims whitespace from name and description", async () => {
+    it('trims whitespace from name and description', async () => {
       const input = {
-        name: "  Trimmed Name  ",
-        description: "  Trimmed Desc  ",
+        name: '  Trimmed Name  ',
+        description: '  Trimmed Desc  ',
       };
       const project = await repository.create(input);
 
-      expect(project.name).toBe("Trimmed Name");
-      expect(project.description).toBe("Trimmed Desc");
+      expect(project.name).toBe('Trimmed Name');
+      expect(project.description).toBe('Trimmed Desc');
     });
 
-    it("assigns a unique ID to the project", async () => {
+    it('assigns a unique ID to the project', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       expect(project.id).toBeDefined();
-      expect(typeof project.id).toBe("string");
+      expect(typeof project.id).toBe('string');
       expect(project.id.length).toBeGreaterThan(0);
     });
 
     it("sets initial status to 'setup'", async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
-      expect(project.status).toBe("setup");
+      expect(project.status).toBe('setup');
     });
 
-    it("initializes timestamps", async () => {
+    it('initializes timestamps', async () => {
       const before = new Date();
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       const after = new Date();
 
@@ -136,110 +136,110 @@ describe("MockProjectsRepository", () => {
       expect(project.createdAt.getTime()).toBeLessThanOrEqual(after.getTime());
     });
 
-    it("initializes with zero datasets", async () => {
+    it('initializes with zero datasets', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       expect(project.datasetCount).toBe(0);
       expect(project.datasets).toEqual([]);
     });
 
-    it("creates an initial activity log entry", async () => {
+    it('creates an initial activity log entry', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       expect(project.activities).toBeDefined();
       expect(project.activities?.length).toBeGreaterThan(0);
-      expect(project.activities?.[0].type).toBe("created");
-      expect(project.activities?.[0].message).toBe("Project created");
+      expect(project.activities?.[0].type).toBe('created');
+      expect(project.activities?.[0].message).toBe('Project created');
     });
 
-    it("adds new project to the beginning of the list", async () => {
+    it('adds new project to the beginning of the list', async () => {
       const project = await repository.create({
-        name: "Latest",
-        description: "Test",
+        name: 'Latest',
+        description: 'Test',
       });
       const projects = await repository.list();
       expect(projects[0].id).toBe(project.id);
     });
   });
 
-  describe("update", () => {
-    it("updates an existing project", async () => {
+  describe('update', () => {
+    it('updates an existing project', async () => {
       const created = await repository.create({
-        name: "Original",
-        description: "Original",
+        name: 'Original',
+        description: 'Original',
       });
       const updated = await repository.update(created.id, {
-        name: "Updated Name",
+        name: 'Updated Name',
       });
 
       expect(updated).toBeDefined();
-      expect(updated?.name).toBe("Updated Name");
-      expect(updated?.description).toBe("Original"); // unchanged
+      expect(updated?.name).toBe('Updated Name');
+      expect(updated?.description).toBe('Original'); // unchanged
     });
 
-    it("returns undefined for non-existent project", async () => {
-      const result = await repository.update("non-existent", { name: "Test" });
+    it('returns undefined for non-existent project', async () => {
+      const result = await repository.update('non-existent', { name: 'Test' });
       expect(result).toBeUndefined();
     });
 
-    it("updates the updatedAt timestamp", async () => {
+    it('updates the updatedAt timestamp', async () => {
       const created = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       const originalUpdatedAt = created.updatedAt;
 
       // Wait a tiny bit to ensure timestamp changes
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      const updated = await repository.update(created.id, { name: "Updated" });
+      const updated = await repository.update(created.id, { name: 'Updated' });
       expect(updated?.updatedAt.getTime()).toBeGreaterThan(
         originalUpdatedAt.getTime()
       );
     });
 
-    it("allows partial updates", async () => {
+    it('allows partial updates', async () => {
       const created = await repository.create({
-        name: "Original",
-        description: "Original Desc",
+        name: 'Original',
+        description: 'Original Desc',
       });
       const updated = await repository.update(created.id, {
-        description: "New Desc",
+        description: 'New Desc',
       });
 
-      expect(updated?.name).toBe("Original");
-      expect(updated?.description).toBe("New Desc");
+      expect(updated?.name).toBe('Original');
+      expect(updated?.description).toBe('New Desc');
     });
 
-    it("persists changes in subsequent get calls", async () => {
+    it('persists changes in subsequent get calls', async () => {
       const created = await repository.create({
-        name: "Original",
-        description: "Test",
+        name: 'Original',
+        description: 'Test',
       });
-      await repository.update(created.id, { name: "Updated" });
+      await repository.update(created.id, { name: 'Updated' });
 
       const retrieved = await repository.get(created.id);
-      expect(retrieved?.name).toBe("Updated");
+      expect(retrieved?.name).toBe('Updated');
     });
   });
 
-  describe("addDataset", () => {
-    it("adds a dataset to a project", async () => {
+  describe('addDataset', () => {
+    it('adds a dataset to a project', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       const dataset = await repository.addDataset(project.id, {
-        name: "test.csv",
+        name: 'test.csv',
         size: 1024,
       });
 
       expect(dataset).toBeDefined();
-      expect(dataset.filename).toBe("test.csv");
+      expect(dataset.filename).toBe('test.csv');
       expect(dataset.size).toBe(1024);
       expect(dataset.id).toBeDefined();
       expect(dataset.uploadedAt).toBeInstanceOf(Date);
@@ -247,47 +247,47 @@ describe("MockProjectsRepository", () => {
 
     it("increments the project's dataset count", async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       expect(project.datasetCount).toBe(0);
 
-      await repository.addDataset(project.id, { name: "file1.csv", size: 100 });
+      await repository.addDataset(project.id, { name: 'file1.csv', size: 100 });
       const updated = await repository.get(project.id);
       expect(updated?.datasetCount).toBe(1);
 
-      await repository.addDataset(project.id, { name: "file2.csv", size: 200 });
+      await repository.addDataset(project.id, { name: 'file2.csv', size: 200 });
       const updated2 = await repository.get(project.id);
       expect(updated2?.datasetCount).toBe(2);
     });
 
-    it("updates lastActivity", async () => {
+    it('updates lastActivity', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
-      await repository.addDataset(project.id, { name: "test.csv", size: 100 });
+      await repository.addDataset(project.id, { name: 'test.csv', size: 100 });
       const updated = await repository.get(project.id);
-      expect(updated?.lastActivity).toBe("dataset uploaded");
+      expect(updated?.lastActivity).toBe('dataset uploaded');
     });
 
-    it("throws error for non-existent project", async () => {
+    it('throws error for non-existent project', async () => {
       await expect(
-        repository.addDataset("non-existent", { name: "test.csv", size: 100 })
-      ).rejects.toThrow("Project not found");
+        repository.addDataset('non-existent', { name: 'test.csv', size: 100 })
+      ).rejects.toThrow('Project not found');
     });
 
-    it("assigns unique IDs to datasets", async () => {
+    it('assigns unique IDs to datasets', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       const dataset1 = await repository.addDataset(project.id, {
-        name: "file1.csv",
+        name: 'file1.csv',
         size: 100,
       });
       const dataset2 = await repository.addDataset(project.id, {
-        name: "file2.csv",
+        name: 'file2.csv',
         size: 200,
       });
 
@@ -295,14 +295,14 @@ describe("MockProjectsRepository", () => {
     });
   });
 
-  describe("deleteDataset", () => {
-    it("removes a dataset from a project", async () => {
+  describe('deleteDataset', () => {
+    it('removes a dataset from a project', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       const dataset = await repository.addDataset(project.id, {
-        name: "test.csv",
+        name: 'test.csv',
         size: 100,
       });
 
@@ -313,68 +313,68 @@ describe("MockProjectsRepository", () => {
       expect(updated?.datasets?.length).toBe(0);
     });
 
-    it("decrements the dataset count", async () => {
+    it('decrements the dataset count', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       const dataset1 = await repository.addDataset(project.id, {
-        name: "file1.csv",
+        name: 'file1.csv',
         size: 100,
       });
-      await repository.addDataset(project.id, { name: "file2.csv", size: 200 });
+      await repository.addDataset(project.id, { name: 'file2.csv', size: 200 });
 
       await repository.deleteDataset(project.id, dataset1.id);
       const updated = await repository.get(project.id);
       expect(updated?.datasetCount).toBe(1);
     });
 
-    it("returns false for non-existent project", async () => {
+    it('returns false for non-existent project', async () => {
       const result = await repository.deleteDataset(
-        "non-existent",
-        "dataset-id"
+        'non-existent',
+        'dataset-id'
       );
       expect(result).toBe(false);
     });
 
-    it("returns false for non-existent dataset", async () => {
+    it('returns false for non-existent dataset', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       const result = await repository.deleteDataset(
         project.id,
-        "non-existent-dataset"
+        'non-existent-dataset'
       );
       expect(result).toBe(false);
     });
 
-    it("updates lastActivity", async () => {
+    it('updates lastActivity', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       const dataset = await repository.addDataset(project.id, {
-        name: "test.csv",
+        name: 'test.csv',
         size: 100,
       });
       await repository.deleteDataset(project.id, dataset.id);
 
       const updated = await repository.get(project.id);
-      expect(updated?.lastActivity).toBe("dataset deleted");
+      expect(updated?.lastActivity).toBe('dataset deleted');
     });
 
-    it("only removes the specified dataset", async () => {
+    it('only removes the specified dataset', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       const dataset1 = await repository.addDataset(project.id, {
-        name: "file1.csv",
+        name: 'file1.csv',
         size: 100,
       });
       const dataset2 = await repository.addDataset(project.id, {
-        name: "file2.csv",
+        name: 'file2.csv',
         size: 200,
       });
 
@@ -385,40 +385,40 @@ describe("MockProjectsRepository", () => {
     });
   });
 
-  describe("listDatasets", () => {
-    it("returns all datasets for a project", async () => {
+  describe('listDatasets', () => {
+    it('returns all datasets for a project', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
-      await repository.addDataset(project.id, { name: "file1.csv", size: 100 });
-      await repository.addDataset(project.id, { name: "file2.csv", size: 200 });
+      await repository.addDataset(project.id, { name: 'file1.csv', size: 100 });
+      await repository.addDataset(project.id, { name: 'file2.csv', size: 200 });
 
       const page = await repository.listDatasets(project.id);
       expect(page.items.length).toBe(2);
       expect(page.total).toBe(2);
     });
 
-    it("returns empty array for project with no datasets", async () => {
+    it('returns empty array for project with no datasets', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       const page = await repository.listDatasets(project.id);
       expect(page.items).toEqual([]);
       expect(page.total).toBe(0);
     });
 
-    it("returns empty array for non-existent project", async () => {
-      const page = await repository.listDatasets("non-existent");
+    it('returns empty array for non-existent project', async () => {
+      const page = await repository.listDatasets('non-existent');
       expect(page.items).toEqual([]);
       expect(page.total).toBe(0);
     });
 
-    it("supports pagination with limit", async () => {
+    it('supports pagination with limit', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       // Add 5 datasets
       for (let i = 0; i < 5; i++) {
@@ -434,10 +434,10 @@ describe("MockProjectsRepository", () => {
       expect(page.nextCursor).toBeDefined();
     });
 
-    it("supports pagination with cursor", async () => {
+    it('supports pagination with cursor', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       // Add 5 datasets
       for (let i = 0; i < 5; i++) {
@@ -449,7 +449,7 @@ describe("MockProjectsRepository", () => {
 
       const page1 = await repository.listDatasets(project.id, { limit: 2 });
       expect(page1.items.length).toBe(2);
-      expect(page1.nextCursor).toBe("2");
+      expect(page1.nextCursor).toBe('2');
 
       const page2 = await repository.listDatasets(project.id, {
         limit: 2,
@@ -459,22 +459,22 @@ describe("MockProjectsRepository", () => {
       expect(page2.items[0].filename).not.toBe(page1.items[0].filename);
     });
 
-    it("returns undefined nextCursor on last page", async () => {
+    it('returns undefined nextCursor on last page', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
-      await repository.addDataset(project.id, { name: "file1.csv", size: 100 });
-      await repository.addDataset(project.id, { name: "file2.csv", size: 200 });
+      await repository.addDataset(project.id, { name: 'file1.csv', size: 100 });
+      await repository.addDataset(project.id, { name: 'file2.csv', size: 200 });
 
       const page = await repository.listDatasets(project.id, { limit: 10 });
       expect(page.nextCursor).toBeUndefined();
     });
 
-    it("defaults to limit of 50", async () => {
+    it('defaults to limit of 50', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
       // Add 60 datasets
       for (let i = 0; i < 60; i++) {
@@ -486,38 +486,38 @@ describe("MockProjectsRepository", () => {
 
       const page = await repository.listDatasets(project.id);
       expect(page.items.length).toBe(50);
-      expect(page.nextCursor).toBe("50");
+      expect(page.nextCursor).toBe('50');
       expect(page.total).toBe(60);
     });
 
-    it("handles cursor at end of list", async () => {
+    it('handles cursor at end of list', async () => {
       const project = await repository.create({
-        name: "Test",
-        description: "Test",
+        name: 'Test',
+        description: 'Test',
       });
-      await repository.addDataset(project.id, { name: "file1.csv", size: 100 });
+      await repository.addDataset(project.id, { name: 'file1.csv', size: 100 });
 
       const page = await repository.listDatasets(project.id, {
         limit: 10,
-        cursor: "1",
+        cursor: '1',
       });
       expect(page.items.length).toBe(0);
       expect(page.nextCursor).toBeUndefined();
     });
   });
 
-  describe("data isolation", () => {
-    it("maintains separate state between repository instances", async () => {
+  describe('data isolation', () => {
+    it('maintains separate state between repository instances', async () => {
       const repo1 = new MockProjectsRepository();
       const repo2 = new MockProjectsRepository();
 
       await repo1.create({
-        name: "Repo1 Project",
-        description: "Test",
+        name: 'Repo1 Project',
+        description: 'Test',
       });
       await repo2.create({
-        name: "Repo2 Project",
-        description: "Test",
+        name: 'Repo2 Project',
+        description: 'Test',
       });
 
       // Each repo should have its own data
@@ -529,9 +529,9 @@ describe("MockProjectsRepository", () => {
     });
   });
 
-  describe("immutability", () => {
-    it("does not mutate input objects", async () => {
-      const input = { name: "Test", description: "Description" };
+  describe('immutability', () => {
+    it('does not mutate input objects', async () => {
+      const input = { name: 'Test', description: 'Description' };
       const original = { ...input };
 
       await repository.create(input);
@@ -539,15 +539,15 @@ describe("MockProjectsRepository", () => {
       expect(input).toEqual(original);
     });
 
-    it("returns new project instances on update", async () => {
+    it('returns new project instances on update', async () => {
       const created = await repository.create({
-        name: "Original",
-        description: "Test",
+        name: 'Original',
+        description: 'Test',
       });
-      const updated = await repository.update(created.id, { name: "Updated" });
+      const updated = await repository.update(created.id, { name: 'Updated' });
 
       expect(updated).not.toBe(created); // Different object reference
-      expect(updated?.name).toBe("Updated");
+      expect(updated?.name).toBe('Updated');
     });
   });
 });
