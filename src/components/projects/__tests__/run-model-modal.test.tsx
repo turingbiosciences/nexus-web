@@ -57,7 +57,9 @@ describe('RunModelModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseDatasets.mockReturnValue(
-      createSuccessQueryReturn(mockDatasets) as unknown as ReturnType<typeof useDatasets>
+      createSuccessQueryReturn(mockDatasets) as unknown as ReturnType<
+        typeof useDatasets
+      >
     );
   });
 
@@ -130,7 +132,9 @@ describe('RunModelModal', () => {
   describe('Empty State', () => {
     it('shows message when no datasets available', () => {
       mockUseDatasets.mockReturnValue(
-        createSuccessQueryReturn([]) as unknown as ReturnType<typeof useDatasets>
+        createSuccessQueryReturn([]) as unknown as ReturnType<
+          typeof useDatasets
+        >
       );
 
       render(
