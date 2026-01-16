@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   LineChart,
@@ -9,13 +9,13 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from "recharts";
+} from 'recharts';
 import {
   CHART_COLORS,
   TOOLTIP_STYLE,
   formatTooltipValue,
   getChartColor,
-} from "@/lib/chart-config";
+} from '@/lib/chart-config';
 
 interface FeatureComparisonChartProps {
   data: Record<string, unknown>;
@@ -29,7 +29,7 @@ export function FeatureComparisonChart({ data }: FeatureComparisonChartProps) {
   // Try to detect data structure and transform accordingly
   if (Array.isArray(data)) {
     chartData = data as Array<Record<string, string | number>>;
-  } else if (typeof data === "object" && data !== null) {
+  } else if (typeof data === 'object' && data !== null) {
     // If it's an object, try to convert to array format
     // Handle different possible structures
     const entries = Object.entries(data);
@@ -48,17 +48,17 @@ export function FeatureComparisonChart({ data }: FeatureComparisonChartProps) {
         chartData = Array.from({ length: maxLength }, (_, index) => {
           const point: Record<string, string | number> = { index: index + 1 };
           entries.forEach(([modelName, values]) => {
-            if (Array.isArray(values) && typeof values[index] === "number") {
+            if (Array.isArray(values) && typeof values[index] === 'number') {
               point[modelName] = values[index];
             }
           });
           return point;
         });
-      } else if (typeof firstValue === "object" && firstValue !== null) {
+      } else if (typeof firstValue === 'object' && firstValue !== null) {
         // Structure: nested objects, convert to array
         chartData = entries.map(([key, value]) => ({
           name: key,
-          ...(typeof value === "object" && value !== null
+          ...(typeof value === 'object' && value !== null
             ? (value as Record<string, unknown>)
             : {}),
         })) as Array<Record<string, string | number>>;
@@ -70,7 +70,7 @@ export function FeatureComparisonChart({ data }: FeatureComparisonChartProps) {
   const modelNames = Array.from(
     new Set(
       chartData.flatMap((item) =>
-        Object.keys(item).filter((key) => key !== "index" && key !== "name")
+        Object.keys(item).filter((key) => key !== 'index' && key !== 'name')
       )
     )
   );
@@ -103,16 +103,16 @@ export function FeatureComparisonChart({ data }: FeatureComparisonChartProps) {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="name"
-            label={{ value: "Features", position: "insideBottom", offset: -5 }}
+            label={{ value: 'Features', position: 'insideBottom', offset: -5 }}
           />
           <YAxis
-            label={{ value: "Value", angle: -90, position: "insideLeft" }}
+            label={{ value: 'Value', angle: -90, position: 'insideLeft' }}
           />
           <Tooltip
             formatter={(value: number) => formatTooltipValue(value)}
             contentStyle={TOOLTIP_STYLE}
           />
-          <Legend wrapperStyle={{ paddingTop: "5px" }} />
+          <Legend wrapperStyle={{ paddingTop: '5px' }} />
           {modelNames.map((modelName, index) => (
             <Line
               key={modelName}
@@ -122,7 +122,7 @@ export function FeatureComparisonChart({ data }: FeatureComparisonChartProps) {
               strokeWidth={2}
               dot={{ r: 4 }}
               activeDot={{ r: 6 }}
-              name={modelName.replace(/_/g, " ")}
+              name={modelName.replace(/_/g, ' ')}
             />
           ))}
         </LineChart>

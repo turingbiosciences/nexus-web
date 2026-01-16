@@ -12,7 +12,7 @@ const originalEnv = process.env;
 beforeEach(() => {
   process.env = {
     ...originalEnv,
-    NEXT_PUBLIC_TURING_API: "http://localhost:8000",
+    NEXT_PUBLIC_TURING_API: 'http://localhost:8000',
   };
 });
 
@@ -28,21 +28,21 @@ beforeEach(() => {
   mockFetch.mockReset();
   // Default mock for token fetch
   mockFetch.mockImplementation((url: string, options: any) => {
-    if (url === "/api/logto/token") {
+    if (url === '/api/logto/token') {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ accessToken: "test-token" }),
+        json: () => Promise.resolve({ accessToken: 'test-token' }),
       });
     }
     // Default mock for file upload
-    if (url.includes("/files") && !url.includes("DELETE")) {
+    if (url.includes('/files') && !url.includes('DELETE')) {
       // Extract filename from FormData if possible
-      let filename = "test.csv";
+      let filename = 'test.csv';
       let size = 12;
 
-      const body = (options?.body as unknown) as FormData;
+      const body = options?.body as unknown as FormData;
       if (body && body.get) {
-        const file = body.get("file") as File;
+        const file = body.get('file') as File;
         if (file && file.name) {
           filename = file.name;
           size = file.size;

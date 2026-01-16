@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   BarChart,
@@ -8,13 +8,13 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from "recharts";
-import { parseFeatureImportanceByModel } from "@/lib/utils/parse-feature-importance";
+} from 'recharts';
+import { parseFeatureImportanceByModel } from '@/lib/utils/parse-feature-importance';
 import {
   CHART_COLORS,
   formatTooltipValue,
   getChartColor,
-} from "@/lib/chart-config";
+} from '@/lib/chart-config';
 
 interface NormalizedFeatureImportanceChartProps {
   data: Record<string, unknown>;
@@ -62,7 +62,7 @@ export function NormalizedFeatureImportanceChart({
         {modelCharts.map((modelChart, modelIndex) => (
           <div key={modelChart.modelName} className="space-y-2">
             <h5 className="text-sm font-medium text-gray-700">
-              {modelChart.modelName.replace(/_/g, " ")}
+              {modelChart.modelName.replace(/_/g, ' ')}
             </h5>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart
@@ -88,7 +88,10 @@ export function NormalizedFeatureImportanceChart({
                 <Bar
                   dataKey="normalized_importance"
                   name="Importance"
-                  fill={getChartColor(CHART_COLORS.blueGradientReverse, modelIndex)}
+                  fill={getChartColor(
+                    CHART_COLORS.blueGradientReverse,
+                    modelIndex
+                  )}
                 />
               </BarChart>
             </ResponsiveContainer>

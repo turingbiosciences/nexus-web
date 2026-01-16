@@ -24,23 +24,23 @@ async function apiUploadDataset({
 
   if (!apiEndpoint) {
     throw new Error(
-      "NEXT_PUBLIC_TURING_API environment variable is not configured"
+      'NEXT_PUBLIC_TURING_API environment variable is not configured'
     );
   }
 
   // Get access token from the token endpoint
-  const tokenResponse = await fetch("/api/logto/token");
+  const tokenResponse = await fetch('/api/logto/token');
   if (!tokenResponse.ok) {
-    throw new Error("Failed to obtain access token");
+    throw new Error('Failed to obtain access token');
   }
   const { accessToken } = await tokenResponse.json();
 
   // Upload the file using FormData
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append('file', file);
 
   const response = await fetch(`${apiEndpoint}/projects/${projectId}/files`, {
-    method: "POST",
+    method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
       // Don't set Content-Type - browser will set it with boundary for multipart/form-data
@@ -75,21 +75,21 @@ async function apiDeleteDataset({
 
   if (!apiEndpoint) {
     throw new Error(
-      "NEXT_PUBLIC_TURING_API environment variable is not configured"
+      'NEXT_PUBLIC_TURING_API environment variable is not configured'
     );
   }
 
   // Get access token from the token endpoint
-  const tokenResponse = await fetch("/api/logto/token");
+  const tokenResponse = await fetch('/api/logto/token');
   if (!tokenResponse.ok) {
-    throw new Error("Failed to obtain access token");
+    throw new Error('Failed to obtain access token');
   }
   const { accessToken } = await tokenResponse.json();
 
   const response = await fetch(
     `${apiEndpoint}/projects/${projectId}/files/${datasetId}`,
     {
-      method: "DELETE",
+      method: 'DELETE',
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

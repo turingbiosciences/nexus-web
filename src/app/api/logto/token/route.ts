@@ -162,11 +162,11 @@ export const GET = async (req: NextRequest) => {
     return NextResponse.json(
       {
         error:
-          process.env.NODE_ENV === "development"
+          process.env.NODE_ENV === 'development'
             ? error instanceof Error
               ? error.message
               : String(error)
-            : "M2M token request failed",
+            : 'M2M token request failed',
       },
       { status: 500 }
     );

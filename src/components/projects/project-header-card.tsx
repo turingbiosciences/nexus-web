@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   CheckCircle,
   Play,
@@ -8,8 +8,8 @@ import {
   Calendar,
   Database,
   Info,
-} from "lucide-react";
-import { Project } from "@/types/project";
+} from 'lucide-react';
+import { Project } from '@/types/project';
 
 interface ProjectHeaderCardProps {
   project: Project;
@@ -21,24 +21,24 @@ interface ProjectHeaderCardProps {
 const statusConfig = {
   complete: {
     icon: CheckCircle,
-    label: "Complete",
-    color: "text-green-600",
-    bg: "bg-green-50",
-    border: "border-green-200",
+    label: 'Complete',
+    color: 'text-green-600',
+    bg: 'bg-green-50',
+    border: 'border-green-200',
   },
   running: {
     icon: Play,
-    label: "Running",
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
+    label: 'Running',
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
   },
   setup: {
     icon: Settings2,
-    label: "Setup",
-    color: "text-yellow-600",
-    bg: "bg-yellow-50",
-    border: "border-yellow-200",
+    label: 'Setup',
+    color: 'text-yellow-600',
+    bg: 'bg-yellow-50',
+    border: 'border-yellow-200',
   },
 };
 
@@ -74,33 +74,33 @@ export function ProjectHeaderCard({
               <Calendar className="h-4 w-4 text-gray-400" />
               <span>
                 {project.completedAt
-                  ? `${project.completedAt.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })} ${project.completedAt.toLocaleTimeString("en-US", {
-                      hour: "numeric",
-                      minute: "2-digit",
+                  ? `${project.completedAt.toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })} ${project.completedAt.toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
                       hour12: true,
                     })}`
                   : latestResultDate
-                  ? `${latestResultDate.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })} ${latestResultDate.toLocaleTimeString("en-US", {
-                      hour: "numeric",
-                      minute: "2-digit",
-                      hour12: true,
-                    })}`
-                  : "Never run"}
+                    ? `${latestResultDate.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })} ${latestResultDate.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true,
+                      })}`
+                    : 'Never run'}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
               <Database className="h-4 w-4 text-gray-400" />
               <span>
                 {project.datasetCount || 0} dataset
-                {project.datasetCount !== 1 ? "s" : ""}
+                {project.datasetCount !== 1 ? 's' : ''}
               </span>
             </div>
           </div>
@@ -120,7 +120,7 @@ export function ProjectHeaderCard({
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Play className="h-4 w-4 mr-2" />
-            {isRunning ? "Running..." : "Run"}
+            {isRunning ? 'Running...' : 'Run'}
           </Button>
         </div>
       </div>

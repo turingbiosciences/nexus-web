@@ -3,19 +3,19 @@
  * Used by ProjectCard on the home page to show accurate counts without navigating into the project
  */
 
-import { useQuery } from "@tanstack/react-query";
-import { useAccessToken } from "@/components/providers/token-provider";
-import { logger } from "@/lib/logger";
-import { getRelativeTime } from "@/lib/utils/date-utils";
-import { getApiBaseUrl } from "@/lib/api/get-api-base";
+import { useQuery } from '@tanstack/react-query';
+import { useAccessToken } from '@/components/providers/token-provider';
+import { logger } from '@/lib/logger';
+import { getRelativeTime } from '@/lib/utils/date-utils';
+import { getApiBaseUrl } from '@/lib/api/get-api-base';
 
 interface ProjectMetadata {
   datasetCount: number;
   lastActivity: string;
 }
 
-const IS_MOCK = ["mock", "live"].includes(
-  process.env.NEXT_PUBLIC_DATA_MODE || "mock"
+const IS_MOCK = ['mock', 'live'].includes(
+  process.env.NEXT_PUBLIC_DATA_MODE || 'mock'
 );
 
 /**
@@ -30,7 +30,7 @@ async function fetchProjectMetadata(
     await new Promise((resolve) => setTimeout(resolve, 100));
     return {
       datasetCount: Math.floor(Math.random() * 5),
-      lastActivity: "2 hours ago",
+      lastActivity: '2 hours ago',
     };
   }
 
@@ -40,10 +40,10 @@ async function fetchProjectMetadata(
   const datasetsResponse = await fetch(
     `${apiUrl}/projects/${projectId}/files?page=1&limit=1`,
     {
-      method: "GET",
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     }
   );
@@ -61,15 +61,15 @@ async function fetchProjectMetadata(
   const activitiesResponse = await fetch(
     `${apiUrl}/projects/${projectId}/activities?page=1&limit=1`,
     {
-      method: "GET",
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     }
   );
 
-  let lastActivity = "No recent activity";
+  let lastActivity = 'No recent activity';
 
   if (activitiesResponse.ok) {
     const activitiesData = await activitiesResponse.json();
@@ -84,7 +84,7 @@ async function fetchProjectMetadata(
 
   logger.info(
     { projectId, datasetCount, lastActivity },
-    "Fetched project metadata"
+    'Fetched project metadata'
   );
 
   return { datasetCount, lastActivity };
@@ -97,10 +97,10 @@ export function useProjectMetadata(projectId: string) {
   const { accessToken } = useAccessToken();
 
   return useQuery({
-    queryKey: ["project-metadata", projectId],
+    queryKey: ['project-metadata', projectId],
     queryFn: () => {
       if (!accessToken) {
-        throw new Error("No access token available");
+        throw new Error('No access token available');
       }
       return fetchProjectMetadata(projectId, accessToken);
     },

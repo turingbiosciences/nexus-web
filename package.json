@@ -8,7 +8,7 @@
     "start": "next start",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test": "jest",
     "test:token": "node --import tsx scripts/test-user-token.ts",
     "test:token:m2m": "node --import tsx scripts/test-token-exchange.ts"
@@ -40,7 +40,6 @@
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.24.7",
     "@babel/preset-typescript": "^7.24.7",
-    "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^16.0.0",

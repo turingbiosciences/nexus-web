@@ -67,7 +67,7 @@ describe('ProjectList', () => {
       isSuccess: true,
       isError: false,
       error: null,
-      status: "success",
+      status: 'success',
       refetch: jest.fn(),
     } as unknown as ReturnType<typeof useProjectMetadata>);
   });

@@ -21,7 +21,7 @@ describe('ProjectActivityTab', () => {
       error: null,
       isPending: false,
       isSuccess: true,
-      status: "success",
+      status: 'success',
       refetch: jest.fn(),
     } as unknown as ReturnType<typeof useActivities>);
   });

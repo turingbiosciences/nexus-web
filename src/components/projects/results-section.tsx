@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useResults } from "@/lib/queries/results";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useState, useEffect, useMemo } from "react";
-import { ModelPerformanceTable } from "./model-performance-table";
-import { FeatureImportanceSection } from "./feature-importance-section";
+import { useResults } from '@/lib/queries/results';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect, useMemo } from 'react';
+import { ModelPerformanceTable } from './model-performance-table';
+import { FeatureImportanceSection } from './feature-importance-section';
 // import { NormalizedFeatureImportanceChart } from "./normalized-feature-importance-chart";
-import { FeatureComparisonChart } from "./feature-comparison-chart";
-import { AggregateFeatureImportanceTable } from "./aggregate-feature-importance-table";
-import { ModelFeatureImportanceCharts } from "./model-feature-importance-charts";
-import { ModelConfig } from "@/types/model-config";
+import { FeatureComparisonChart } from './feature-comparison-chart';
+import { AggregateFeatureImportanceTable } from './aggregate-feature-importance-table';
+import { ModelFeatureImportanceCharts } from './model-feature-importance-charts';
+import { ModelConfig } from '@/types/model-config';
 
 interface ResultsSectionProps {
   projectId: string;
@@ -35,7 +35,7 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
   // Initialize expanded state with the first result when results load
   useEffect(() => {
     if (results.length > 0 && expandedResults.size === 0) {
-      const firstResultKey = results[0]?.id || "result-0";
+      const firstResultKey = results[0]?.id || 'result-0';
       setExpandedResults(new Set([firstResultKey]));
     }
   }, [results, expandedResults.size]);
@@ -61,7 +61,7 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
             onClick={() => setShowRawData(!showRawData)}
             className="text-sm text-blue-600 hover:text-blue-700 underline"
           >
-            {showRawData ? "Hide" : "Show"} Raw Data
+            {showRawData ? 'Hide' : 'Show'} Raw Data
           </button>
         )}
       </div>
@@ -107,7 +107,7 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-semibold text-sm text-gray-200">
                     Raw API Response ({results.length} result
-                    {results.length !== 1 ? "s" : ""})
+                    {results.length !== 1 ? 's' : ''})
                   </h4>
                   <button
                     onClick={() => {
@@ -151,7 +151,7 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                       className="flex items-start justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
                       onClick={() => toggleExpand(resultKey)}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
+                        if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
                           toggleExpand(resultKey);
                         }
@@ -174,12 +174,13 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-xs text-gray-400">
-                          {result.createdAt.toLocaleDateString()}{" "}
+                          {result.createdAt.toLocaleDateString()}{' '}
                           {result.createdAt.toLocaleTimeString()}
                         </div>
                         <svg
-                          className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""
-                            }`}
+                          className={`w-5 h-5 text-gray-400 transition-transform ${
+                            isExpanded ? 'rotate-180' : ''
+                          }`}
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -198,7 +199,7 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                     {isExpanded && (
                       <div className="border-t p-4 bg-gray-50 space-y-6">
                         {modelConfigs &&
-                          Object.keys(modelConfigs).length > 0 ? (
+                        Object.keys(modelConfigs).length > 0 ? (
                           <>
                             <ModelPerformanceTable
                               modelConfigs={modelConfigs}
@@ -226,30 +227,30 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                                 };
                               }
                             ).data?.aggregate_feature_importance && (
-                                <AggregateFeatureImportanceTable
-                                  data={
-                                    (
-                                      result as unknown as {
-                                        data: {
-                                          aggregate_feature_importance: {
-                                            top_features: Array<{
-                                              feature: string;
-                                              mean_importance: number;
-                                              sum_importance: number;
-                                              max_importance: number;
-                                              min_importance: number;
-                                              std_importance: number;
-                                              weighted_score: number;
-                                              num_models: number;
-                                              models: string[];
-                                            }>;
-                                          };
+                              <AggregateFeatureImportanceTable
+                                data={
+                                  (
+                                    result as unknown as {
+                                      data: {
+                                        aggregate_feature_importance: {
+                                          top_features: Array<{
+                                            feature: string;
+                                            mean_importance: number;
+                                            sum_importance: number;
+                                            max_importance: number;
+                                            min_importance: number;
+                                            std_importance: number;
+                                            weighted_score: number;
+                                            num_models: number;
+                                            models: string[];
+                                          }>;
                                         };
-                                      }
-                                    ).data.aggregate_feature_importance
-                                  }
-                                />
-                              )}
+                                      };
+                                    }
+                                  ).data.aggregate_feature_importance
+                                }
+                              />
+                            )}
                             {/* Normalized Feature Importance - COMMENTED OUT FOR NOW */}
                             {/* {(
                               result as {
@@ -288,21 +289,21 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                                 };
                               }
                             ).data?.feature_comparison && (
-                                <FeatureComparisonChart
-                                  data={
-                                    (
-                                      result as {
-                                        data?: {
-                                          feature_comparison?: Record<
-                                            string,
-                                            unknown
-                                          >;
-                                        };
-                                      }
-                                    ).data!.feature_comparison!
-                                  }
-                                />
-                              )}
+                              <FeatureComparisonChart
+                                data={
+                                  (
+                                    result as {
+                                      data?: {
+                                        feature_comparison?: Record<
+                                          string,
+                                          unknown
+                                        >;
+                                      };
+                                    }
+                                  ).data!.feature_comparison!
+                                }
+                              />
+                            )}
                           </>
                         ) : (
                           <p className="text-sm text-gray-500">

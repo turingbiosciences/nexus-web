@@ -1,18 +1,18 @@
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { ProjectHeaderCard } from "@/components/projects/project-header-card";
-import { Project } from "@/types/project";
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { ProjectHeaderCard } from '@/components/projects/project-header-card';
+import { Project } from '@/types/project';
 
-describe("ProjectHeaderCard", () => {
+describe('ProjectHeaderCard', () => {
   const mockOnRun = jest.fn();
 
   const baseProject: Project = {
-    id: "project-1",
-    name: "Test Project",
-    description: "Test project description",
-    status: "setup",
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-02"),
+    id: 'project-1',
+    name: 'Test Project',
+    description: 'Test project description',
+    status: 'setup',
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-02'),
     datasetCount: 3,
   };
 
@@ -20,8 +20,8 @@ describe("ProjectHeaderCard", () => {
     jest.clearAllMocks();
   });
 
-  describe("Basic Rendering", () => {
-    it("renders project name and description", () => {
+  describe('Basic Rendering', () => {
+    it('renders project name and description', () => {
       render(
         <ProjectHeaderCard
           project={baseProject}
@@ -30,11 +30,11 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(screen.getByText("Test Project")).toBeInTheDocument();
-      expect(screen.getByText("Test project description")).toBeInTheDocument();
+      expect(screen.getByText('Test Project')).toBeInTheDocument();
+      expect(screen.getByText('Test project description')).toBeInTheDocument();
     });
 
-    it("renders Run button", () => {
+    it('renders Run button', () => {
       render(
         <ProjectHeaderCard
           project={baseProject}
@@ -43,10 +43,10 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(screen.getByRole("button", { name: /run/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /run/i })).toBeInTheDocument();
     });
 
-    it("renders project metadata inline", () => {
+    it('renders project metadata inline', () => {
       render(
         <ProjectHeaderCard
           project={baseProject}
@@ -56,14 +56,14 @@ describe("ProjectHeaderCard", () => {
       );
 
       // New component shows status label inline and dataset count
-      expect(screen.getByText("Setup")).toBeInTheDocument();
+      expect(screen.getByText('Setup')).toBeInTheDocument();
       expect(screen.getByText(/3 datasets/)).toBeInTheDocument();
     });
   });
 
-  describe("Status Display", () => {
+  describe('Status Display', () => {
     it("displays 'Setup' status for setup projects", () => {
-      const setupProject = { ...baseProject, status: "setup" as const };
+      const setupProject = { ...baseProject, status: 'setup' as const };
 
       render(
         <ProjectHeaderCard
@@ -73,11 +73,11 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(screen.getByText("Setup")).toBeInTheDocument();
+      expect(screen.getByText('Setup')).toBeInTheDocument();
     });
 
     it("displays 'Complete' status for complete projects", () => {
-      const completeProject = { ...baseProject, status: "complete" as const };
+      const completeProject = { ...baseProject, status: 'complete' as const };
 
       render(
         <ProjectHeaderCard
@@ -87,11 +87,11 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(screen.getByText("Complete")).toBeInTheDocument();
+      expect(screen.getByText('Complete')).toBeInTheDocument();
     });
 
     it("displays 'Running' status for running projects", () => {
-      const runningProject = { ...baseProject, status: "running" as const };
+      const runningProject = { ...baseProject, status: 'running' as const };
 
       render(
         <ProjectHeaderCard
@@ -101,15 +101,15 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(screen.getByText("Running")).toBeInTheDocument();
+      expect(screen.getByText('Running')).toBeInTheDocument();
     });
   });
 
-  describe("Last Run Display", () => {
-    it("displays formatted date when completedAt is set", () => {
+  describe('Last Run Display', () => {
+    it('displays formatted date when completedAt is set', () => {
       const projectWithCompletion: Project = {
         ...baseProject,
-        completedAt: new Date("2024-06-15T12:00:00"),
+        completedAt: new Date('2024-06-15T12:00:00'),
       };
 
       render(
@@ -137,12 +137,12 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(screen.getByText("Never run")).toBeInTheDocument();
+      expect(screen.getByText('Never run')).toBeInTheDocument();
     });
   });
 
-  describe("Dataset Count Display", () => {
-    it("displays dataset count when present", () => {
+  describe('Dataset Count Display', () => {
+    it('displays dataset count when present', () => {
       const projectWithDatasets = {
         ...baseProject,
         datasetCount: 5,
@@ -159,7 +159,7 @@ describe("ProjectHeaderCard", () => {
       expect(screen.getByText(/5 datasets/)).toBeInTheDocument();
     });
 
-    it("displays 0 when datasetCount is undefined", () => {
+    it('displays 0 when datasetCount is undefined', () => {
       const projectWithoutDatasets = {
         ...baseProject,
         datasetCount: undefined,
@@ -176,7 +176,7 @@ describe("ProjectHeaderCard", () => {
       expect(screen.getByText(/0 datasets/)).toBeInTheDocument();
     });
 
-    it("displays 0 when datasetCount is 0", () => {
+    it('displays 0 when datasetCount is 0', () => {
       const projectWithZeroDatasets = {
         ...baseProject,
         datasetCount: 0,
@@ -194,8 +194,8 @@ describe("ProjectHeaderCard", () => {
     });
   });
 
-  describe("Run Button Behavior", () => {
-    it("enables Run button when not running and has datasets", () => {
+  describe('Run Button Behavior', () => {
+    it('enables Run button when not running and has datasets', () => {
       render(
         <ProjectHeaderCard
           project={baseProject}
@@ -204,11 +204,11 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      const runButton = screen.getByRole("button", { name: /run/i });
+      const runButton = screen.getByRole('button', { name: /run/i });
       expect(runButton).not.toBeDisabled();
     });
 
-    it("disables Run button when project is running", () => {
+    it('disables Run button when project is running', () => {
       render(
         <ProjectHeaderCard
           project={baseProject}
@@ -217,7 +217,7 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      const runButton = screen.getByRole("button", { name: /running/i });
+      const runButton = screen.getByRole('button', { name: /running/i });
       expect(runButton).toBeDisabled();
     });
 
@@ -230,10 +230,10 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(screen.getByText("Running...")).toBeInTheDocument();
+      expect(screen.getByText('Running...')).toBeInTheDocument();
     });
 
-    it("disables Run button when no datasets are present", () => {
+    it('disables Run button when no datasets are present', () => {
       const projectWithoutDatasets = {
         ...baseProject,
         datasetCount: 0,
@@ -247,11 +247,11 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      const runButton = screen.getByRole("button", { name: /run/i });
+      const runButton = screen.getByRole('button', { name: /run/i });
       expect(runButton).toBeDisabled();
     });
 
-    it("disables Run button when datasetCount is undefined", () => {
+    it('disables Run button when datasetCount is undefined', () => {
       const projectWithoutDatasets = {
         ...baseProject,
         datasetCount: undefined,
@@ -265,11 +265,11 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      const runButton = screen.getByRole("button", { name: /run/i });
+      const runButton = screen.getByRole('button', { name: /run/i });
       expect(runButton).toBeDisabled();
     });
 
-    it("calls onRun when Run button is clicked", () => {
+    it('calls onRun when Run button is clicked', () => {
       render(
         <ProjectHeaderCard
           project={baseProject}
@@ -278,13 +278,13 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      const runButton = screen.getByRole("button", { name: /run/i });
+      const runButton = screen.getByRole('button', { name: /run/i });
       fireEvent.click(runButton);
 
       expect(mockOnRun).toHaveBeenCalledTimes(1);
     });
 
-    it("does not call onRun when button is disabled", () => {
+    it('does not call onRun when button is disabled', () => {
       render(
         <ProjectHeaderCard
           project={baseProject}
@@ -293,18 +293,18 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      const runButton = screen.getByRole("button", { name: /running/i });
+      const runButton = screen.getByRole('button', { name: /running/i });
       fireEvent.click(runButton);
 
       expect(mockOnRun).not.toHaveBeenCalled();
     });
   });
 
-  describe("Edge Cases", () => {
-    it("handles project with empty description", () => {
+  describe('Edge Cases', () => {
+    it('handles project with empty description', () => {
       const projectWithEmptyDesc = {
         ...baseProject,
-        description: "",
+        description: '',
       };
 
       render(
@@ -315,13 +315,13 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(screen.getByText("Test Project")).toBeInTheDocument();
+      expect(screen.getByText('Test Project')).toBeInTheDocument();
     });
 
-    it("handles very long project names gracefully", () => {
+    it('handles very long project names gracefully', () => {
       const projectWithLongName = {
         ...baseProject,
-        name: "This is a very long project name that should wrap properly in the UI without breaking the layout",
+        name: 'This is a very long project name that should wrap properly in the UI without breaking the layout',
       };
 
       render(
@@ -337,11 +337,11 @@ describe("ProjectHeaderCard", () => {
       ).toBeInTheDocument();
     });
 
-    it("handles very long descriptions gracefully", () => {
+    it('handles very long descriptions gracefully', () => {
       const projectWithLongDesc = {
         ...baseProject,
         description:
-          "This is a very long description that contains a lot of text and should wrap properly without breaking the layout or causing any visual issues in the component rendering",
+          'This is a very long description that contains a lot of text and should wrap properly without breaking the layout or causing any visual issues in the component rendering',
       };
 
       render(
@@ -357,7 +357,7 @@ describe("ProjectHeaderCard", () => {
       ).toBeInTheDocument();
     });
 
-    it("renders correctly with large dataset count", () => {
+    it('renders correctly with large dataset count', () => {
       const projectWithManyDatasets = {
         ...baseProject,
         datasetCount: 9999,
@@ -375,12 +375,12 @@ describe("ProjectHeaderCard", () => {
     });
   });
 
-  describe("Visual States", () => {
-    it("renders with complete status styling", () => {
+  describe('Visual States', () => {
+    it('renders with complete status styling', () => {
       const completeProject = {
         ...baseProject,
-        status: "complete" as const,
-        completedAt: new Date("2024-06-15"),
+        status: 'complete' as const,
+        completedAt: new Date('2024-06-15'),
       };
 
       const { container } = render(
@@ -391,13 +391,13 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(container.querySelector(".text-green-600")).toBeInTheDocument();
+      expect(container.querySelector('.text-green-600')).toBeInTheDocument();
     });
 
-    it("renders with running status styling", () => {
+    it('renders with running status styling', () => {
       const runningProject = {
         ...baseProject,
-        status: "running" as const,
+        status: 'running' as const,
       };
 
       const { container } = render(
@@ -408,13 +408,13 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(container.querySelector(".text-blue-600")).toBeInTheDocument();
+      expect(container.querySelector('.text-blue-600')).toBeInTheDocument();
     });
 
-    it("renders with setup status styling", () => {
+    it('renders with setup status styling', () => {
       const setupProject = {
         ...baseProject,
-        status: "setup" as const,
+        status: 'setup' as const,
       };
 
       const { container } = render(
@@ -425,12 +425,12 @@ describe("ProjectHeaderCard", () => {
         />
       );
 
-      expect(container.querySelector(".text-yellow-600")).toBeInTheDocument();
+      expect(container.querySelector('.text-yellow-600')).toBeInTheDocument();
     });
   });
 
-  describe("Metadata Grid Layout", () => {
-    it("renders with correct layout", () => {
+  describe('Metadata Grid Layout', () => {
+    it('renders with correct layout', () => {
       const { container } = render(
         <ProjectHeaderCard
           project={baseProject}
@@ -440,11 +440,11 @@ describe("ProjectHeaderCard", () => {
       );
 
       // Check for the main card container
-      const cardElement = container.querySelector(".card");
+      const cardElement = container.querySelector('.card');
       expect(cardElement).toBeInTheDocument();
     });
 
-    it("renders all metadata items with icons", () => {
+    it('renders all metadata items with icons', () => {
       const { container } = render(
         <ProjectHeaderCard
           project={baseProject}
@@ -454,7 +454,7 @@ describe("ProjectHeaderCard", () => {
       );
 
       // Check for lucide icons (svg elements)
-      const icons = container.querySelectorAll("svg");
+      const icons = container.querySelectorAll('svg');
       // Expect at least 4 icons: status icon, calendar, database, and play button icon
       expect(icons.length).toBeGreaterThanOrEqual(4);
     });

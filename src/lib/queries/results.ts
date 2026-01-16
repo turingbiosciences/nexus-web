@@ -1,11 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
-import { ProjectResult } from "@/types/project";
-import { IS_MOCK } from "@/config/flags";
-import { projectsRepository } from "@/data";
-import { useAccessToken } from "@/components/providers/token-provider";
-import { authFetch } from "@/lib/auth-fetch";
-import { logger } from "@/lib/logger";
-import { getApiBaseUrl } from "@/lib/api/get-api-base";
+import { useQuery } from '@tanstack/react-query';
+import { ProjectResult } from '@/types/project';
+import { IS_MOCK } from '@/config/flags';
+import { projectsRepository } from '@/data';
+import { useAccessToken } from '@/components/providers/token-provider';
+import { authFetch } from '@/lib/auth-fetch';
+import { logger } from '@/lib/logger';
+import { getApiBaseUrl } from '@/lib/api/get-api-base';
 
 interface UseResultsOptions {
   enabled?: boolean;
@@ -28,14 +28,14 @@ async function fetchResultsViaApi(
   const base = getApiBaseUrl();
 
   const url = `${base}/projects/${projectId}/results`;
-  logger.debug({ projectId, url }, "Fetching results from API");
+  logger.debug({ projectId, url }, 'Fetching results from API');
 
   const res = await authFetch(url, {
-    method: "GET",
+    method: 'GET',
     token: accessToken,
     onTokenRefresh,
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
 
@@ -43,7 +43,7 @@ async function fetchResultsViaApi(
     const errorText = await res.text();
     logger.error(
       { projectId, status: res.status, errorText },
-      "Failed to fetch results from API"
+      'Failed to fetch results from API'
     );
     throw new Error(`Failed to fetch results (${res.status})`);
   }
@@ -54,7 +54,7 @@ async function fetchResultsViaApi(
       projectId,
       rawResponse: json,
     },
-    "Raw results API response"
+    'Raw results API response'
   );
 
   // Support both array and object with items/results property
@@ -67,7 +67,7 @@ async function fetchResultsViaApi(
       projectId,
       count: items.length,
     },
-    "Results API response received"
+    'Results API response received'
   );
 
   // Map to ProjectResult but preserve all original data
@@ -84,7 +84,7 @@ async function fetchResultsViaApi(
 
   logger.debug(
     { projectId, count: mapped.length },
-    "Results mapped successfully"
+    'Results mapped successfully'
   );
 
   return mapped;
@@ -96,12 +96,12 @@ async function fetchResults(
   onTokenRefresh: () => Promise<string | null>
 ) {
   if (IS_MOCK) {
-    logger.info({ projectId, IS_MOCK }, "Using mock results data");
+    logger.info({ projectId, IS_MOCK }, 'Using mock results data');
     const projects = await projectsRepository.list();
     const project = projects.find((p) => p.id === projectId);
     return project?.results || [];
   }
-  logger.info({ projectId, IS_MOCK }, "Using API for results data");
+  logger.info({ projectId, IS_MOCK }, 'Using API for results data');
   return fetchResultsViaApi(projectId, accessToken, onTokenRefresh);
 }
 
@@ -110,15 +110,15 @@ export function useResults(projectId: string, options: UseResultsOptions = {}) {
   const { enabled = true } = options;
 
   return useQuery({
-    queryKey: ["results", projectId],
+    queryKey: ['results', projectId],
     queryFn: () => {
       if (!accessToken) {
-        throw new Error("Access token not available");
+        throw new Error('Access token not available');
       }
       return fetchResults(projectId, accessToken, refreshToken);
     },
     enabled: enabled && !!projectId && isAuthenticated && !!accessToken,
     staleTime: 30_000,
-    refetchOnMount: "always", // Always refetch when component mounts to get fresh results data
+    refetchOnMount: 'always', // Always refetch when component mounts to get fresh results data
   });
 }
