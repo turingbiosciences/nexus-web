@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 interface SignInPromptProps {
   title?: string;
@@ -8,10 +8,10 @@ interface SignInPromptProps {
 }
 
 export function SignInPrompt({
-  title = "Sign in Required",
-  message = "Please sign in to access the file upload dashboard",
-  buttonText = "Sign In",
-  signInUrl = "/api/logto/sign-in",
+  title = 'Sign in Required',
+  message = 'Please sign in to access the file upload dashboard',
+  buttonText = 'Sign In',
+  signInUrl = '/api/logto/sign-in',
 }: SignInPromptProps) {
   return (
     <div className="alert-info p-8 text-center">

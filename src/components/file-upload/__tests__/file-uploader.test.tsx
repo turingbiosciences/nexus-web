@@ -1,17 +1,17 @@
-import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
-import { FileUploader } from "../file-uploader";
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import { FileUploader } from '../file-uploader';
 
 // Mock dependencies
-jest.mock("react-dropzone", () => ({
+jest.mock('react-dropzone', () => ({
   useDropzone: jest.fn(() => ({
-    getRootProps: jest.fn(() => ({ "data-testid": "dropzone" })),
-    getInputProps: jest.fn(() => ({ type: "file" })),
+    getRootProps: jest.fn(() => ({ 'data-testid': 'dropzone' })),
+    getInputProps: jest.fn(() => ({ type: 'file' })),
     isDragActive: false,
   })),
 }));
 
-jest.mock("tus-js-client", () => ({
+jest.mock('tus-js-client', () => ({
   Upload: jest.fn(function MockUpload() {
     return {
       start: jest.fn(),
@@ -21,23 +21,23 @@ jest.mock("tus-js-client", () => ({
   }),
 }));
 
-jest.mock("@/components/providers/token-provider", () => ({
+jest.mock('@/components/providers/token-provider', () => ({
   useAccessToken: jest.fn(),
 }));
 
-import { useDropzone } from "react-dropzone";
-import { useAccessToken } from "@/components/providers/token-provider";
-import { Upload as TusUpload } from "tus-js-client";
+import { useDropzone } from 'react-dropzone';
+import { useAccessToken } from '@/components/providers/token-provider';
+import { Upload as TusUpload } from 'tus-js-client';
 
 const mockUseDropzone = useDropzone as jest.Mock;
 const mockUseAccessToken = useAccessToken as jest.Mock;
 
-describe("FileUploader", () => {
+describe('FileUploader', () => {
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_TURING_API = "https://api.example.test";
+    process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.test';
     mockUseDropzone.mockClear();
     mockUseAccessToken.mockReturnValue({
-      accessToken: "mock-token",
+      accessToken: 'mock-token',
       isLoading: false,
       error: null,
       refreshToken: jest.fn().mockResolvedValue(undefined),
@@ -48,21 +48,21 @@ describe("FileUploader", () => {
     global.crypto = {
       ...global.crypto,
       randomUUID: jest.fn(
-        () => "mock-uuid-" + Math.random().toString(36).substring(2, 15)
+        () => 'mock-uuid-' + Math.random().toString(36).substring(2, 15)
       ),
     } as typeof global.crypto;
   });
 
-  it("renders dropzone with heading", () => {
+  it('renders dropzone with heading', () => {
     render(<FileUploader />);
     expect(screen.getByText(/drag & drop files here/i)).toBeInTheDocument();
     // Check for the card title
     expect(
-      screen.getByRole("heading", { name: /upload files/i })
+      screen.getByRole('heading', { name: /upload files/i })
     ).toBeInTheDocument();
   });
 
-  it("shows sign-in banner when not authenticated", () => {
+  it('shows sign-in banner when not authenticated', () => {
     mockUseAccessToken.mockReturnValue({
       accessToken: null,
       isLoading: false,
@@ -77,7 +77,7 @@ describe("FileUploader", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows loading state when auth is loading", () => {
+  it('shows loading state when auth is loading', () => {
     mockUseAccessToken.mockReturnValue({
       accessToken: null,
       isLoading: false,
@@ -90,20 +90,20 @@ describe("FileUploader", () => {
     expect(screen.getByText(/checking authentication/i)).toBeInTheDocument();
   });
 
-  it("accepts files via onDrop callback", () => {
+  it('accepts files via onDrop callback', () => {
     let capturedOnDrop: ((files: File[]) => void) | undefined;
     mockUseDropzone.mockImplementation((config) => {
       capturedOnDrop = config.onDrop;
       return {
-        getRootProps: () => ({ "data-testid": "dropzone" }),
-        getInputProps: () => ({ type: "file" }),
+        getRootProps: () => ({ 'data-testid': 'dropzone' }),
+        getInputProps: () => ({ type: 'file' }),
         isDragActive: false,
       };
     });
 
     render(<FileUploader />);
 
-    const testFile = new File(["content"], "test.txt", { type: "text/plain" });
+    const testFile = new File(['content'], 'test.txt', { type: 'text/plain' });
     if (capturedOnDrop) {
       capturedOnDrop([testFile]);
     }
@@ -113,21 +113,21 @@ describe("FileUploader", () => {
     });
   });
 
-  it("calls onUploadComplete when file upload succeeds", async () => {
+  it('calls onUploadComplete when file upload succeeds', async () => {
     const onUploadComplete = jest.fn();
     let capturedOnDrop: ((files: File[]) => void) | undefined;
     mockUseDropzone.mockImplementation((config) => {
       capturedOnDrop = config.onDrop;
       return {
-        getRootProps: () => ({ "data-testid": "dropzone" }),
-        getInputProps: () => ({ type: "file" }),
+        getRootProps: () => ({ 'data-testid': 'dropzone' }),
+        getInputProps: () => ({ type: 'file' }),
         isDragActive: false,
       };
     });
 
     render(<FileUploader onUploadComplete={onUploadComplete} />);
 
-    const testFile = new File(["content"], "test.txt", { type: "text/plain" });
+    const testFile = new File(['content'], 'test.txt', { type: 'text/plain' });
     if (capturedOnDrop) {
       capturedOnDrop([testFile]);
     }
@@ -139,7 +139,7 @@ describe("FileUploader", () => {
     });
   });
 
-  it("respects maxSize configuration from react-dropzone", () => {
+  it('respects maxSize configuration from react-dropzone', () => {
     const maxSize = 1024 * 1024; // 1MB
     render(<FileUploader maxSize={maxSize} />);
 
@@ -151,22 +151,22 @@ describe("FileUploader", () => {
     );
   });
 
-  it("handles multiple file selection", async () => {
+  it('handles multiple file selection', async () => {
     let capturedOnDrop: ((files: File[]) => void) | undefined;
     mockUseDropzone.mockImplementation((config) => {
       capturedOnDrop = config.onDrop;
       return {
-        getRootProps: () => ({ "data-testid": "dropzone" }),
-        getInputProps: () => ({ type: "file" }),
+        getRootProps: () => ({ 'data-testid': 'dropzone' }),
+        getInputProps: () => ({ type: 'file' }),
         isDragActive: false,
       };
     });
 
     render(<FileUploader />);
     capturedOnDrop?.([
-      new File(["1"], "a.txt"),
-      new File(["2"], "b.txt"),
-      new File(["3"], "c.txt"),
+      new File(['1'], 'a.txt'),
+      new File(['2'], 'b.txt'),
+      new File(['3'], 'c.txt'),
     ]);
 
     await waitFor(() => {
@@ -176,22 +176,22 @@ describe("FileUploader", () => {
     });
   });
 
-  it("removes an upload from the queue", async () => {
+  it('removes an upload from the queue', async () => {
     let capturedOnDrop: ((files: File[]) => void) | undefined;
     mockUseDropzone.mockImplementation((config) => {
       capturedOnDrop = config.onDrop;
       return {
-        getRootProps: () => ({ "data-testid": "dropzone" }),
-        getInputProps: () => ({ type: "file" }),
+        getRootProps: () => ({ 'data-testid': 'dropzone' }),
+        getInputProps: () => ({ type: 'file' }),
         isDragActive: false,
       };
     });
 
     render(<FileUploader />);
-    capturedOnDrop?.([new File(["a"], "remove.txt")]);
+    capturedOnDrop?.([new File(['a'], 'remove.txt')]);
     await screen.findByText(/remove.txt/);
 
-    const removeBtn = screen.getByRole("button", { name: /remove upload/i });
+    const removeBtn = screen.getByRole('button', { name: /remove upload/i });
     removeBtn.click();
 
     await waitFor(() => {
@@ -199,27 +199,27 @@ describe("FileUploader", () => {
     });
   });
 
-  it("renders start upload button for pending files", async () => {
+  it('renders start upload button for pending files', async () => {
     let capturedOnDrop: ((files: File[]) => void) | undefined;
     mockUseDropzone.mockImplementation((config) => {
       capturedOnDrop = config.onDrop;
       return {
-        getRootProps: () => ({ "data-testid": "dropzone" }),
-        getInputProps: () => ({ type: "file" }),
+        getRootProps: () => ({ 'data-testid': 'dropzone' }),
+        getInputProps: () => ({ type: 'file' }),
         isDragActive: false,
       };
     });
 
     render(<FileUploader projectId="test-project" />);
-    capturedOnDrop?.([new File(["xx"], "progress.txt")]);
+    capturedOnDrop?.([new File(['xx'], 'progress.txt')]);
 
-    const startBtn = await screen.findByRole("button", {
+    const startBtn = await screen.findByRole('button', {
       name: /start upload/i,
     });
     expect(startBtn).toBeInTheDocument();
   });
 
-  it("displays error banner when token is unavailable during upload attempt", async () => {
+  it('displays error banner when token is unavailable during upload attempt', async () => {
     mockUseAccessToken.mockReturnValue({
       accessToken: null,
       isLoading: false,
@@ -233,16 +233,16 @@ describe("FileUploader", () => {
     mockUseDropzone.mockImplementation((config) => {
       capturedOnDrop = config.onDrop;
       return {
-        getRootProps: () => ({ "data-testid": "dropzone" }),
-        getInputProps: () => ({ type: "file" }),
+        getRootProps: () => ({ 'data-testid': 'dropzone' }),
+        getInputProps: () => ({ type: 'file' }),
         isDragActive: false,
       };
     });
 
     render(<FileUploader projectId="test-project" />);
-    capturedOnDrop?.([new File(["err"], "error.txt")]);
+    capturedOnDrop?.([new File(['err'], 'error.txt')]);
 
-    const startBtn = await screen.findByRole("button", {
+    const startBtn = await screen.findByRole('button', {
       name: /start upload/i,
     });
     startBtn.click();
@@ -254,7 +254,7 @@ describe("FileUploader", () => {
     });
   });
 
-  it("shows token acquisition error", async () => {
+  it('shows token acquisition error', async () => {
     mockUseAccessToken.mockReturnValue({
       accessToken: null,
       isLoading: false,
@@ -272,15 +272,15 @@ describe("FileUploader", () => {
     mockUseDropzone.mockImplementation((config) => {
       capturedOnDrop = config.onDrop;
       return {
-        getRootProps: () => ({ "data-testid": "dropzone" }),
-        getInputProps: () => ({ type: "file" }),
+        getRootProps: () => ({ 'data-testid': 'dropzone' }),
+        getInputProps: () => ({ type: 'file' }),
         isDragActive: false,
       };
     });
 
     render(<FileUploader />);
-    capturedOnDrop?.([new File(["x"], "token.txt")]);
-    const startBtn = await screen.findByRole("button", {
+    capturedOnDrop?.([new File(['x'], 'token.txt')]);
+    const startBtn = await screen.findByRole('button', {
       name: /start upload/i,
     });
     startBtn.click();
@@ -291,7 +291,7 @@ describe("FileUploader", () => {
     });
   });
 
-  it("shows auth banner disabled state for dropzone when unauthenticated", () => {
+  it('shows auth banner disabled state for dropzone when unauthenticated', () => {
     mockUseAccessToken.mockReturnValue({
       accessToken: null,
       isLoading: false,
@@ -307,7 +307,7 @@ describe("FileUploader", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows disabled state message when not authenticated", () => {
+  it('shows disabled state message when not authenticated', () => {
     mockUseAccessToken.mockReturnValue({
       accessToken: null,
       isLoading: false,
@@ -325,9 +325,9 @@ describe("FileUploader", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows project ID requirement error when missing", async () => {
+  it('shows project ID requirement error when missing', async () => {
     mockUseAccessToken.mockReturnValue({
-      accessToken: "valid-token",
+      accessToken: 'valid-token',
       isLoading: false,
       error: null,
       refreshToken: jest.fn(),
@@ -339,17 +339,17 @@ describe("FileUploader", () => {
     mockUseDropzone.mockImplementation((config) => {
       capturedOnDrop = config.onDrop;
       return {
-        getRootProps: () => ({ "data-testid": "dropzone" }),
-        getInputProps: () => ({ type: "file" }),
+        getRootProps: () => ({ 'data-testid': 'dropzone' }),
+        getInputProps: () => ({ type: 'file' }),
         isDragActive: false,
       };
     });
 
     // Render without projectId prop
     render(<FileUploader />);
-    capturedOnDrop?.([new File(["content"], "test.txt")]);
+    capturedOnDrop?.([new File(['content'], 'test.txt')]);
 
-    const startBtn = await screen.findByRole("button", {
+    const startBtn = await screen.findByRole('button', {
       name: /start upload/i,
     });
     startBtn.click();

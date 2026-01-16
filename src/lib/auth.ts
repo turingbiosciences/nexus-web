@@ -1,12 +1,12 @@
-import { LogtoNextConfig } from "@logto/next";
-import { logger } from "@/lib/logger";
+import { LogtoNextConfig } from '@logto/next';
+import { logger } from '@/lib/logger';
 
 export const logtoScopes = [
-  "openid",
-  "profile",
-  "email",
-  "offline_access",
-  "all",
+  'openid',
+  'profile',
+  'email',
+  'offline_access',
+  'all',
 ];
 
 // Determine resource from environment variables
@@ -17,16 +17,16 @@ const turingApiResource =
 export const logtoResources = turingApiResource ? [turingApiResource] : [];
 
 // Log configuration state for debugging
-if (typeof window === "undefined" && process.env.NODE_ENV === "development") {
+if (typeof window === 'undefined' && process.env.NODE_ENV === 'development') {
   // Server-side only logging in development
   logger.debug(
     {
       hasResource: !!turingApiResource,
-      resourceValue: turingApiResource || "(not set)",
+      resourceValue: turingApiResource || '(not set)',
       resourcesArray: logtoResources,
       nodeEnv: process.env.NODE_ENV,
     },
-    "Auth configuration"
+    'Auth configuration'
   );
 }
 
@@ -36,7 +36,7 @@ export const logtoConfig: LogtoNextConfig = {
   endpoint: process.env.LOGTO_ENDPOINT!,
   baseUrl: process.env.NEXTAUTH_URL!,
   cookieSecret: process.env.NEXTAUTH_SECRET!,
-  cookieSecure: process.env.NODE_ENV === "production",
+  cookieSecure: process.env.NODE_ENV === 'production',
   scopes: logtoScopes,
   // NOTE: Do NOT include resources in user authentication config
   // Resources are only for M2M token exchange (see /api/logto/token)

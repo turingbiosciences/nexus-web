@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { createContext, useContext } from "react";
-import { useLogto } from "@logto/react";
+import { createContext, useContext } from 'react';
+import { useLogto } from '@logto/react';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -12,7 +12,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: true,
-  getAccessToken: async () => "",
+  getAccessToken: async () => '',
 });
 
 export const useAuth = () => useContext(AuthContext);

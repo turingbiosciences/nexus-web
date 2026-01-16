@@ -1,13 +1,13 @@
-import LogtoClient from "@logto/next/edge";
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-import { logtoConfig } from "@/lib/auth";
-import { logRequest } from "@/lib/api-logger";
+import LogtoClient from '@logto/next/edge';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { logtoConfig } from '@/lib/auth';
+import { logRequest } from '@/lib/api-logger';
 
 const logto = new LogtoClient(logtoConfig);
 
 export const GET = async (req: NextRequest) => {
-  logRequest("user", req);
+  logRequest('user', req);
   const handler = logto.handleUser();
   const res = await handler(req);
 
@@ -19,7 +19,7 @@ export const GET = async (req: NextRequest) => {
   }
 
   const data =
-    parsed && typeof parsed === "object"
+    parsed && typeof parsed === 'object'
       ? (parsed as Record<string, unknown>)
       : null;
   const authenticated = Boolean(
@@ -28,9 +28,9 @@ export const GET = async (req: NextRequest) => {
   const claims = (data as Record<string, unknown>)?.claims ?? null;
   const sub =
     claims &&
-    typeof claims === "object" &&
-    "sub" in claims &&
-    typeof claims.sub === "string"
+    typeof claims === 'object' &&
+    'sub' in claims &&
+    typeof claims.sub === 'string'
       ? claims.sub
       : null;
 

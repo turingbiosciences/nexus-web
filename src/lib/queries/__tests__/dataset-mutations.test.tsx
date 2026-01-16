@@ -1,10 +1,10 @@
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   useUploadDatasetMutation,
   useDeleteDatasetMutation,
-} from "../dataset-mutations";
-import React from "react";
+} from '../dataset-mutations';
+import React from 'react';
 
 // Mock environment variable
 const originalEnv = process.env;
@@ -12,7 +12,7 @@ const originalEnv = process.env;
 beforeEach(() => {
   process.env = {
     ...originalEnv,
-    NEXT_PUBLIC_TURING_API: "http://localhost:8000",
+    NEXT_PUBLIC_TURING_API: 'http://localhost:8000',
   };
 });
 
@@ -28,21 +28,21 @@ beforeEach(() => {
   mockFetch.mockReset();
   // Default mock for token fetch
   mockFetch.mockImplementation((url: string, options: any) => {
-    if (url === "/api/logto/token") {
+    if (url === '/api/logto/token') {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ accessToken: "test-token" }),
+        json: () => Promise.resolve({ accessToken: 'test-token' }),
       });
     }
     // Default mock for file upload
-    if (url.includes("/files") && !url.includes("DELETE")) {
+    if (url.includes('/files') && !url.includes('DELETE')) {
       // Extract filename from FormData if possible
-      let filename = "test.csv";
+      let filename = 'test.csv';
       let size = 12;
 
-      const body = (options?.body as unknown) as FormData;
+      const body = options?.body as unknown as FormData;
       if (body && body.get) {
-        const file = body.get("file") as File;
+        const file = body.get('file') as File;
         if (file && file.name) {
           filename = file.name;
           size = file.size;
@@ -79,31 +79,31 @@ function createWrapper() {
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
-  Wrapper.displayName = "QueryClientWrapper";
+  Wrapper.displayName = 'QueryClientWrapper';
   return Wrapper;
 }
 
-describe("useUploadDatasetMutation", () => {
-  it("successfully uploads a dataset", async () => {
-    const { result } = renderHook(() => useUploadDatasetMutation("project-1"), {
+describe('useUploadDatasetMutation', () => {
+  it('successfully uploads a dataset', async () => {
+    const { result } = renderHook(() => useUploadDatasetMutation('project-1'), {
       wrapper: createWrapper(),
     });
 
-    const file = new File(["test content"], "test.csv", { type: "text/csv" });
+    const file = new File(['test content'], 'test.csv', { type: 'text/csv' });
 
     result.current.mutate(file);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data).toBeDefined();
-    expect(result.current.data?.filename).toBe("test.csv");
+    expect(result.current.data?.filename).toBe('test.csv');
     expect(result.current.data?.size).toBe(file.size);
     expect(result.current.data?.id).toBeDefined();
     expect(result.current.data?.uploadedAt).toBeInstanceOf(Date);
   });
 
-  it("starts in idle state", () => {
-    const { result } = renderHook(() => useUploadDatasetMutation("project-1"), {
+  it('starts in idle state', () => {
+    const { result } = renderHook(() => useUploadDatasetMutation('project-1'), {
       wrapper: createWrapper(),
     });
 
@@ -113,12 +113,12 @@ describe("useUploadDatasetMutation", () => {
     expect(result.current.data).toBeUndefined();
   });
 
-  it("transitions through states during upload", async () => {
-    const { result } = renderHook(() => useUploadDatasetMutation("project-1"), {
+  it('transitions through states during upload', async () => {
+    const { result } = renderHook(() => useUploadDatasetMutation('project-1'), {
       wrapper: createWrapper(),
     });
 
-    const file = new File(["test content"], "test.csv", { type: "text/csv" });
+    const file = new File(['test content'], 'test.csv', { type: 'text/csv' });
 
     result.current.mutate(file);
 
@@ -128,24 +128,24 @@ describe("useUploadDatasetMutation", () => {
     expect(result.current.data).toBeDefined();
   });
 
-  it("handles multiple sequential uploads", async () => {
-    const { result } = renderHook(() => useUploadDatasetMutation("project-1"), {
+  it('handles multiple sequential uploads', async () => {
+    const { result } = renderHook(() => useUploadDatasetMutation('project-1'), {
       wrapper: createWrapper(),
     });
 
-    const file1 = new File(["test 1"], "test1.csv", { type: "text/csv" });
+    const file1 = new File(['test 1'], 'test1.csv', { type: 'text/csv' });
 
     // First upload
     result.current.mutate(file1);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data?.filename).toBe("test1.csv");
+    expect(result.current.data?.filename).toBe('test1.csv');
 
     // Can perform multiple uploads with same mutation
     expect(result.current).toBeDefined();
   });
 
-  it("uses correct mutation key", () => {
-    const { result } = renderHook(() => useUploadDatasetMutation("project-1"), {
+  it('uses correct mutation key', () => {
+    const { result } = renderHook(() => useUploadDatasetMutation('project-1'), {
       wrapper: createWrapper(),
     });
 
@@ -153,21 +153,21 @@ describe("useUploadDatasetMutation", () => {
     expect(result.current).toBeDefined();
   });
 
-  it("handles different project IDs", async () => {
+  it('handles different project IDs', async () => {
     const wrapper1 = createWrapper();
     const wrapper2 = createWrapper();
 
     const { result: result1 } = renderHook(
-      () => useUploadDatasetMutation("project-1"),
+      () => useUploadDatasetMutation('project-1'),
       { wrapper: wrapper1 }
     );
 
     const { result: result2 } = renderHook(
-      () => useUploadDatasetMutation("project-2"),
+      () => useUploadDatasetMutation('project-2'),
       { wrapper: wrapper2 }
     );
 
-    const file = new File(["test"], "test.csv", { type: "text/csv" });
+    const file = new File(['test'], 'test.csv', { type: 'text/csv' });
 
     // First upload
     result1.current.mutate(file);
@@ -180,28 +180,28 @@ describe("useUploadDatasetMutation", () => {
     expect(result2.current.data).toBeDefined();
   });
 
-  it("generates unique IDs for uploads", async () => {
-    const { result } = renderHook(() => useUploadDatasetMutation("project-1"), {
+  it('generates unique IDs for uploads', async () => {
+    const { result } = renderHook(() => useUploadDatasetMutation('project-1'), {
       wrapper: createWrapper(),
     });
 
-    const file1 = new File(["test 1"], "test1.csv", { type: "text/csv" });
+    const file1 = new File(['test 1'], 'test1.csv', { type: 'text/csv' });
 
     result.current.mutate(file1);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     const id1 = result.current.data?.id;
 
     expect(id1).toBeDefined();
-    expect(typeof id1).toBe("string");
+    expect(typeof id1).toBe('string');
   });
 
-  it("preserves file metadata", async () => {
-    const { result } = renderHook(() => useUploadDatasetMutation("project-1"), {
+  it('preserves file metadata', async () => {
+    const { result } = renderHook(() => useUploadDatasetMutation('project-1'), {
       wrapper: createWrapper(),
     });
 
-    const file = new File(["test content"], "data.csv", {
-      type: "text/csv",
+    const file = new File(['test content'], 'data.csv', {
+      type: 'text/csv',
     });
     const originalSize = file.size;
 
@@ -209,18 +209,18 @@ describe("useUploadDatasetMutation", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(result.current.data?.filename).toBe("data.csv");
+    expect(result.current.data?.filename).toBe('data.csv');
     expect(result.current.data?.size).toBe(originalSize);
   });
 });
 
-describe("useDeleteDatasetMutation", () => {
-  it("successfully deletes a dataset", async () => {
-    const { result } = renderHook(() => useDeleteDatasetMutation("project-1"), {
+describe('useDeleteDatasetMutation', () => {
+  it('successfully deletes a dataset', async () => {
+    const { result } = renderHook(() => useDeleteDatasetMutation('project-1'), {
       wrapper: createWrapper(),
     });
 
-    result.current.mutate("dataset-1");
+    result.current.mutate('dataset-1');
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -228,8 +228,8 @@ describe("useDeleteDatasetMutation", () => {
     expect(result.current.data?.success).toBe(true);
   });
 
-  it("starts in idle state", () => {
-    const { result } = renderHook(() => useDeleteDatasetMutation("project-1"), {
+  it('starts in idle state', () => {
+    const { result } = renderHook(() => useDeleteDatasetMutation('project-1'), {
       wrapper: createWrapper(),
     });
 
@@ -239,12 +239,12 @@ describe("useDeleteDatasetMutation", () => {
     expect(result.current.data).toBeUndefined();
   });
 
-  it("transitions through states during deletion", async () => {
-    const { result } = renderHook(() => useDeleteDatasetMutation("project-1"), {
+  it('transitions through states during deletion', async () => {
+    const { result } = renderHook(() => useDeleteDatasetMutation('project-1'), {
       wrapper: createWrapper(),
     });
 
-    result.current.mutate("dataset-1");
+    result.current.mutate('dataset-1');
 
     // Wait for completion
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -252,13 +252,13 @@ describe("useDeleteDatasetMutation", () => {
     expect(result.current.data).toBeDefined();
   });
 
-  it("handles sequential deletions", async () => {
-    const { result } = renderHook(() => useDeleteDatasetMutation("project-1"), {
+  it('handles sequential deletions', async () => {
+    const { result } = renderHook(() => useDeleteDatasetMutation('project-1'), {
       wrapper: createWrapper(),
     });
 
     // First deletion
-    result.current.mutate("dataset-1");
+    result.current.mutate('dataset-1');
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.success).toBe(true);
 
@@ -266,8 +266,8 @@ describe("useDeleteDatasetMutation", () => {
     expect(result.current).toBeDefined();
   });
 
-  it("uses correct mutation key", () => {
-    const { result } = renderHook(() => useDeleteDatasetMutation("project-1"), {
+  it('uses correct mutation key', () => {
+    const { result } = renderHook(() => useDeleteDatasetMutation('project-1'), {
       wrapper: createWrapper(),
     });
 
@@ -275,39 +275,39 @@ describe("useDeleteDatasetMutation", () => {
     expect(result.current).toBeDefined();
   });
 
-  it("handles different project IDs", async () => {
+  it('handles different project IDs', async () => {
     const wrapper1 = createWrapper();
     const wrapper2 = createWrapper();
 
     const { result: result1 } = renderHook(
-      () => useDeleteDatasetMutation("project-1"),
+      () => useDeleteDatasetMutation('project-1'),
       { wrapper: wrapper1 }
     );
 
     const { result: result2 } = renderHook(
-      () => useDeleteDatasetMutation("project-2"),
+      () => useDeleteDatasetMutation('project-2'),
       { wrapper: wrapper2 }
     );
 
     // First deletion
-    result1.current.mutate("dataset-1");
+    result1.current.mutate('dataset-1');
     await waitFor(() => expect(result1.current.isSuccess).toBe(true));
     expect(result1.current.data?.success).toBe(true);
 
     // Second deletion with different project
-    result2.current.mutate("dataset-1");
+    result2.current.mutate('dataset-1');
     await waitFor(() => expect(result2.current.isSuccess).toBe(true));
     expect(result2.current.data?.success).toBe(true);
   });
 
-  it("completes deletion within reasonable time", async () => {
-    const { result } = renderHook(() => useDeleteDatasetMutation("project-1"), {
+  it('completes deletion within reasonable time', async () => {
+    const { result } = renderHook(() => useDeleteDatasetMutation('project-1'), {
       wrapper: createWrapper(),
     });
 
     const startTime = Date.now();
 
-    result.current.mutate("dataset-1");
+    result.current.mutate('dataset-1');
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -317,22 +317,22 @@ describe("useDeleteDatasetMutation", () => {
   });
 });
 
-describe("Mutation Interactions", () => {
-  it("can use both upload and delete mutations together", async () => {
+describe('Mutation Interactions', () => {
+  it('can use both upload and delete mutations together', async () => {
     const wrapper = createWrapper();
 
     const { result: uploadResult } = renderHook(
-      () => useUploadDatasetMutation("project-1"),
+      () => useUploadDatasetMutation('project-1'),
       { wrapper }
     );
 
     const { result: deleteResult } = renderHook(
-      () => useDeleteDatasetMutation("project-1"),
+      () => useDeleteDatasetMutation('project-1'),
       { wrapper }
     );
 
     // Upload a file
-    const file = new File(["test"], "test.csv", { type: "text/csv" });
+    const file = new File(['test'], 'test.csv', { type: 'text/csv' });
     uploadResult.current.mutate(file);
 
     await waitFor(() => expect(uploadResult.current.isSuccess).toBe(true));
@@ -348,16 +348,16 @@ describe("Mutation Interactions", () => {
     expect(deleteResult.current.data?.success).toBe(true);
   });
 
-  it("maintains independent state for upload and delete", async () => {
+  it('maintains independent state for upload and delete', async () => {
     const wrapper = createWrapper();
 
     const { result: uploadResult } = renderHook(
-      () => useUploadDatasetMutation("project-1"),
+      () => useUploadDatasetMutation('project-1'),
       { wrapper }
     );
 
     const { result: deleteResult } = renderHook(
-      () => useDeleteDatasetMutation("project-1"),
+      () => useDeleteDatasetMutation('project-1'),
       { wrapper }
     );
 
@@ -365,7 +365,7 @@ describe("Mutation Interactions", () => {
     expect(uploadResult.current.isIdle).toBe(true);
     expect(deleteResult.current.isIdle).toBe(true);
 
-    const file = new File(["test"], "test.csv", { type: "text/csv" });
+    const file = new File(['test'], 'test.csv', { type: 'text/csv' });
     uploadResult.current.mutate(file);
 
     await waitFor(() => expect(uploadResult.current.isSuccess).toBe(true));

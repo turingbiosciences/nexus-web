@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   BarChart,
@@ -9,17 +9,17 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-} from "recharts";
+} from 'recharts';
 import {
   parseFeatureImportance,
   FeatureImportanceData,
-} from "@/lib/utils/parse-feature-importance";
+} from '@/lib/utils/parse-feature-importance';
 import {
   CHART_COLORS,
   TOOLTIP_STYLE,
   formatTooltipValue,
   getChartColor,
-} from "@/lib/chart-config";
+} from '@/lib/chart-config';
 
 interface FeatureImportanceChartProps {
   modelName: string;
@@ -40,7 +40,7 @@ export function FeatureImportanceChart({
       <div className="border rounded-lg p-4 bg-white">
         <div className="mb-4">
           <h4 className="font-semibold text-gray-900 capitalize">
-            {modelName.replace(/_/g, " ")}
+            {modelName.replace(/_/g, ' ')}
           </h4>
           <p className="text-sm text-gray-600 mt-1">
             Best config: <span className="font-mono text-xs">{bestConfig}</span>
@@ -60,7 +60,7 @@ export function FeatureImportanceChart({
     <div className="border rounded-lg p-4 bg-white">
       <div className="mb-4">
         <h4 className="font-semibold text-gray-900 capitalize">
-          {modelName.replace(/_/g, " ")}
+          {modelName.replace(/_/g, ' ')}
         </h4>
         <p className="text-sm text-gray-600 mt-1">
           Best config: <span className="font-mono text-xs">{bestConfig}</span>
@@ -83,7 +83,7 @@ export function FeatureImportanceChart({
           />
           <Tooltip
             formatter={(value: number) => formatTooltipValue(value)}
-            labelStyle={{ color: "#374151" }}
+            labelStyle={{ color: '#374151' }}
             contentStyle={TOOLTIP_STYLE}
           />
           <Bar dataKey="importance" radius={[0, 4, 4, 0]}>

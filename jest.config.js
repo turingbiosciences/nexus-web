@@ -1,28 +1,28 @@
 /* eslint-disable */
 // Jest configuration leveraging Next.js SWC transform via next/jest.
 // This fixes JSX/TSX parsing issues encountered after removing Babel.
-const nextJest = require("next/jest");
+const nextJest = require('next/jest');
 
 const createJestConfig = nextJest({
-  dir: "./",
+  dir: './',
 });
 
 /** @type {import('jest').Config} */
 const customJestConfig = {
-  testEnvironment: "jsdom",
-  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/src/$1",
+    '^@/(.*)$': '<rootDir>/src/$1',
   },
-  testMatch: ["**/__tests__/**/*.(ts|tsx)", "**/?(*.)+(test|spec).(ts|tsx)"],
+  testMatch: ['**/__tests__/**/*.(ts|tsx)', '**/?(*.)+(test|spec).(ts|tsx)'],
   collectCoverageFrom: [
-    "src/**/*.{ts,tsx}",
-    "!src/**/*.d.ts",
-    "!src/app/**", // exclude Next.js route files for now
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/app/**', // exclude Next.js route files for now
   ],
   collectCoverage: true,
-  coverageDirectory: "coverage",
-  coverageReporters: ["text", "lcov", "json"],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'json'],
   coverageThreshold: {
     global: {
       // Raised thresholds after expanding test coverage across UI, upload, dummy components

@@ -1,17 +1,17 @@
-import React from "react";
-import { render, screen } from "@testing-library/react";
-import { ProjectActivityTab } from "../project-activity-tab";
-import { useActivities } from "@/lib/queries/activities";
-import { ProjectsProvider } from "@/components/providers/projects-provider";
-import { TokenProvider } from "@/components/providers/token-provider";
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { ProjectActivityTab } from '../project-activity-tab';
+import { useActivities } from '@/lib/queries/activities';
+import { ProjectsProvider } from '@/components/providers/projects-provider';
+import { TokenProvider } from '@/components/providers/token-provider';
 
 // Mock the useActivities hook
-jest.mock("@/lib/queries/activities");
+jest.mock('@/lib/queries/activities');
 const mockUseActivities = useActivities as jest.MockedFunction<
   typeof useActivities
 >;
 
-describe("ProjectActivityTab", () => {
+describe('ProjectActivityTab', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseActivities.mockReturnValue({
@@ -21,7 +21,7 @@ describe("ProjectActivityTab", () => {
       error: null,
       isPending: false,
       isSuccess: true,
-      status: "success",
+      status: 'success',
       refetch: jest.fn(),
     } as unknown as ReturnType<typeof useActivities>);
   });
@@ -34,19 +34,19 @@ describe("ProjectActivityTab", () => {
     );
   };
 
-  it("renders ActivitiesSection with projectId", () => {
+  it('renders ActivitiesSection with projectId', () => {
     renderWithProviders(<ProjectActivityTab projectId="test-project-123" />);
 
-    expect(screen.getByText("Recent Activity")).toBeInTheDocument();
-    expect(mockUseActivities).toHaveBeenCalledWith("test-project-123", {
+    expect(screen.getByText('Recent Activity')).toBeInTheDocument();
+    expect(mockUseActivities).toHaveBeenCalledWith('test-project-123', {
       limit: 20,
     });
   });
 
-  it("passes projectId prop to ActivitiesSection", () => {
+  it('passes projectId prop to ActivitiesSection', () => {
     renderWithProviders(<ProjectActivityTab projectId="another-project-456" />);
 
-    expect(mockUseActivities).toHaveBeenCalledWith("another-project-456", {
+    expect(mockUseActivities).toHaveBeenCalledWith('another-project-456', {
       limit: 20,
     });
   });

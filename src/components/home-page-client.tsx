@@ -1,26 +1,26 @@
-"use client";
+'use client';
 
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-import { DebugPanel } from "@/components/debug/debug-panel";
-import { useSearchParams } from "next/navigation";
-import { useAccessToken } from "@/components/providers/token-provider";
-import { LoadingCard } from "@/components/ui/loading-card";
-import { SignInPrompt } from "@/components/auth/sign-in-prompt";
-import { ProjectList } from "@/components/projects/project-list";
-import { ProjectStatusChart } from "@/components/projects/project-status-chart";
+import { Header } from '@/components/layout/header';
+import { Footer } from '@/components/layout/footer';
+import { DebugPanel } from '@/components/debug/debug-panel';
+import { useSearchParams } from 'next/navigation';
+import { useAccessToken } from '@/components/providers/token-provider';
+import { LoadingCard } from '@/components/ui/loading-card';
+import { SignInPrompt } from '@/components/auth/sign-in-prompt';
+import { ProjectList } from '@/components/projects/project-list';
+import { ProjectStatusChart } from '@/components/projects/project-status-chart';
 // Projects come from provider now
-import { useProjects } from "@/components/providers/projects-provider";
-import { useState } from "react";
-import { NewProjectDialog } from "@/components/projects/new-project-dialog";
-import { logger } from "@/lib/logger";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useProjects } from '@/components/providers/projects-provider';
+import { useState } from 'react';
+import { NewProjectDialog } from '@/components/projects/new-project-dialog';
+import { logger } from '@/lib/logger';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export function HomePageClient() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const searchParams = useSearchParams();
-  const authError = searchParams.get("error");
+  const authError = searchParams.get('error');
   const { isAuthenticated, authLoading } = useAccessToken();
 
   const {
@@ -41,7 +41,7 @@ export function HomePageClient() {
       isLoading,
       projectsCount: projects.length,
     },
-    "HomePageClient render state"
+    'HomePageClient render state'
   );
 
   return (
@@ -49,7 +49,7 @@ export function HomePageClient() {
       <Header />
 
       <main className="container-page py-8">
-        {authError === "auth_failed" && (
+        {authError === 'auth_failed' && (
           <div className="alert-error mb-6">
             <div className="flex">
               <div className="flex-shrink-0">
@@ -144,7 +144,7 @@ export function HomePageClient() {
                 onClose={() => setDialogOpen(false)}
                 onCreated={(id) => {
                   // Optional: navigate to new project detail page
-                  logger.info({ projectId: id }, "Project created via dialog");
+                  logger.info({ projectId: id }, 'Project created via dialog');
                 }}
               />
             </>

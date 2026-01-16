@@ -1,7 +1,7 @@
 // Global authentication utilities integrating directly with the Logto React SDK.
 // Provides a global context + module-level cache for non-React consumers.
 
-import { logger } from "@/lib/logger";
+import { logger } from '@/lib/logger';
 import React, {
   createContext,
   useContext,
@@ -10,8 +10,8 @@ import React, {
   useCallback,
   useRef,
   type ReactNode,
-} from "react";
-import { useLogto } from "@logto/react";
+} from 'react';
+import { useLogto } from '@logto/react';
 
 export interface GlobalAuthState {
   isAuthenticated: boolean;
@@ -24,7 +24,7 @@ export interface GlobalAuthState {
 // Module-level mutable cache (updated by provider)
 let cachedAuthState: Pick<
   GlobalAuthState,
-  "isAuthenticated" | "isLoading" | "claims"
+  'isAuthenticated' | 'isLoading' | 'claims'
 > = {
   isAuthenticated: false,
   isLoading: true,
@@ -53,32 +53,32 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
     fetchingRef.current = true;
     (async () => {
       try {
-        const resp = await fetch("/api/logto/user", {
-          credentials: "include",
-          headers: { "cache-control": "no-store" },
+        const resp = await fetch('/api/logto/user', {
+          credentials: 'include',
+          headers: { 'cache-control': 'no-store' },
         });
         if (resp.ok) {
           const data = await resp.json();
-          if (data && typeof data === "object") {
+          if (data && typeof data === 'object') {
             setClaims((prev) => ({ ...prev, ...data.claims }));
           }
         }
       } catch (e) {
         // Non-fatal; keep going without claims.
-        logger.warn({ error: e }, "GlobalAuthProvider claims fetch failed");
+        logger.warn({ error: e }, 'GlobalAuthProvider claims fetch failed');
       }
     })();
   }, [isAuthenticated]);
 
   const refreshAuth = useCallback(async () => {
     try {
-      const resp = await fetch("/api/logto/user", {
-        credentials: "include",
-        headers: { "cache-control": "no-store" },
+      const resp = await fetch('/api/logto/user', {
+        credentials: 'include',
+        headers: { 'cache-control': 'no-store' },
       });
       if (resp.ok) {
         const data = await resp.json();
-        if (data && typeof data === "object") {
+        if (data && typeof data === 'object') {
           setClaims(data.claims);
           cachedAuthState = {
             isAuthenticated: true,
@@ -100,7 +100,7 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
         };
       }
     } catch (error) {
-      logger.error({ error }, "refreshAuth error");
+      logger.error({ error }, 'refreshAuth error');
     }
   }, []);
 
@@ -120,7 +120,7 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
 export function useGlobalAuth(): GlobalAuthState {
   const ctx = useContext(GlobalAuthContext);
   if (!ctx) {
-    throw new Error("useGlobalAuth must be used within <GlobalAuthProvider>");
+    throw new Error('useGlobalAuth must be used within <GlobalAuthProvider>');
   }
   return ctx;
 }
@@ -138,14 +138,14 @@ export async function checkAuth(): Promise<boolean> {
     return cachedAuthState.isAuthenticated;
   }
   try {
-    const response = await fetch("/api/logto/user", {
-      credentials: "include",
-      headers: { "cache-control": "no-store" },
+    const response = await fetch('/api/logto/user', {
+      credentials: 'include',
+      headers: { 'cache-control': 'no-store' },
     });
     if (!response.ok) return false;
     return true;
   } catch (error) {
-    logger.error({ error }, "checkAuth fallback error");
+    logger.error({ error }, 'checkAuth fallback error');
     return false;
   }
 }

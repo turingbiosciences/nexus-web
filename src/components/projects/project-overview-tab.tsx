@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { ProjectStatsCard } from "@/components/projects/project-stats-card";
+import { ProjectStatsCard } from '@/components/projects/project-stats-card';
 
 interface ProjectOverviewTabProps {
   projectId: string;

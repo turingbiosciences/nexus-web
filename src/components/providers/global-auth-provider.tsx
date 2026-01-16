@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, {
   createContext,
@@ -7,9 +7,9 @@ import React, {
   useState,
   useCallback,
   type ReactNode,
-} from "react";
-import { useLogto } from "@logto/react";
-import { logger } from "@/lib/logger";
+} from 'react';
+import { useLogto } from '@logto/react';
+import { logger } from '@/lib/logger';
 
 export type GlobalAuthContextType = {
   isAuthenticated: boolean;
@@ -43,18 +43,18 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
       logtoIsLoading: logto.isLoading,
       hasClaims: !!claims,
     },
-    "GlobalAuthProvider component render"
+    'GlobalAuthProvider component render'
   );
 
   // Shared auth check logic - used by both initial check and manual refresh
   const checkAuthState = useCallback(async () => {
-    logger.debug("GlobalAuthProvider checkAuthState called");
+    logger.debug('GlobalAuthProvider checkAuthState called');
     setIsLoading(true);
     setError(null);
     try {
       // Fetch from server-side /api/logto/user to check real auth state
-      const response = await fetch("/api/logto/user", {
-        credentials: "include",
+      const response = await fetch('/api/logto/user', {
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -65,7 +65,7 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
             authenticated,
             hasClaims: !!data?.claims,
           },
-          "GlobalAuthProvider API response"
+          'GlobalAuthProvider API response'
         );
         setIsAuthenticated(authenticated);
 
@@ -77,7 +77,7 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
       } else {
         logger.warn(
           { status: response.status },
-          "GlobalAuthProvider API response not OK"
+          'GlobalAuthProvider API response not OK'
         );
         setIsAuthenticated(false);
         setClaims(null);
@@ -85,7 +85,7 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       logger.error(
         { error: err },
-        "GlobalAuthProvider failed to fetch auth state"
+        'GlobalAuthProvider failed to fetch auth state'
       );
       setError(err instanceof Error ? err : new Error(String(err)));
       setIsAuthenticated(false);
@@ -102,7 +102,7 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
         logtoIsAuthenticated: logto.isAuthenticated,
         logtoIsLoading: logto.isLoading,
       },
-      "GlobalAuthProvider useEffect triggered"
+      'GlobalAuthProvider useEffect triggered'
     );
 
     checkAuthState();
@@ -110,7 +110,7 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
 
   // Public refresh function for manual auth refresh
   const refreshAuth = useCallback(async () => {
-    logger.debug("GlobalAuthProvider refreshAuth called manually");
+    logger.debug('GlobalAuthProvider refreshAuth called manually');
     await checkAuthState();
   }, [checkAuthState]);
 
@@ -137,6 +137,6 @@ export function GlobalAuthProvider({ children }: { children: ReactNode }) {
 export function useGlobalAuth() {
   const ctx = useContext(GlobalAuthContext);
   if (!ctx)
-    throw new Error("useGlobalAuth must be used within GlobalAuthProvider");
+    throw new Error('useGlobalAuth must be used within GlobalAuthProvider');
   return ctx;
 }

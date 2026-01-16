@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { FeatureImportanceChart } from "./feature-importance-chart";
-import { ModelConfig } from "@/types/model-config";
+import { FeatureImportanceChart } from './feature-importance-chart';
+import { ModelConfig } from '@/types/model-config';
 
 interface FeatureImportanceSectionProps {
   modelConfigs: Record<string, ModelConfig>;
@@ -35,7 +35,7 @@ export function FeatureImportanceSection({
             | undefined;
           if (
             !featureImportance ||
-            (typeof featureImportance === "object" &&
+            (typeof featureImportance === 'object' &&
               Object.keys(featureImportance).length === 0)
           ) {
             return null;

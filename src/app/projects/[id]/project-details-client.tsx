@@ -1,29 +1,29 @@
-"use client";
+'use client';
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
+import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { Header } from '@/components/layout/header';
+import { Footer } from '@/components/layout/footer';
 // Use projects provider for dynamic state
-import { useProjects } from "@/components/providers/projects-provider";
-import { useAccessToken } from "@/components/providers/token-provider";
-import { SignInPrompt } from "@/components/auth/sign-in-prompt";
-import { LoadingCard } from "@/components/ui/loading-card";
-import { Button } from "@/components/ui/button";
-import { ProjectResultsTab } from "@/components/projects/project-results-tab";
-import { ProjectActivityTab } from "@/components/projects/project-activity-tab";
-import { ProjectDatasetsTab } from "@/components/projects/project-datasets-tab";
-import { ProjectSettingsTab } from "@/components/projects/project-settings-tab";
-import { ProjectHeaderCard } from "@/components/projects/project-header-card";
-import { RunModelModal } from "@/components/projects/run-model-modal";
-import { JobProgressCard } from "@/components/projects/job-progress-card";
-import { ArrowLeft } from "lucide-react";
-import { useToast } from "@/components/ui/toast-provider";
-import { authFetch } from "@/lib/auth-fetch";
-import { useResults } from "@/lib/queries/results";
-import { useJobStatus } from "@/hooks/use-job-status";
-import { Job } from "@/types/job";
-import { IS_MOCK } from "@/config/flags";
+import { useProjects } from '@/components/providers/projects-provider';
+import { useAccessToken } from '@/components/providers/token-provider';
+import { SignInPrompt } from '@/components/auth/sign-in-prompt';
+import { LoadingCard } from '@/components/ui/loading-card';
+import { Button } from '@/components/ui/button';
+import { ProjectResultsTab } from '@/components/projects/project-results-tab';
+import { ProjectActivityTab } from '@/components/projects/project-activity-tab';
+import { ProjectDatasetsTab } from '@/components/projects/project-datasets-tab';
+import { ProjectSettingsTab } from '@/components/projects/project-settings-tab';
+import { ProjectHeaderCard } from '@/components/projects/project-header-card';
+import { RunModelModal } from '@/components/projects/run-model-modal';
+import { JobProgressCard } from '@/components/projects/job-progress-card';
+import { ArrowLeft } from 'lucide-react';
+import { useToast } from '@/components/ui/toast-provider';
+import { authFetch } from '@/lib/auth-fetch';
+import { useResults } from '@/lib/queries/results';
+import { useJobStatus } from '@/hooks/use-job-status';
+import { Job } from '@/types/job';
+import { IS_MOCK } from '@/config/flags';
 
 interface ProjectDetailsClientProps {
   projectId: string;
@@ -35,8 +35,8 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     useAccessToken();
   const { push: pushToast } = useToast();
   const [activeTab, setActiveTab] = useState<
-    "overview" | "activity" | "datasets" | "settings"
-  >("overview");
+    'overview' | 'activity' | 'datasets' | 'settings'
+  >('overview');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [isRunModalOpen, setIsRunModalOpen] = useState(false);
@@ -59,9 +59,9 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
   const handleJobComplete = useCallback(
     (completedJob: Job) => {
       pushToast({
-        title: "Training Complete!",
-        description: `Model ${completedJob.best_model || "trained"} successfully. Refreshing results...`,
-        variant: "default",
+        title: 'Training Complete!',
+        description: `Model ${completedJob.best_model || 'trained'} successfully. Refreshing results...`,
+        variant: 'default',
       });
       // Refresh results after job completes
       resultsQuery.refetch();
@@ -73,9 +73,9 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
   const handleJobError = useCallback(
     (error: string) => {
       pushToast({
-        title: "Training Failed",
+        title: 'Training Failed',
         description: error,
-        variant: "destructive",
+        variant: 'destructive',
         duration: 0,
       });
       setIsRunning(false);
@@ -112,11 +112,12 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     try {
       await deleteProject(project.id);
       // Navigate back to home after successful deletion
-      router.push("/");
+      router.push('/');
     } catch (err) {
-      console.error("Failed to delete project:", err);
+      console.error('Failed to delete project:', err);
       alert(
-        `Failed to delete project: ${err instanceof Error ? err.message : "Unknown error"
+        `Failed to delete project: ${
+          err instanceof Error ? err.message : 'Unknown error'
         }`
       );
       setIsDeleting(false);
@@ -140,11 +141,11 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
       const response = await authFetch(
         `${baseUrl}/projects/${project.id}/training/start`,
         {
-          method: "POST",
+          method: 'POST',
           token: accessToken,
           onTokenRefresh: refreshToken,
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             file_id: datasetId,
@@ -161,24 +162,24 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
         // Start tracking the job via SSE
         setActiveJobId(data.job_id);
         pushToast({
-          title: "Training Started",
-          description: "Tracking job progress...",
-          variant: "default",
+          title: 'Training Started',
+          description: 'Tracking job progress...',
+          variant: 'default',
         });
       } else {
         pushToast({
-          title: "Training Error",
+          title: 'Training Error',
           description: data.message || JSON.stringify(data),
-          variant: "destructive",
+          variant: 'destructive',
           duration: 0,
         });
         setIsRunning(false);
       }
     } catch (err) {
       pushToast({
-        title: "Request Failed",
-        description: `Error: ${err instanceof Error ? err.message : "Unknown error"}`,
-        variant: "destructive",
+        title: 'Request Failed',
+        description: `Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        variant: 'destructive',
         duration: 0,
       });
       setIsRunning(false);
@@ -230,7 +231,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
               The project you&apos;re looking for doesn&apos;t exist or has been
               removed.
             </p>
-            <Button onClick={() => router.push("/")}>
+            <Button onClick={() => router.push('/')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
@@ -247,7 +248,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
 
       <main className="container-page py-8 space-y-6">
         {/* Back Button */}
-        <Button variant="outline" onClick={() => router.push("/")}>
+        <Button variant="outline" onClick={() => router.push('/')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Projects
         </Button>
@@ -275,38 +276,42 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             <button
-              onClick={() => setActiveTab("overview")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "overview"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+              onClick={() => setActiveTab('overview')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'overview'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
             >
               Overview
             </button>
             <button
-              onClick={() => setActiveTab("activity")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "activity"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+              onClick={() => setActiveTab('activity')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'activity'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
             >
               Activity
             </button>
             <button
-              onClick={() => setActiveTab("datasets")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "datasets"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+              onClick={() => setActiveTab('datasets')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'datasets'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
             >
               Datasets
             </button>
             <button
-              onClick={() => setActiveTab("settings")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "settings"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+              onClick={() => setActiveTab('settings')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'settings'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
             >
               Settings
             </button>
@@ -314,11 +319,11 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
         </div>
 
         {/* Tab Content */}
-        {activeTab === "overview" ? (
+        {activeTab === 'overview' ? (
           <ProjectResultsTab projectId={project.id} />
-        ) : activeTab === "activity" ? (
+        ) : activeTab === 'activity' ? (
           <ProjectActivityTab projectId={project.id} />
-        ) : activeTab === "datasets" ? (
+        ) : activeTab === 'datasets' ? (
           <ProjectDatasetsTab projectId={project.id} />
         ) : (
           <ProjectSettingsTab

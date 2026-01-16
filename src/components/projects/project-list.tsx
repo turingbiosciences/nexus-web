@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Project } from "@/types/project";
-import { ProjectCard } from "./project-card";
-import { Folder } from "lucide-react";
+import { Project } from '@/types/project';
+import { ProjectCard } from './project-card';
+import { Folder } from 'lucide-react';
 
 interface ProjectListProps {
   projects: Project[];

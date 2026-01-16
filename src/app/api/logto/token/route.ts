@@ -1,25 +1,28 @@
-import { NextRequest, NextResponse } from "next/server";
-import LogtoClient from "@logto/next/edge";
-import { logtoConfig } from "@/lib/auth";
-import { logger } from "@/lib/logger";
-import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
+import { NextRequest, NextResponse } from 'next/server';
+import LogtoClient from '@logto/next/edge';
+import { logtoConfig } from '@/lib/auth';
+import { logger } from '@/lib/logger';
+import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const logto = new LogtoClient(logtoConfig);
 
 export const GET = async (req: NextRequest) => {
-  logger.debug("M2M token request received");
+  logger.debug('M2M token request received');
 
   // Rate limiting: 10 requests per minute per IP
-  const identifier = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "unknown";
+  const identifier =
+    req.headers.get('x-forwarded-for') ??
+    req.headers.get('x-real-ip') ??
+    'unknown';
   const rateLimitResult = checkRateLimit(identifier, {
     maxRequests: 10,
     windowMs: 60 * 1000, // 1 minute
-    prefix: "token",
+    prefix: 'token',
   });
 
   if (!rateLimitResult.success) {
     return NextResponse.json(
-      { error: "Too many requests. Please try again later." },
+      { error: 'Too many requests. Please try again later.' },
       {
         status: 429,
         headers: getRateLimitHeaders(rateLimitResult),
@@ -32,18 +35,18 @@ export const GET = async (req: NextRequest) => {
     const { isAuthenticated } = await logto.getLogtoContext(req);
 
     if (!isAuthenticated) {
-      logger.warn("Unauthorized token request - user not authenticated");
+      logger.warn('Unauthorized token request - user not authenticated');
       return NextResponse.json(
-        { error: "Unauthorized. Authentication required." },
+        { error: 'Unauthorized. Authentication required.' },
         { status: 401 }
       );
     }
 
-    logger.debug("User authenticated, proceeding with M2M token fetch");
+    logger.debug('User authenticated, proceeding with M2M token fetch');
   } catch (authError) {
-    logger.error({ error: authError }, "Authentication check failed");
+    logger.error({ error: authError }, 'Authentication check failed');
     return NextResponse.json(
-      { error: "Authentication verification failed" },
+      { error: 'Authentication verification failed' },
       { status: 401 }
     );
   }
@@ -61,14 +64,14 @@ export const GET = async (req: NextRequest) => {
     .map(([key]) => key);
 
   if (missingVars.length > 0) {
-    logger.error({ missingVars }, "Missing required environment variables");
+    logger.error({ missingVars }, 'Missing required environment variables');
     return NextResponse.json(
       {
         error:
-          "Server misconfiguration: Missing required environment variables",
+          'Server misconfiguration: Missing required environment variables',
         details:
-          process.env.NODE_ENV === "development"
-            ? `Missing: ${missingVars.join(", ")}`
+          process.env.NODE_ENV === 'development'
+            ? `Missing: ${missingVars.join(', ')}`
             : undefined,
       },
       { status: 500 }
@@ -76,14 +79,14 @@ export const GET = async (req: NextRequest) => {
   }
 
   // Only log config in development to avoid exposing sensitive info
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV === 'development') {
     logger.debug(
       {
         endpoint: requiredEnvVars.LOGTO_ENDPOINT,
         m2mAppId: requiredEnvVars.LOGTO_M2M_APP_ID,
         resource: requiredEnvVars.LOGTO_M2M_ENDPOINT,
       },
-      "M2M config validated"
+      'M2M config validated'
     );
   }
 
@@ -92,16 +95,16 @@ export const GET = async (req: NextRequest) => {
     const tokenResponse = await fetch(
       `${requiredEnvVars.LOGTO_ENDPOINT}/oidc/token`,
       {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          grant_type: "client_credentials",
+          grant_type: 'client_credentials',
           client_id: requiredEnvVars.LOGTO_M2M_APP_ID!,
           client_secret: requiredEnvVars.LOGTO_M2M_APP_SECRET!,
           resource: requiredEnvVars.LOGTO_M2M_ENDPOINT!,
-          scope: "all",
+          scope: 'all',
         }),
       }
     );
@@ -110,7 +113,7 @@ export const GET = async (req: NextRequest) => {
       const errorText = await tokenResponse.text();
       logger.error(
         { status: tokenResponse.status, errorText },
-        "Token fetch failed"
+        'Token fetch failed'
       );
       throw new Error(
         `Token fetch failed: ${tokenResponse.status} - ${errorText}`
@@ -123,17 +126,17 @@ export const GET = async (req: NextRequest) => {
       token_type: string;
     };
 
-    logger.info("M2M token obtained successfully");
+    logger.info('M2M token obtained successfully');
 
     // Decode the JWT to inspect claims (just for debugging) for debugging)
     if (
-      process.env.NODE_ENV === "development" &&
-      process.env.NEXT_PUBLIC_TBIO_DEBUG === "true"
+      process.env.NODE_ENV === 'development' &&
+      process.env.NEXT_PUBLIC_TBIO_DEBUG === 'true'
     ) {
       try {
-        const [, payload] = tokenData.access_token.split(".");
+        const [, payload] = tokenData.access_token.split('.');
         const decodedPayload = JSON.parse(
-          Buffer.from(payload, "base64url").toString()
+          Buffer.from(payload, 'base64url').toString()
         );
         logger.debug(
           {
@@ -142,10 +145,10 @@ export const GET = async (req: NextRequest) => {
             iss: decodedPayload.iss,
             exp: new Date(decodedPayload.exp * 1000).toISOString(),
           },
-          "Token claims decoded"
+          'Token claims decoded'
         );
       } catch {
-        logger.debug("Could not decode token for debugging");
+        logger.debug('Could not decode token for debugging');
       }
     }
 
@@ -155,15 +158,15 @@ export const GET = async (req: NextRequest) => {
       tokenType: tokenData.token_type,
     });
   } catch (error) {
-    logger.error({ error }, "M2M token request failed");
+    logger.error({ error }, 'M2M token request failed');
     return NextResponse.json(
       {
         error:
-          process.env.NODE_ENV === "development"
+          process.env.NODE_ENV === 'development'
             ? error instanceof Error
               ? error.message
               : String(error)
-            : "M2M token request failed",
+            : 'M2M token request failed',
       },
       { status: 500 }
     );

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useActivities } from "@/lib/queries/activities";
-import { useProjects } from "@/components/providers/projects-provider";
-import { getRelativeTime } from "@/lib/utils/date-utils";
-import { useEffect } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useActivities } from '@/lib/queries/activities';
+import { useProjects } from '@/components/providers/projects-provider';
+import { getRelativeTime } from '@/lib/utils/date-utils';
+import { useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ActivitiesSectionProps {
   projectId: string;
@@ -81,15 +81,15 @@ export function ActivitiesSection({
                 <li key={act.id} className="flex items-start gap-3 text-sm">
                   <div
                     className={`w-2 h-2 rounded-full mt-1.5 ${
-                      act.type === "upload"
-                        ? "bg-blue-500"
-                        : act.type === "status_change"
-                        ? "bg-yellow-500"
-                        : act.type === "delete"
-                        ? "bg-red-500"
-                        : act.type === "updated"
-                        ? "bg-gray-400"
-                        : "bg-green-500"
+                      act.type === 'upload'
+                        ? 'bg-blue-500'
+                        : act.type === 'status_change'
+                          ? 'bg-yellow-500'
+                          : act.type === 'delete'
+                            ? 'bg-red-500'
+                            : act.type === 'updated'
+                              ? 'bg-gray-400'
+                              : 'bg-green-500'
                     }`}
                   />
                   <div>

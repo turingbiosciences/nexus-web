@@ -78,16 +78,16 @@ Created custom in-memory rate limiting system and applied to token endpoint:
 
 ```typescript
 // Rate limit check before authentication
-const identifier = req.ip ?? req.headers.get("x-forwarded-for") ?? "unknown";
+const identifier = req.ip ?? req.headers.get('x-forwarded-for') ?? 'unknown';
 const rateLimitResult = checkRateLimit(identifier, {
   maxRequests: 10,
   windowMs: 60000, // 1 minute
-  prefix: "token",
+  prefix: 'token',
 });
 
 if (!rateLimitResult.success) {
   return NextResponse.json(
-    { error: "Too many requests. Please try again later." },
+    { error: 'Too many requests. Please try again later.' },
     {
       status: 429,
       headers: getRateLimitHeaders(rateLimitResult),
@@ -244,11 +244,11 @@ Logto session cookies should provide some protection, but custom API routes may 
 ```typescript
 // For state-changing operations, verify origin header
 export async function POST(req: NextRequest) {
-  const origin = req.headers.get("origin");
-  const host = req.headers.get("host");
+  const origin = req.headers.get('origin');
+  const host = req.headers.get('host');
 
   if (origin && !origin.includes(host)) {
-    return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
   }
 
   // ... rest of handler
@@ -274,8 +274,8 @@ throw new Error(`Token fetch failed: ${tokenResponse.status} - ${errorText}`);
 
 ```typescript
 // In production, sanitize error messages
-if (process.env.NODE_ENV === "production") {
-  return NextResponse.json({ error: "Token fetch failed" }, { status: 500 });
+if (process.env.NODE_ENV === 'production') {
+  return NextResponse.json({ error: 'Token fetch failed' }, { status: 500 });
 } else {
   return NextResponse.json(
     { error: `Token fetch failed: ${tokenResponse.status} - ${errorText}` },
@@ -289,37 +289,30 @@ if (process.env.NODE_ENV === "production") {
 ## Security Best Practices Already Implemented ✅
 
 1. **Authentication Required for Token Endpoint**
-
    - `/api/logto/token` verifies user authentication before issuing tokens
    - Proper HTTP-only cookie usage via Logto
 
 2. **No localStorage/sessionStorage for Tokens**
-
    - Tokens managed server-side and via secure context
    - No client-side token storage vulnerabilities
 
 3. **No Obvious XSS Vulnerabilities**
-
    - No `dangerouslySetInnerHTML` usage found
    - No direct HTML injection patterns
    - React's automatic escaping provides protection
 
 4. **Environment Variables Properly Namespaced**
-
    - Public variables prefixed with `NEXT_PUBLIC_`
    - Secrets properly separated from client code
 
 5. **HTTPS-Only Cookies in Production**
-
    - `cookieSecure: process.env.NODE_ENV === "production"`
 
 6. **Structured Logging with Sentry Integration**
-
    - Errors automatically tracked
    - Production logs structured as JSON
 
 7. **Token Refresh Mechanism**
-
    - Proper token refresh flow implemented
    - Stale token handling
 

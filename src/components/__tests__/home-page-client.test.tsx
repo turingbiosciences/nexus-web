@@ -1,54 +1,54 @@
-import React from "react";
-import { render, screen } from "@testing-library/react";
-import { HomePageClient } from "@/components/home-page-client";
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { HomePageClient } from '@/components/home-page-client';
 
 // Mock Next.js hooks
-jest.mock("next/navigation", () => ({
+jest.mock('next/navigation', () => ({
   useSearchParams: jest.fn(() => ({
     get: jest.fn(() => null),
   })),
 }));
 
 // Mock the components and providers
-jest.mock("@/components/auth/auth-button", () => ({
+jest.mock('@/components/auth/auth-button', () => ({
   AuthButton: () => <button>Auth Button</button>,
 }));
 
-jest.mock("@/components/file-upload/file-uploader", () => ({
+jest.mock('@/components/file-upload/file-uploader', () => ({
   FileUploader: () => <div>File Uploader</div>,
 }));
 
-jest.mock("@/components/projects/project-list", () => ({
+jest.mock('@/components/projects/project-list', () => ({
   ProjectList: () => <div>Project List</div>,
 }));
 
-jest.mock("@/components/projects/new-project-dialog", () => ({
+jest.mock('@/components/projects/new-project-dialog', () => ({
   NewProjectDialog: () => <div>New Project Dialog</div>,
 }));
 
-jest.mock("@/components/upload/upload-statistics", () => ({
+jest.mock('@/components/upload/upload-statistics', () => ({
   UploadStatistics: () => <div>Upload Statistics</div>,
 }));
 
-jest.mock("@/components/debug/debug-panel", () => ({
+jest.mock('@/components/debug/debug-panel', () => ({
   DebugPanel: () => <div>Debug Panel</div>,
 }));
 
-jest.mock("@/components/providers/token-provider", () => ({
+jest.mock('@/components/providers/token-provider', () => ({
   useAccessToken: jest.fn(),
 }));
 
-jest.mock("@/components/providers/projects-provider", () => ({
+jest.mock('@/components/providers/projects-provider', () => ({
   useProjects: jest.fn(),
 }));
 
-import { useAccessToken } from "@/components/providers/token-provider";
-import { useProjects } from "@/components/providers/projects-provider";
+import { useAccessToken } from '@/components/providers/token-provider';
+import { useProjects } from '@/components/providers/projects-provider';
 
 const mockedUseAccessToken = useAccessToken as jest.Mock;
 const mockedUseProjects = useProjects as jest.Mock;
 
-describe("HomePageClient", () => {
+describe('HomePageClient', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
@@ -69,7 +69,7 @@ describe("HomePageClient", () => {
       getProjectById: jest.fn(),
       getStatusCounts: jest.fn(() => ({
         setup: 0,
-        "data-upload": 0,
+        'data-upload': 0,
         processing: 0,
         completed: 0,
         archived: 0,
@@ -78,14 +78,14 @@ describe("HomePageClient", () => {
     });
   });
 
-  it("renders the main page structure", () => {
+  it('renders the main page structure', () => {
     render(<HomePageClient />);
 
-    expect(screen.getByAltText("Turing Biosciences")).toBeInTheDocument();
-    expect(screen.getByText("Auth Button")).toBeInTheDocument();
+    expect(screen.getByAltText('Turing Biosciences')).toBeInTheDocument();
+    expect(screen.getByText('Auth Button')).toBeInTheDocument();
   });
 
-  it("shows sign-in prompt when not authenticated", () => {
+  it('shows sign-in prompt when not authenticated', () => {
     mockedUseAccessToken.mockReturnValue({
       isAuthenticated: false,
       authLoading: false,
@@ -95,86 +95,86 @@ describe("HomePageClient", () => {
 
     render(<HomePageClient />);
 
-    expect(screen.getByText("Sign in Required")).toBeInTheDocument();
+    expect(screen.getByText('Sign in Required')).toBeInTheDocument();
   });
 
-  it("shows projects dashboard when authenticated", () => {
+  it('shows projects dashboard when authenticated', () => {
     mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
-      accessToken: "mock-token",
+      accessToken: 'mock-token',
       refreshToken: jest.fn(),
     });
 
     render(<HomePageClient />);
 
     expect(
-      screen.getByRole("heading", { name: "Projects" })
+      screen.getByRole('heading', { name: 'Projects' })
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Manage and monitor your biosciences research projects")
+      screen.getByText('Manage and monitor your biosciences research projects')
     ).toBeInTheDocument();
   });
 
-  it("renders project list when authenticated", () => {
+  it('renders project list when authenticated', () => {
     mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
-      accessToken: "mock-token",
+      accessToken: 'mock-token',
       refreshToken: jest.fn(),
     });
 
     render(<HomePageClient />);
 
-    expect(screen.getByText("Project List")).toBeInTheDocument();
+    expect(screen.getByText('Project List')).toBeInTheDocument();
   });
 
-  it("renders project status chart when authenticated", () => {
+  it('renders project status chart when authenticated', () => {
     mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
-      accessToken: "mock-token",
+      accessToken: 'mock-token',
       refreshToken: jest.fn(),
     });
 
     render(<HomePageClient />);
 
-    expect(screen.getByText("Project Status Overview")).toBeInTheDocument();
+    expect(screen.getByText('Project Status Overview')).toBeInTheDocument();
   });
 
-  it("renders new project button when authenticated", () => {
+  it('renders new project button when authenticated', () => {
     mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
-      accessToken: "mock-token",
+      accessToken: 'mock-token',
       refreshToken: jest.fn(),
     });
 
     render(<HomePageClient />);
 
-    expect(screen.getByText("New Project")).toBeInTheDocument();
+    expect(screen.getByText('New Project')).toBeInTheDocument();
   });
 
-  it("renders new project dialog when authenticated", () => {
+  it('renders new project dialog when authenticated', () => {
     mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
-      accessToken: "mock-token",
+      accessToken: 'mock-token',
       refreshToken: jest.fn(),
     });
 
     render(<HomePageClient />);
 
-    expect(screen.getByText("New Project Dialog")).toBeInTheDocument();
+    expect(screen.getByText('New Project Dialog')).toBeInTheDocument();
   });
 
-  it("renders debug panel", () => {
+  it('renders debug panel', () => {
     render(<HomePageClient />);
 
-    expect(screen.getByText("Debug Panel")).toBeInTheDocument();
+    expect(screen.getByText('Debug Panel')).toBeInTheDocument();
   });
 
-  it("handles loading state", () => {
+  it('handles loading state', () => {
     mockedUseAccessToken.mockReturnValue({
       isAuthenticated: false,
       authLoading: true,
@@ -185,27 +185,27 @@ describe("HomePageClient", () => {
     render(<HomePageClient />);
 
     // Should show loading card
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
 
-  it("shows projects error when projects fail to load", () => {
+  it('shows projects error when projects fail to load', () => {
     mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
-      accessToken: "mock-token",
+      accessToken: 'mock-token',
       refreshToken: jest.fn(),
     });
 
     mockedUseProjects.mockReturnValue({
       projects: [],
       loading: false,
-      error: new Error("Failed to load projects"),
+      error: new Error('Failed to load projects'),
       createProject: jest.fn(),
       updateProject: jest.fn(),
       getProjectById: jest.fn(),
       getStatusCounts: jest.fn(() => ({
         setup: 0,
-        "data-upload": 0,
+        'data-upload': 0,
         processing: 0,
         completed: 0,
         archived: 0,
@@ -215,6 +215,6 @@ describe("HomePageClient", () => {
 
     render(<HomePageClient />);
 
-    expect(screen.getByText("Failed to Load Projects")).toBeInTheDocument();
+    expect(screen.getByText('Failed to Load Projects')).toBeInTheDocument();
   });
 });

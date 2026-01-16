@@ -23,6 +23,7 @@
 ## Verification
 
 The sign-out endpoint now correctly redirects to:
+
 ```
 https://q98adz.logto.app/oidc/session/end?client_id=h28vlbexr7nmgjk5f2qdg&post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3000
 ```

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Modal } from "@/components/ui/modal";
-import { Button } from "@/components/ui/button";
-import { useDatasets } from "@/lib/queries/datasets";
-import { Loader2 } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Modal } from '@/components/ui/modal';
+import { Button } from '@/components/ui/button';
+import { useDatasets } from '@/lib/queries/datasets';
+import { Loader2 } from 'lucide-react';
 
 interface RunModelModalProps {
   isOpen: boolean;
@@ -23,9 +23,9 @@ export function RunModelModal({
   projectId,
   onConfirm,
 }: RunModelModalProps) {
-  const [selectedDatasetId, setSelectedDatasetId] = useState<string>("");
-  const [targetColumn, setTargetColumn] = useState<string>("");
-  const [excludeColumns, setExcludeColumns] = useState<string>("");
+  const [selectedDatasetId, setSelectedDatasetId] = useState<string>('');
+  const [targetColumn, setTargetColumn] = useState<string>('');
+  const [excludeColumns, setExcludeColumns] = useState<string>('');
 
   // Fetch latest 3 datasets
   const { data: datasetsData, isLoading } = useDatasets(projectId, {
@@ -43,9 +43,9 @@ export function RunModelModal({
   // Reset selection when modal opens/closes
   useEffect(() => {
     if (isOpen) {
-      setSelectedDatasetId("");
-      setTargetColumn("");
-      setExcludeColumns("");
+      setSelectedDatasetId('');
+      setTargetColumn('');
+      setExcludeColumns('');
     }
   }, [isOpen]);
 
@@ -53,7 +53,7 @@ export function RunModelModal({
     if (selectedDatasetId && targetColumn) {
       // Parse comma-separated exclude columns into array
       const excludeColumnsArray = excludeColumns
-        .split(",")
+        .split(',')
         .map((col) => col.trim())
         .filter((col) => col.length > 0);
 
@@ -89,7 +89,7 @@ export function RunModelModal({
               <option value="">Choose a dataset...</option>
               {datasets.map((dataset) => (
                 <option key={dataset.id} value={dataset.id}>
-                  {dataset.filename} ({(dataset.size / 1024 / 1024).toFixed(2)}{" "}
+                  {dataset.filename} ({(dataset.size / 1024 / 1024).toFixed(2)}{' '}
                   MB) - {dataset.uploadedAt.toLocaleDateString()}
                 </option>
               ))}

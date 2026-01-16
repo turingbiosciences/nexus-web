@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { AuthButton } from "@/components/auth/auth-button";
-import { Logo } from "@/components/ui/logo";
+import { AuthButton } from '@/components/auth/auth-button';
+import { Logo } from '@/components/ui/logo';
 
 export function Header() {
   return (

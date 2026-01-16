@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import {
   createContext,
   useCallback,
@@ -7,20 +7,20 @@ import {
   useRef,
   useEffect,
   ReactNode,
-} from "react";
-import { cn } from "@/lib/utils";
+} from 'react';
+import { cn } from '@/lib/utils';
 
 export interface Toast {
   id: string;
   title?: string;
   description?: string;
-  variant?: "default" | "destructive";
+  variant?: 'default' | 'destructive';
   duration?: number; // ms
 }
 
 interface ToastContextValue {
   toasts: Toast[];
-  push: (t: Omit<Toast, "id">) => string;
+  push: (t: Omit<Toast, 'id'>) => string;
   dismiss: (id: string) => void;
 }
 
@@ -43,9 +43,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const push = useCallback(
-    (t: Omit<Toast, "id">) => {
+    (t: Omit<Toast, 'id'>) => {
       const id = crypto.randomUUID();
-      const toast: Toast = { duration: 5000, variant: "default", ...t, id };
+      const toast: Toast = { duration: 5000, variant: 'default', ...t, id };
       setToasts((ts) => [...ts, toast]);
       if (toast.duration && toast.duration > 0) {
         const handle = window.setTimeout(() => {
@@ -78,9 +78,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             className={cn(
-              "pointer-events-auto w-full max-w-sm rounded-md border px-4 py-3 shadow-sm bg-white text-sm flex flex-col gap-1 animate-in fade-in slide-in-from-bottom-2",
-              t.variant === "destructive" &&
-                "border-red-300 bg-red-50 text-red-800"
+              'pointer-events-auto w-full max-w-sm rounded-md border px-4 py-3 shadow-sm bg-white text-sm flex flex-col gap-1 animate-in fade-in slide-in-from-bottom-2',
+              t.variant === 'destructive' &&
+                'border-red-300 bg-red-50 text-red-800'
             )}
             role="status"
           >
@@ -110,6 +110,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
 export function useToast() {
   const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error("useToast must be used within <ToastProvider>");
+  if (!ctx) throw new Error('useToast must be used within <ToastProvider>');
   return ctx;
 }

@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import { LogIn, LogOut, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAccessToken } from "@/components/providers/token-provider";
+import { LogIn, LogOut, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAccessToken } from '@/components/providers/token-provider';
 
 export function AuthButton() {
   const { isAuthenticated, authLoading: isLoading } = useAccessToken();
 
   const handleSignIn = () => {
     // Use API route directly (same as home page link)
-    window.location.href = "/api/logto/sign-in";
+    window.location.href = '/api/logto/sign-in';
   };
 
   const handleSignOut = async () => {
     // Simply navigate to the Logto sign-out endpoint
     // It will handle the redirect to Logto and back
-    window.location.href = "/api/logto/sign-out";
+    window.location.href = '/api/logto/sign-out';
   };
 
   if (isLoading) {

@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { DatasetsSection } from "../datasets-section";
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { DatasetsSection } from '../datasets-section';
 
 // Mock dependencies
 const mockGetProjectById = jest.fn();
@@ -11,7 +11,7 @@ const mockUploadMutate = jest.fn();
 const mockDeleteMutate = jest.fn();
 const mockUseDatasetsReturn = jest.fn();
 
-jest.mock("@/components/providers/projects-provider", () => ({
+jest.mock('@/components/providers/projects-provider', () => ({
   useProjects: () => ({
     getProjectById: mockGetProjectById,
     addDataset: mockAddDataset,
@@ -19,11 +19,11 @@ jest.mock("@/components/providers/projects-provider", () => ({
   }),
 }));
 
-jest.mock("@/lib/queries/datasets", () => ({
+jest.mock('@/lib/queries/datasets', () => ({
   useDatasets: (...args: unknown[]) => mockUseDatasetsReturn(...args),
 }));
 
-jest.mock("@/lib/queries/dataset-mutations", () => ({
+jest.mock('@/lib/queries/dataset-mutations', () => ({
   useUploadDatasetMutation: () => ({
     mutate: mockUploadMutate,
     isPending: false,
@@ -34,13 +34,13 @@ jest.mock("@/lib/queries/dataset-mutations", () => ({
   }),
 }));
 
-jest.mock("@/components/ui/toast-provider", () => ({
+jest.mock('@/components/ui/toast-provider', () => ({
   useToast: () => ({
     push: mockPush,
   }),
 }));
 
-jest.mock("@/components/file-upload/file-uploader", () => ({
+jest.mock('@/components/file-upload/file-uploader', () => ({
   FileUploader: ({
     onUploadComplete,
   }: {
@@ -49,8 +49,8 @@ jest.mock("@/components/file-upload/file-uploader", () => ({
     <div data-testid="file-uploader">
       <button
         onClick={() => {
-          const mockFile = new File(["test"], "test.csv", {
-            type: "text/csv",
+          const mockFile = new File(['test'], 'test.csv', {
+            type: 'text/csv',
           });
           onUploadComplete([mockFile]);
         }}
@@ -61,7 +61,7 @@ jest.mock("@/components/file-upload/file-uploader", () => ({
   ),
 }));
 
-jest.mock("@/lib/reconcile-datasets", () => ({
+jest.mock('@/lib/reconcile-datasets', () => ({
   reconcileDatasets: jest.fn(({ remote, optimistic, pendingDeleteIds }) => {
     const remoteSafe = remote || [];
     const optimisticSafe = optimistic || [];
@@ -71,27 +71,27 @@ jest.mock("@/lib/reconcile-datasets", () => ({
   }),
 }));
 
-describe("DatasetsSection", () => {
+describe('DatasetsSection', () => {
   const mockProject = {
-    id: "project-1",
-    name: "Test Project",
-    description: "Test description",
-    status: "running" as const,
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date("2024-01-15"),
+    id: 'project-1',
+    name: 'Test Project',
+    description: 'Test description',
+    status: 'running' as const,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-15'),
     datasetCount: 2,
     datasets: [
       {
-        id: "dataset-1",
-        filename: "test1.csv",
+        id: 'dataset-1',
+        filename: 'test1.csv',
         size: 1024,
-        uploadedAt: new Date("2024-01-10"),
+        uploadedAt: new Date('2024-01-10'),
       },
       {
-        id: "dataset-2",
-        filename: "test2.csv",
+        id: 'dataset-2',
+        filename: 'test2.csv',
         size: 2048,
-        uploadedAt: new Date("2024-01-12"),
+        uploadedAt: new Date('2024-01-12'),
       },
     ],
   };
@@ -99,16 +99,16 @@ describe("DatasetsSection", () => {
   const mockDatasetsQuery = {
     data: [
       {
-        id: "dataset-1",
-        filename: "test1.csv",
+        id: 'dataset-1',
+        filename: 'test1.csv',
         size: 1024,
-        uploadedAt: new Date("2024-01-10"),
+        uploadedAt: new Date('2024-01-10'),
       },
       {
-        id: "dataset-2",
-        filename: "test2.csv",
+        id: 'dataset-2',
+        filename: 'test2.csv',
         size: 2048,
-        uploadedAt: new Date("2024-01-12"),
+        uploadedAt: new Date('2024-01-12'),
       },
     ],
     isLoading: false,
@@ -122,21 +122,21 @@ describe("DatasetsSection", () => {
     mockUseDatasetsReturn.mockReturnValue(mockDatasetsQuery);
   });
 
-  it("renders datasets section with title", () => {
+  it('renders datasets section with title', () => {
     render(<DatasetsSection projectId="project-1" />);
 
-    expect(screen.getByText("Datasets")).toBeInTheDocument();
+    expect(screen.getByText('Datasets')).toBeInTheDocument();
   });
 
-  it("displays dataset count message", () => {
+  it('displays dataset count message', () => {
     render(<DatasetsSection projectId="project-1" />);
 
     expect(
-      screen.getByText("This project has 2 dataset(s).")
+      screen.getByText('This project has 2 dataset(s).')
     ).toBeInTheDocument();
   });
 
-  it("displays no datasets message when count is zero", () => {
+  it('displays no datasets message when count is zero', () => {
     mockGetProjectById.mockReturnValue({
       ...mockProject,
       datasetCount: 0,
@@ -150,19 +150,19 @@ describe("DatasetsSection", () => {
 
     render(<DatasetsSection projectId="project-1" />);
 
-    expect(screen.getByText("No datasets found.")).toBeInTheDocument();
+    expect(screen.getByText('No datasets found.')).toBeInTheDocument();
   });
 
-  it("renders list of datasets with details", () => {
+  it('renders list of datasets with details', () => {
     render(<DatasetsSection projectId="project-1" />);
 
-    expect(screen.getByText("test1.csv")).toBeInTheDocument();
-    expect(screen.getByText("test2.csv")).toBeInTheDocument();
+    expect(screen.getByText('test1.csv')).toBeInTheDocument();
+    expect(screen.getByText('test2.csv')).toBeInTheDocument();
     expect(screen.getByText(/1 KB/)).toBeInTheDocument();
     expect(screen.getByText(/2 KB/)).toBeInTheDocument();
   });
 
-  it("shows loading skeleton when data is loading", () => {
+  it('shows loading skeleton when data is loading', () => {
     mockUseDatasetsReturn.mockReturnValue({
       ...mockDatasetsQuery,
       isLoading: true,
@@ -170,57 +170,57 @@ describe("DatasetsSection", () => {
 
     const { container } = render(<DatasetsSection projectId="project-1" />);
 
-    const skeleton = container.querySelector(".animate-pulse");
+    const skeleton = container.querySelector('.animate-pulse');
     expect(skeleton).toBeInTheDocument();
   });
 
-  it("renders download button for each dataset", () => {
+  it('renders download button for each dataset', () => {
     render(<DatasetsSection projectId="project-1" />);
 
-    const downloadButtons = screen.getAllByRole("button", {
+    const downloadButtons = screen.getAllByRole('button', {
       name: /download/i,
     });
     expect(downloadButtons).toHaveLength(2);
   });
 
-  it("renders delete button for each dataset", () => {
+  it('renders delete button for each dataset', () => {
     render(<DatasetsSection projectId="project-1" />);
 
-    const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
+    const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
     expect(deleteButtons).toHaveLength(2);
   });
 
-  it("logs to console when download button is clicked", async () => {
+  it('logs to console when download button is clicked', async () => {
     const user = userEvent.setup();
-    const consoleSpy = jest.spyOn(console, "log").mockImplementation();
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
     render(<DatasetsSection projectId="project-1" />);
 
-    const downloadButtons = screen.getAllByRole("button", {
+    const downloadButtons = screen.getAllByRole('button', {
       name: /download/i,
     });
     await user.click(downloadButtons[0]);
 
-    expect(consoleSpy).toHaveBeenCalledWith("Download dataset", "dataset-2");
+    expect(consoleSpy).toHaveBeenCalledWith('Download dataset', 'dataset-2');
 
     consoleSpy.mockRestore();
   });
 
-  it("handles delete dataset with optimistic update", async () => {
+  it('handles delete dataset with optimistic update', async () => {
     const user = userEvent.setup();
     render(<DatasetsSection projectId="project-1" />);
 
-    const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
+    const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
     await user.click(deleteButtons[0]);
 
-    expect(mockUpdateProject).toHaveBeenCalledWith("project-1", {
+    expect(mockUpdateProject).toHaveBeenCalledWith('project-1', {
       datasets: [mockProject.datasets![0]], // Removed second dataset (dataset-2 is now first after sort)
       datasetCount: 1,
-      lastActivity: "dataset deleted",
+      lastActivity: 'dataset deleted',
     });
 
     expect(mockDeleteMutate).toHaveBeenCalledWith(
-      "dataset-2",
+      'dataset-2',
       expect.objectContaining({
         onSuccess: expect.any(Function),
         onError: expect.any(Function),
@@ -229,7 +229,7 @@ describe("DatasetsSection", () => {
     );
   });
 
-  it("shows success toast on delete success", async () => {
+  it('shows success toast on delete success', async () => {
     const user = userEvent.setup();
     mockDeleteMutate.mockImplementation((id, options) => {
       options.onSuccess?.();
@@ -237,17 +237,17 @@ describe("DatasetsSection", () => {
 
     render(<DatasetsSection projectId="project-1" />);
 
-    const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
+    const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
     await user.click(deleteButtons[0]);
 
     expect(mockPush).toHaveBeenCalledWith({
-      title: "Dataset deleted",
-      description: "test2.csv was removed successfully.",
-      variant: "default",
+      title: 'Dataset deleted',
+      description: 'test2.csv was removed successfully.',
+      variant: 'default',
     });
   });
 
-  it("shows error toast on delete failure", async () => {
+  it('shows error toast on delete failure', async () => {
     const user = userEvent.setup();
     mockDeleteMutate.mockImplementation((id, options) => {
       options.onError?.();
@@ -255,29 +255,29 @@ describe("DatasetsSection", () => {
 
     render(<DatasetsSection projectId="project-1" />);
 
-    const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
+    const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
     await user.click(deleteButtons[0]);
 
     expect(mockPush).toHaveBeenCalledWith({
-      title: "Deletion failed",
-      description: "Could not delete test2.csv. Please retry.",
-      variant: "destructive",
+      title: 'Deletion failed',
+      description: 'Could not delete test2.csv. Please retry.',
+      variant: 'destructive',
     });
   });
 
-  it("renders file uploader when showUploader is true", () => {
+  it('renders file uploader when showUploader is true', () => {
     render(<DatasetsSection projectId="project-1" showUploader={true} />);
 
-    expect(screen.getByTestId("file-uploader")).toBeInTheDocument();
+    expect(screen.getByTestId('file-uploader')).toBeInTheDocument();
   });
 
-  it("does not render file uploader when showUploader is false", () => {
+  it('does not render file uploader when showUploader is false', () => {
     render(<DatasetsSection projectId="project-1" showUploader={false} />);
 
-    expect(screen.queryByTestId("file-uploader")).not.toBeInTheDocument();
+    expect(screen.queryByTestId('file-uploader')).not.toBeInTheDocument();
   });
 
-  it("handles file upload completion", async () => {
+  it('handles file upload completion', async () => {
     const user = userEvent.setup();
     mockUploadMutate.mockImplementation((file, options) => {
       options.onSuccess?.();
@@ -285,10 +285,10 @@ describe("DatasetsSection", () => {
 
     render(<DatasetsSection projectId="project-1" />);
 
-    const uploadButton = screen.getByRole("button", { name: /upload file/i });
+    const uploadButton = screen.getByRole('button', { name: /upload file/i });
     await user.click(uploadButton);
 
-    expect(mockAddDataset).toHaveBeenCalledWith("project-1");
+    expect(mockAddDataset).toHaveBeenCalledWith('project-1');
 
     expect(mockUploadMutate).toHaveBeenCalledWith(
       expect.any(File),
@@ -299,7 +299,7 @@ describe("DatasetsSection", () => {
     );
   });
 
-  it("shows success toast on upload success", async () => {
+  it('shows success toast on upload success', async () => {
     const user = userEvent.setup();
     mockUploadMutate.mockImplementation((file, options) => {
       options.onSuccess?.();
@@ -307,17 +307,17 @@ describe("DatasetsSection", () => {
 
     render(<DatasetsSection projectId="project-1" />);
 
-    const uploadButton = screen.getByRole("button", { name: /upload file/i });
+    const uploadButton = screen.getByRole('button', { name: /upload file/i });
     await user.click(uploadButton);
 
     expect(mockPush).toHaveBeenCalledWith({
-      title: "Upload complete",
-      description: "test.csv was uploaded successfully.",
-      variant: "default",
+      title: 'Upload complete',
+      description: 'test.csv was uploaded successfully.',
+      variant: 'default',
     });
   });
 
-  it("shows error toast on upload failure", async () => {
+  it('shows error toast on upload failure', async () => {
     const user = userEvent.setup();
     mockUploadMutate.mockImplementation((file, options) => {
       options.onError?.();
@@ -325,17 +325,17 @@ describe("DatasetsSection", () => {
 
     render(<DatasetsSection projectId="project-1" />);
 
-    const uploadButton = screen.getByRole("button", { name: /upload file/i });
+    const uploadButton = screen.getByRole('button', { name: /upload file/i });
     await user.click(uploadButton);
 
     expect(mockPush).toHaveBeenCalledWith({
-      title: "Upload failed",
-      description: "Could not upload test.csv. Please try again.",
-      variant: "destructive",
+      title: 'Upload failed',
+      description: 'Could not upload test.csv. Please try again.',
+      variant: 'destructive',
     });
   });
 
-  it("renders nothing when project is not found", () => {
+  it('renders nothing when project is not found', () => {
     mockGetProjectById.mockReturnValue(null);
 
     const { container } = render(<DatasetsSection projectId="nonexistent" />);
@@ -343,14 +343,14 @@ describe("DatasetsSection", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders optimistic datasets with reduced opacity", () => {
+  it('renders optimistic datasets with reduced opacity', () => {
     mockGetProjectById.mockReturnValue({
       ...mockProject,
       datasets: [
         ...mockProject.datasets!,
         {
-          id: "optimistic-123",
-          filename: "uploading.csv",
+          id: 'optimistic-123',
+          filename: 'uploading.csv',
           size: 512,
           uploadedAt: new Date(),
         },
@@ -359,7 +359,7 @@ describe("DatasetsSection", () => {
 
     render(<DatasetsSection projectId="project-1" />);
 
-    const optimisticItem = screen.getByText("uploading.csv").closest("li");
-    expect(optimisticItem).toHaveClass("opacity-70", "italic");
+    const optimisticItem = screen.getByText('uploading.csv').closest('li');
+    expect(optimisticItem).toHaveClass('opacity-70', 'italic');
   });
 });

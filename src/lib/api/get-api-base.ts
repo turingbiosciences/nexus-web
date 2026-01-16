@@ -9,10 +9,10 @@
  * @returns The normalized API base URL (without trailing slash)
  */
 export function getApiBaseUrl(): string {
-    const base = process.env.NEXT_PUBLIC_TURING_API;
-    if (!base) {
-        throw new Error("Missing NEXT_PUBLIC_TURING_API environment variable");
-    }
-    // Normalize by removing trailing slash if present
-    return base.replace(/\/$/, "");
+  const base = process.env.NEXT_PUBLIC_TURING_API;
+  if (!base) {
+    throw new Error('Missing NEXT_PUBLIC_TURING_API environment variable');
+  }
+  // Normalize by removing trailing slash if present
+  return base.replace(/\/$/, '');
 }

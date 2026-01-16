@@ -151,7 +151,7 @@ Once the API resource is configured:
    console.log(token); // "eyJhbG..." ✅
 
    // Use token for API calls
-   fetch("https://nexus-api-xxo8b.ondigitalocean.app/projects", {
+   fetch('https://nexus-api-xxo8b.ondigitalocean.app/projects', {
      headers: { Authorization: `Bearer ${token}` },
    });
    ```
