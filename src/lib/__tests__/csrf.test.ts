@@ -25,9 +25,7 @@ describe('validateCSRF', () => {
   const createRequest = (method: string, headers: Record<string, string>) => {
     return new NextRequest('http://example.com/api/test', {
       method,
-      headers: {
-        get: (key: string) => headers[key.toLowerCase()] || null,
-      },
+      headers: new Headers(headers),
     });
   };
 

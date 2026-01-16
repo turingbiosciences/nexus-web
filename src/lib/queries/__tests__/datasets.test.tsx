@@ -279,7 +279,6 @@ describe('useDatasets', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      // @ts-expect-error - Type narrowing for test
       expect(result.current.data).toHaveLength(2);
       // @ts-expect-error - Type narrowing for test
       expect(result.current.nextCursor).toBe('cursor-next');
@@ -306,7 +305,6 @@ describe('useDatasets', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      // @ts-expect-error - Type narrowing for test
       expect(result.current.data).toHaveLength(2);
       // @ts-expect-error - Type narrowing for test
       expect(result.current.nextCursor).toBeUndefined();

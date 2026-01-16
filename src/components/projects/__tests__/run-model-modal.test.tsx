@@ -57,7 +57,7 @@ describe('RunModelModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseDatasets.mockReturnValue(
-      createSuccessQueryReturn(mockDatasets) as ReturnType<typeof useDatasets>
+      createSuccessQueryReturn(mockDatasets) as unknown as ReturnType<typeof useDatasets>
     );
   });
 
@@ -111,7 +111,7 @@ describe('RunModelModal', () => {
   describe('Loading State', () => {
     it('shows loading spinner when datasets are loading', () => {
       mockUseDatasets.mockReturnValue(
-        createLoadingQueryReturn() as ReturnType<typeof useDatasets>
+        createLoadingQueryReturn() as unknown as ReturnType<typeof useDatasets>
       );
 
       const { container } = render(
@@ -130,7 +130,7 @@ describe('RunModelModal', () => {
   describe('Empty State', () => {
     it('shows message when no datasets available', () => {
       mockUseDatasets.mockReturnValue(
-        createSuccessQueryReturn([]) as ReturnType<typeof useDatasets>
+        createSuccessQueryReturn([]) as unknown as ReturnType<typeof useDatasets>
       );
 
       render(

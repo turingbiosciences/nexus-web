@@ -11,6 +11,14 @@ describe('JobProgressCard', () => {
     progress_percent: 50,
     message: 'Training in progress...',
     created_at: new Date().toISOString(),
+    completed_at: null,
+    error: null,
+    best_model: null,
+    metrics: null,
+    models_trained: null,
+    feature_importance: null,
+    results_csv_url: null,
+    graph_svg_url: null,
   };
 
   beforeEach(() => {
