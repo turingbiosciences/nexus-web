@@ -9,7 +9,7 @@ import React from 'react';
  * Mock Modal component for testing modal-based components
  * Use with jest.mock('@/components/ui/modal', () => require('@/lib/test-mocks').modalMock)
  */
- 
+
 export const MockModal = ({
   isOpen,
   onClose: _onClose,
