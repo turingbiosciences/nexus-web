@@ -69,14 +69,14 @@ export function validateCSRF(req: NextRequest): NextResponse | null {
       }
       return null;
     } catch {
-        logger.warn(
-          { referer },
-          "CSRF check failed: Invalid referer URL"
-        );
-        return NextResponse.json(
-            { error: "Invalid referer" },
-            { status: 403 }
-        );
+      logger.warn(
+        { referer },
+        "CSRF check failed: Invalid referer URL"
+      );
+      return NextResponse.json(
+        { error: "Invalid referer" },
+        { status: 403 }
+      );
     }
   }
 
