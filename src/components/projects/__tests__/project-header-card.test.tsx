@@ -2,19 +2,16 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ProjectHeaderCard } from '@/components/projects/project-header-card';
 import { Project } from '@/types/project';
+import { createMockProject } from '@/lib/mock-factories';
 
 describe('ProjectHeaderCard', () => {
   const mockOnRun = jest.fn();
 
-  const baseProject: Project = {
+  const baseProject: Project = createMockProject({
     id: 'project-1',
     name: 'Test Project',
     description: 'Test project description',
-    status: 'setup',
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-02'),
-    datasetCount: 3,
-  };
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();

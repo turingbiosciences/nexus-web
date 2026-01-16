@@ -3,6 +3,14 @@ import { render, screen } from '@testing-library/react';
 import { ResultsSection } from '../results-section';
 import { useAccessToken } from '@/components/providers/token-provider';
 import { useQuery } from '@tanstack/react-query';
+import {
+  createAccessTokenMock,
+  createUnauthenticatedMock,
+  createSuccessQueryReturn,
+  createLoadingQueryReturn,
+  setupTestEnv,
+  cleanupTestEnv,
+} from '@/lib/test-mocks';
 
 // Mock dependencies
 jest.mock('@/components/providers/token-provider');
@@ -15,29 +23,18 @@ const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>;
 
 describe('ResultsSection', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
-    mockUseAccessToken.mockReturnValue({
-      accessToken: 'mock-token',
-      isLoading: false,
-      error: null,
-      refreshToken: jest.fn(),
-      isAuthenticated: true,
-      authLoading: false,
-    });
+    setupTestEnv();
+    mockUseAccessToken.mockReturnValue(createAccessTokenMock());
   });
 
   afterEach(() => {
-    delete process.env.NEXT_PUBLIC_TURING_API;
+    cleanupTestEnv();
   });
 
   it('renders loading state', () => {
-    mockUseQuery.mockReturnValue({
-      data: undefined,
-      isLoading: true,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof useQuery>);
+    mockUseQuery.mockReturnValue(
+      createLoadingQueryReturn() as ReturnType<typeof useQuery>
+    );
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -46,12 +43,9 @@ describe('ResultsSection', () => {
   });
 
   it('renders empty state when no results', () => {
-    mockUseQuery.mockReturnValue({
-      data: [],
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof useQuery>);
+    mockUseQuery.mockReturnValue(
+      createSuccessQueryReturn([]) as ReturnType<typeof useQuery>
+    );
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -78,12 +72,9 @@ describe('ResultsSection', () => {
       },
     ];
 
-    mockUseQuery.mockReturnValue({
-      data: results,
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof useQuery>);
+    mockUseQuery.mockReturnValue(
+      createSuccessQueryReturn(results) as ReturnType<typeof useQuery>
+    );
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -103,12 +94,9 @@ describe('ResultsSection', () => {
       },
     ];
 
-    mockUseQuery.mockReturnValue({
-      data: results,
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof useQuery>);
+    mockUseQuery.mockReturnValue(
+      createSuccessQueryReturn(results) as ReturnType<typeof useQuery>
+    );
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -127,12 +115,9 @@ describe('ResultsSection', () => {
       },
     ];
 
-    mockUseQuery.mockReturnValue({
-      data: results,
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof useQuery>);
+    mockUseQuery.mockReturnValue(
+      createSuccessQueryReturn(results) as ReturnType<typeof useQuery>
+    );
 
     const { container } = render(
       <ResultsSection projectId="test-project-id" />
@@ -143,21 +128,11 @@ describe('ResultsSection', () => {
   });
 
   it('disables query when not authenticated', () => {
-    mockUseAccessToken.mockReturnValue({
-      accessToken: null,
-      isLoading: false,
-      error: null,
-      refreshToken: jest.fn(),
-      isAuthenticated: false,
-      authLoading: false,
-    });
+    mockUseAccessToken.mockReturnValue(createUnauthenticatedMock());
 
-    mockUseQuery.mockReturnValue({
-      data: [],
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof useQuery>);
+    mockUseQuery.mockReturnValue(
+      createSuccessQueryReturn([]) as ReturnType<typeof useQuery>
+    );
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -169,21 +144,16 @@ describe('ResultsSection', () => {
   });
 
   it('disables query when no access token', () => {
-    mockUseAccessToken.mockReturnValue({
-      accessToken: null,
-      isLoading: false,
-      error: null,
-      refreshToken: jest.fn(),
-      isAuthenticated: true,
-      authLoading: false,
-    });
+    mockUseAccessToken.mockReturnValue(
+      createAccessTokenMock({
+        accessToken: null,
+        isAuthenticated: true,
+      })
+    );
 
-    mockUseQuery.mockReturnValue({
-      data: [],
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof useQuery>);
+    mockUseQuery.mockReturnValue(
+      createSuccessQueryReturn([]) as ReturnType<typeof useQuery>
+    );
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -195,12 +165,9 @@ describe('ResultsSection', () => {
   });
 
   it('uses correct query key', () => {
-    mockUseQuery.mockReturnValue({
-      data: [],
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof useQuery>);
+    mockUseQuery.mockReturnValue(
+      createSuccessQueryReturn([]) as ReturnType<typeof useQuery>
+    );
 
     render(<ResultsSection projectId="my-project-123" />);
 
@@ -212,12 +179,9 @@ describe('ResultsSection', () => {
   });
 
   it('sets staleTime to 30 seconds', () => {
-    mockUseQuery.mockReturnValue({
-      data: [],
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof useQuery>);
+    mockUseQuery.mockReturnValue(
+      createSuccessQueryReturn([]) as ReturnType<typeof useQuery>
+    );
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -229,12 +193,9 @@ describe('ResultsSection', () => {
   });
 
   it('displays SVG icon in empty state', () => {
-    mockUseQuery.mockReturnValue({
-      data: [],
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof useQuery>);
+    mockUseQuery.mockReturnValue(
+      createSuccessQueryReturn([]) as ReturnType<typeof useQuery>
+    );
 
     const { container } = render(
       <ResultsSection projectId="test-project-id" />
@@ -253,12 +214,9 @@ describe('ResultsSection', () => {
       createdAt: new Date('2024-01-01T10:00:00Z'),
     }));
 
-    mockUseQuery.mockReturnValue({
-      data: results,
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as ReturnType<typeof useQuery>);
+    mockUseQuery.mockReturnValue(
+      createSuccessQueryReturn(results) as ReturnType<typeof useQuery>
+    );
 
     render(<ResultsSection projectId="test-project-id" />);
 

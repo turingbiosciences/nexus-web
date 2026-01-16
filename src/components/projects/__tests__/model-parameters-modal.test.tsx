@@ -6,7 +6,7 @@ import { ModelParametersModal } from '../model-parameters-modal';
 jest.mock('@/components/ui/modal', () => ({
   Modal: ({
     isOpen,
-    onClose,
+    onClose: _onClose,
     title,
     children,
   }: {

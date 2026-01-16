@@ -1,17 +1,21 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { RunModelModal } from '../run-model-modal';
+import {
+  createSuccessQueryReturn,
+  createLoadingQueryReturn,
+} from '@/lib/test-mocks';
 
 // Mock the useDatasets hook
 jest.mock('@/lib/queries/datasets', () => ({
   useDatasets: jest.fn(),
 }));
 
-// Mock the Modal component to make testing easier
+// Mock the Modal component
 jest.mock('@/components/ui/modal', () => ({
   Modal: ({
     isOpen,
-    onClose,
+    onClose: _onClose,
     title,
     children,
   }: {
@@ -52,10 +56,9 @@ describe('RunModelModal', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseDatasets.mockReturnValue({
-      data: mockDatasets,
-      isLoading: false,
-    } as ReturnType<typeof useDatasets>);
+    mockUseDatasets.mockReturnValue(
+      createSuccessQueryReturn(mockDatasets) as ReturnType<typeof useDatasets>
+    );
   });
 
   describe('Rendering', () => {
@@ -107,10 +110,9 @@ describe('RunModelModal', () => {
 
   describe('Loading State', () => {
     it('shows loading spinner when datasets are loading', () => {
-      mockUseDatasets.mockReturnValue({
-        data: undefined,
-        isLoading: true,
-      } as ReturnType<typeof useDatasets>);
+      mockUseDatasets.mockReturnValue(
+        createLoadingQueryReturn() as ReturnType<typeof useDatasets>
+      );
 
       const { container } = render(
         <RunModelModal
@@ -127,10 +129,9 @@ describe('RunModelModal', () => {
 
   describe('Empty State', () => {
     it('shows message when no datasets available', () => {
-      mockUseDatasets.mockReturnValue({
-        data: [],
-        isLoading: false,
-      } as ReturnType<typeof useDatasets>);
+      mockUseDatasets.mockReturnValue(
+        createSuccessQueryReturn([]) as ReturnType<typeof useDatasets>
+      );
 
       render(
         <RunModelModal
