@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import { validateCSRF } from "@/lib/csrf";
 
 export const POST = async (request: NextRequest) => {
+  // CSRF Protection
+  const csrfError = validateCSRF(request);
+  if (csrfError) {
+    return csrfError;
+  }
+
   try {
     // Clear all authentication cookies
     const response = NextResponse.json({ success: true });
