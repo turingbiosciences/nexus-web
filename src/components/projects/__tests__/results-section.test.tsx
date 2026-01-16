@@ -173,7 +173,7 @@ describe('ResultsSection', () => {
 
     expect(mockUseQuery).toHaveBeenCalledWith(
       expect.objectContaining({
-        queryKey: ['results', 'my-project-123'],
+        queryKey: ['results', 'my-project-123', {}],
       })
     );
   });

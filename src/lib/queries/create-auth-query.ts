@@ -151,16 +151,25 @@ export function createAuthQuery<
 
 /**
  * Helper to extract items from API response that may be array or object with items property
+ * Supports various API response formats: items, data, activities, results
  */
 export function extractItems<T>(
-  response: T[] | { items?: T[]; data?: T[] } | Record<string, unknown>
+  response:
+    | T[]
+    | { items?: T[]; data?: T[]; activities?: T[]; results?: T[] }
+    | Record<string, unknown>
 ): T[] {
   if (Array.isArray(response)) {
     return response;
   }
   if (typeof response === 'object' && response !== null) {
-    const obj = response as { items?: T[]; data?: T[] };
-    return obj.items || obj.data || [];
+    const obj = response as {
+      items?: T[];
+      data?: T[];
+      activities?: T[];
+      results?: T[];
+    };
+    return obj.items || obj.data || obj.activities || obj.results || [];
   }
   return [];
 }
