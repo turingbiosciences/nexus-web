@@ -66,7 +66,7 @@ function Consumer() {
       <button
         onClick={() => {
           if (projects[0]) {
-            addDataset(projects[0].id, { name: "file.txt", size: 123 });
+            addDataset(projects[0].id);
           }
         }}
       >

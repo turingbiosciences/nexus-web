@@ -7,6 +7,7 @@ let store: Project[] = mockProjects.map((p) => ({
   ...p,
   datasets: p.datasets ? [...p.datasets] : [],
   activities: p.activities ? [...p.activities] : [],
+  results: p.results ? [...p.results] : [],
 }));
 
 function findProject(id: string): Project | undefined {

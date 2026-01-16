@@ -10,7 +10,11 @@ interface RunModelModalProps {
   isOpen: boolean;
   onClose: () => void;
   projectId: string;
-  onConfirm: (datasetId: string, targetColumn: string) => void;
+  onConfirm: (
+    datasetId: string,
+    targetColumn: string,
+    excludeColumns: string[]
+  ) => void;
 }
 
 export function RunModelModal({
@@ -21,6 +25,7 @@ export function RunModelModal({
 }: RunModelModalProps) {
   const [selectedDatasetId, setSelectedDatasetId] = useState<string>("");
   const [targetColumn, setTargetColumn] = useState<string>("");
+  const [excludeColumns, setExcludeColumns] = useState<string>("");
 
   // Fetch latest 3 datasets
   const { data: datasetsData, isLoading } = useDatasets(projectId, {
@@ -40,12 +45,19 @@ export function RunModelModal({
     if (isOpen) {
       setSelectedDatasetId("");
       setTargetColumn("");
+      setExcludeColumns("");
     }
   }, [isOpen]);
 
   const handleConfirm = () => {
     if (selectedDatasetId && targetColumn) {
-      onConfirm(selectedDatasetId, targetColumn);
+      // Parse comma-separated exclude columns into array
+      const excludeColumnsArray = excludeColumns
+        .split(",")
+        .map((col) => col.trim())
+        .filter((col) => col.length > 0);
+
+      onConfirm(selectedDatasetId, targetColumn, excludeColumnsArray);
       onClose();
     }
   };
@@ -108,6 +120,28 @@ export function RunModelModal({
           />
           <p className="mt-1 text-xs text-gray-500">
             The column name in your dataset to use as the prediction target
+          </p>
+        </div>
+
+        {/* Exclude Columns Input */}
+        <div>
+          <label
+            htmlFor="exclude-columns"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Exclude Columns (Optional)
+          </label>
+          <input
+            id="exclude-columns"
+            type="text"
+            value={excludeColumns}
+            onChange={(e) => setExcludeColumns(e.target.value)}
+            placeholder="e.g., ID, timestamp, patient_name"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={!selectedDatasetId}
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Comma-separated list of column names to exclude from training
           </p>
         </div>
 

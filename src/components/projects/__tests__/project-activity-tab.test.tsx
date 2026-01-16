@@ -19,13 +19,17 @@ describe("ProjectActivityTab", () => {
       isLoading: false,
       isError: false,
       error: null,
-    } as ReturnType<typeof useActivities>);
+      isPending: false,
+      isSuccess: true,
+      status: "success",
+      refetch: jest.fn(),
+    } as unknown as ReturnType<typeof useActivities>);
   });
 
   const renderWithProviders = (ui: React.ReactElement) => {
     return render(
       <TokenProvider>
-        <ProjectsProvider initialProjects={[]}>{ui}</ProjectsProvider>
+        <ProjectsProvider>{ui}</ProjectsProvider>
       </TokenProvider>
     );
   };

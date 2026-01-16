@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAccessToken } from "@/components/providers/token-provider";
 import { logger } from "@/lib/logger";
 import { getRelativeTime } from "@/lib/utils/date-utils";
+import { getApiBaseUrl } from "@/lib/api/get-api-base";
 
 interface ProjectMetadata {
   datasetCount: number;
@@ -33,12 +34,7 @@ async function fetchProjectMetadata(
     };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
-  if (!baseUrl) {
-    throw new Error("Missing NEXT_PUBLIC_TURING_API environment variable");
-  }
-
-  const apiUrl = baseUrl.replace(/\/$/, "");
+  const apiUrl = getApiBaseUrl();
 
   // Fetch datasets to get count
   const datasetsResponse = await fetch(

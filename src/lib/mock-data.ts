@@ -55,6 +55,29 @@ export const mockProjects: Project[] = [
     createdAt: daysAgo(56),
     updatedAt: daysAgo(7),
     completedAt: daysAgo(7),
+    results: [
+      {
+        id: "r2-1",
+        name: "Differential Expression Analysis",
+        type: "Statistical Report",
+        createdAt: daysAgo(10),
+        size: 2_345_112,
+      },
+      {
+        id: "r2-2",
+        name: "Pathway Enrichment Results",
+        type: "JSON Data",
+        createdAt: daysAgo(9),
+        size: 184_221,
+      },
+      {
+        id: "r2-3",
+        name: "Final Analysis Report",
+        type: "PDF Document",
+        createdAt: daysAgo(7),
+        size: 1_223_992,
+      },
+    ],
     datasets: [
       {
         id: "d2-1",
@@ -214,6 +237,29 @@ export const mockProjects: Project[] = [
     createdAt: daysAgo(73),
     updatedAt: daysAgo(27),
     completedAt: daysAgo(27),
+    results: [
+      {
+        id: "r5-1",
+        name: "Risk Model Performance Metrics",
+        type: "CSV Data",
+        createdAt: daysAgo(30),
+        size: 145_223,
+      },
+      {
+        id: "r5-2",
+        name: "Feature Importance Analysis",
+        type: "JSON Data",
+        createdAt: daysAgo(28),
+        size: 98_441,
+      },
+      {
+        id: "r5-3",
+        name: "Model Validation Report",
+        type: "PDF Document",
+        createdAt: daysAgo(27),
+        size: 1_223_992,
+      },
+    ],
     datasets: [
       {
         id: "d5-1",
