@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   CheckCircle,
   Play,
@@ -51,16 +51,16 @@ export function ProjectHeaderCard({
 }: ProjectHeaderCardProps) {
   const config = statusConfig[project.status] || statusConfig.setup;
   const StatusIcon = config.icon;
-  
+
   // State for keyboard-controlled tooltip visibility
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const tooltipId = `tooltip-${project.id}`;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
+    if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       setIsTooltipVisible(true);
-    } else if (e.key === "Escape") {
+    } else if (e.key === 'Escape') {
       setIsTooltipVisible(false);
     }
   };
@@ -95,8 +95,8 @@ export function ProjectHeaderCard({
               role="tooltip"
               className={`absolute left-0 top-full mt-2 w-80 bg-gray-900 text-white text-sm rounded-lg p-3 shadow-lg transition-all duration-200 z-10 ${
                 isTooltipVisible
-                  ? "opacity-100 visible"
-                  : "opacity-0 invisible group-hover:opacity-100 group-hover:visible"
+                  ? 'opacity-100 visible'
+                  : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
               }`}
             >
               {project.description}

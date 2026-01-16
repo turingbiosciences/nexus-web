@@ -457,8 +457,8 @@ describe('ProjectHeaderCard', () => {
     });
   });
 
-  describe("Tooltip Accessibility", () => {
-    it("tooltip button has correct ARIA attributes", () => {
+  describe('Tooltip Accessibility', () => {
+    it('tooltip button has correct ARIA attributes', () => {
       render(
         <ProjectHeaderCard
           project={baseProject}
@@ -467,12 +467,12 @@ describe('ProjectHeaderCard', () => {
         />
       );
 
-      const tooltipButton = screen.getByRole("button", {
-        name: "Project description",
+      const tooltipButton = screen.getByRole('button', {
+        name: 'Project description',
       });
       expect(tooltipButton).toBeInTheDocument();
-      expect(tooltipButton).toHaveAttribute("aria-describedby");
-      expect(tooltipButton).toHaveAttribute("type", "button");
+      expect(tooltipButton).toHaveAttribute('aria-describedby');
+      expect(tooltipButton).toHaveAttribute('type', 'button');
     });
 
     it("tooltip element has role='tooltip'", () => {
@@ -484,12 +484,12 @@ describe('ProjectHeaderCard', () => {
         />
       );
 
-      const tooltip = screen.getByRole("tooltip");
+      const tooltip = screen.getByRole('tooltip');
       expect(tooltip).toBeInTheDocument();
-      expect(tooltip).toHaveTextContent("Test project description");
+      expect(tooltip).toHaveTextContent('Test project description');
     });
 
-    it("tooltip button and tooltip are linked via aria-describedby", () => {
+    it('tooltip button and tooltip are linked via aria-describedby', () => {
       render(
         <ProjectHeaderCard
           project={baseProject}
@@ -498,16 +498,16 @@ describe('ProjectHeaderCard', () => {
         />
       );
 
-      const tooltipButton = screen.getByRole("button", {
-        name: "Project description",
+      const tooltipButton = screen.getByRole('button', {
+        name: 'Project description',
       });
-      const tooltip = screen.getByRole("tooltip");
+      const tooltip = screen.getByRole('tooltip');
 
-      const ariaDescribedby = tooltipButton.getAttribute("aria-describedby");
+      const ariaDescribedby = tooltipButton.getAttribute('aria-describedby');
       expect(ariaDescribedby).toBe(tooltip.id);
     });
 
-    it("shows tooltip on focus", () => {
+    it('shows tooltip on focus', () => {
       render(
         <ProjectHeaderCard
           project={baseProject}
@@ -516,22 +516,22 @@ describe('ProjectHeaderCard', () => {
         />
       );
 
-      const tooltipButton = screen.getByRole("button", {
-        name: "Project description",
+      const tooltipButton = screen.getByRole('button', {
+        name: 'Project description',
       });
-      const tooltip = screen.getByRole("tooltip");
+      const tooltip = screen.getByRole('tooltip');
 
       // Initially hidden
-      expect(tooltip).toHaveClass("opacity-0");
+      expect(tooltip).toHaveClass('opacity-0');
 
       // Focus the button
       fireEvent.focus(tooltipButton);
 
       // Should be visible
-      expect(tooltip).toHaveClass("opacity-100");
+      expect(tooltip).toHaveClass('opacity-100');
     });
 
-    it("hides tooltip on blur", () => {
+    it('hides tooltip on blur', () => {
       render(
         <ProjectHeaderCard
           project={baseProject}
@@ -540,21 +540,21 @@ describe('ProjectHeaderCard', () => {
         />
       );
 
-      const tooltipButton = screen.getByRole("button", {
-        name: "Project description",
+      const tooltipButton = screen.getByRole('button', {
+        name: 'Project description',
       });
-      const tooltip = screen.getByRole("tooltip");
+      const tooltip = screen.getByRole('tooltip');
 
       // Focus to show
       fireEvent.focus(tooltipButton);
-      expect(tooltip).toHaveClass("opacity-100");
+      expect(tooltip).toHaveClass('opacity-100');
 
       // Blur to hide
       fireEvent.blur(tooltipButton);
-      expect(tooltip).toHaveClass("opacity-0");
+      expect(tooltip).toHaveClass('opacity-0');
     });
 
-    it("shows tooltip when Enter key is pressed", () => {
+    it('shows tooltip when Enter key is pressed', () => {
       render(
         <ProjectHeaderCard
           project={baseProject}
@@ -563,16 +563,16 @@ describe('ProjectHeaderCard', () => {
         />
       );
 
-      const tooltipButton = screen.getByRole("button", {
-        name: "Project description",
+      const tooltipButton = screen.getByRole('button', {
+        name: 'Project description',
       });
-      const tooltip = screen.getByRole("tooltip");
+      const tooltip = screen.getByRole('tooltip');
 
-      fireEvent.keyDown(tooltipButton, { key: "Enter" });
-      expect(tooltip).toHaveClass("opacity-100");
+      fireEvent.keyDown(tooltipButton, { key: 'Enter' });
+      expect(tooltip).toHaveClass('opacity-100');
     });
 
-    it("shows tooltip when Space key is pressed", () => {
+    it('shows tooltip when Space key is pressed', () => {
       render(
         <ProjectHeaderCard
           project={baseProject}
@@ -581,16 +581,16 @@ describe('ProjectHeaderCard', () => {
         />
       );
 
-      const tooltipButton = screen.getByRole("button", {
-        name: "Project description",
+      const tooltipButton = screen.getByRole('button', {
+        name: 'Project description',
       });
-      const tooltip = screen.getByRole("tooltip");
+      const tooltip = screen.getByRole('tooltip');
 
-      fireEvent.keyDown(tooltipButton, { key: " " });
-      expect(tooltip).toHaveClass("opacity-100");
+      fireEvent.keyDown(tooltipButton, { key: ' ' });
+      expect(tooltip).toHaveClass('opacity-100');
     });
 
-    it("hides tooltip when Escape key is pressed", () => {
+    it('hides tooltip when Escape key is pressed', () => {
       render(
         <ProjectHeaderCard
           project={baseProject}
@@ -599,21 +599,21 @@ describe('ProjectHeaderCard', () => {
         />
       );
 
-      const tooltipButton = screen.getByRole("button", {
-        name: "Project description",
+      const tooltipButton = screen.getByRole('button', {
+        name: 'Project description',
       });
-      const tooltip = screen.getByRole("tooltip");
+      const tooltip = screen.getByRole('tooltip');
 
       // Show tooltip first
       fireEvent.focus(tooltipButton);
-      expect(tooltip).toHaveClass("opacity-100");
+      expect(tooltip).toHaveClass('opacity-100');
 
       // Hide with Escape
-      fireEvent.keyDown(tooltipButton, { key: "Escape" });
-      expect(tooltip).toHaveClass("opacity-0");
+      fireEvent.keyDown(tooltipButton, { key: 'Escape' });
+      expect(tooltip).toHaveClass('opacity-0');
     });
 
-    it("tooltip button has visible focus indicator", () => {
+    it('tooltip button has visible focus indicator', () => {
       const { container } = render(
         <ProjectHeaderCard
           project={baseProject}
@@ -622,12 +622,12 @@ describe('ProjectHeaderCard', () => {
         />
       );
 
-      const tooltipButton = screen.getByRole("button", {
-        name: "Project description",
+      const tooltipButton = screen.getByRole('button', {
+        name: 'Project description',
       });
 
-      expect(tooltipButton).toHaveClass("focus:ring-2");
-      expect(tooltipButton).toHaveClass("focus:ring-blue-500");
+      expect(tooltipButton).toHaveClass('focus:ring-2');
+      expect(tooltipButton).toHaveClass('focus:ring-blue-500');
     });
   });
 });
