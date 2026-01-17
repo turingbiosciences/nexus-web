@@ -476,7 +476,7 @@ describe('ProjectHeaderCard', () => {
     });
 
     it("tooltip element has role='tooltip'", () => {
-      render(
+      const { container } = render(
         <ProjectHeaderCard
           project={baseProject}
           isRunning={false}
@@ -484,13 +484,13 @@ describe('ProjectHeaderCard', () => {
         />
       );
 
-      const tooltip = screen.getByRole('tooltip');
+      const tooltip = container.querySelector('[role="tooltip"]');
       expect(tooltip).toBeInTheDocument();
       expect(tooltip).toHaveTextContent('Test project description');
     });
 
     it('tooltip button and tooltip are linked via aria-describedby', () => {
-      render(
+      const { container } = render(
         <ProjectHeaderCard
           project={baseProject}
           isRunning={false}
@@ -501,14 +501,14 @@ describe('ProjectHeaderCard', () => {
       const tooltipButton = screen.getByRole('button', {
         name: 'Project description',
       });
-      const tooltip = screen.getByRole('tooltip');
+      const tooltip = container.querySelector('[role="tooltip"]');
 
       const ariaDescribedby = tooltipButton.getAttribute('aria-describedby');
-      expect(ariaDescribedby).toBe(tooltip.id);
+      expect(ariaDescribedby).toBe(tooltip?.id);
     });
 
     it('shows tooltip on focus', () => {
-      render(
+      const { container } = render(
         <ProjectHeaderCard
           project={baseProject}
           isRunning={false}
@@ -519,7 +519,7 @@ describe('ProjectHeaderCard', () => {
       const tooltipButton = screen.getByRole('button', {
         name: 'Project description',
       });
-      const tooltip = screen.getByRole('tooltip');
+      const tooltip = container.querySelector('[role="tooltip"]');
 
       // Initially hidden
       expect(tooltip).toHaveClass('opacity-0');
@@ -532,7 +532,7 @@ describe('ProjectHeaderCard', () => {
     });
 
     it('hides tooltip on blur', () => {
-      render(
+      const { container } = render(
         <ProjectHeaderCard
           project={baseProject}
           isRunning={false}
@@ -543,7 +543,7 @@ describe('ProjectHeaderCard', () => {
       const tooltipButton = screen.getByRole('button', {
         name: 'Project description',
       });
-      const tooltip = screen.getByRole('tooltip');
+      const tooltip = container.querySelector('[role="tooltip"]');
 
       // Focus to show
       fireEvent.focus(tooltipButton);
@@ -555,7 +555,7 @@ describe('ProjectHeaderCard', () => {
     });
 
     it('shows tooltip when Enter key is pressed', () => {
-      render(
+      const { container } = render(
         <ProjectHeaderCard
           project={baseProject}
           isRunning={false}
@@ -566,14 +566,14 @@ describe('ProjectHeaderCard', () => {
       const tooltipButton = screen.getByRole('button', {
         name: 'Project description',
       });
-      const tooltip = screen.getByRole('tooltip');
+      const tooltip = container.querySelector('[role="tooltip"]');
 
       fireEvent.keyDown(tooltipButton, { key: 'Enter' });
       expect(tooltip).toHaveClass('opacity-100');
     });
 
     it('shows tooltip when Space key is pressed', () => {
-      render(
+      const { container } = render(
         <ProjectHeaderCard
           project={baseProject}
           isRunning={false}
@@ -584,14 +584,14 @@ describe('ProjectHeaderCard', () => {
       const tooltipButton = screen.getByRole('button', {
         name: 'Project description',
       });
-      const tooltip = screen.getByRole('tooltip');
+      const tooltip = container.querySelector('[role="tooltip"]');
 
       fireEvent.keyDown(tooltipButton, { key: ' ' });
       expect(tooltip).toHaveClass('opacity-100');
     });
 
     it('hides tooltip when Escape key is pressed', () => {
-      render(
+      const { container } = render(
         <ProjectHeaderCard
           project={baseProject}
           isRunning={false}
@@ -602,7 +602,7 @@ describe('ProjectHeaderCard', () => {
       const tooltipButton = screen.getByRole('button', {
         name: 'Project description',
       });
-      const tooltip = screen.getByRole('tooltip');
+      const tooltip = container.querySelector('[role="tooltip"]');
 
       // Show tooltip first
       fireEvent.focus(tooltipButton);
@@ -628,6 +628,79 @@ describe('ProjectHeaderCard', () => {
 
       expect(tooltipButton).toHaveClass('focus:ring-2');
       expect(tooltipButton).toHaveClass('focus:ring-blue-500');
+    });
+
+    it('shows tooltip on mouse enter', () => {
+      const { container } = render(
+        <ProjectHeaderCard
+          project={baseProject}
+          isRunning={false}
+          onRun={mockOnRun}
+        />
+      );
+
+      const tooltipButton = screen.getByRole('button', {
+        name: 'Project description',
+      });
+      const tooltip = container.querySelector('[role="tooltip"]');
+
+      // Initially hidden
+      expect(tooltip).toHaveClass('opacity-0');
+
+      // Mouse enter the button
+      fireEvent.mouseEnter(tooltipButton);
+
+      // Should be visible
+      expect(tooltip).toHaveClass('opacity-100');
+    });
+
+    it('hides tooltip on mouse leave', () => {
+      const { container } = render(
+        <ProjectHeaderCard
+          project={baseProject}
+          isRunning={false}
+          onRun={mockOnRun}
+        />
+      );
+
+      const tooltipButton = screen.getByRole('button', {
+        name: 'Project description',
+      });
+      const tooltip = container.querySelector('[role="tooltip"]');
+
+      // Mouse enter to show
+      fireEvent.mouseEnter(tooltipButton);
+      expect(tooltip).toHaveClass('opacity-100');
+
+      // Mouse leave to hide
+      fireEvent.mouseLeave(tooltipButton);
+      expect(tooltip).toHaveClass('opacity-0');
+    });
+
+    it('tooltip has aria-hidden attribute that toggles with visibility', () => {
+      const { container } = render(
+        <ProjectHeaderCard
+          project={baseProject}
+          isRunning={false}
+          onRun={mockOnRun}
+        />
+      );
+
+      const tooltipButton = screen.getByRole('button', {
+        name: 'Project description',
+      });
+      const tooltip = container.querySelector('[role="tooltip"]');
+
+      // Initially hidden
+      expect(tooltip).toHaveAttribute('aria-hidden', 'true');
+
+      // Focus to show
+      fireEvent.focus(tooltipButton);
+      expect(tooltip).toHaveAttribute('aria-hidden', 'false');
+
+      // Blur to hide
+      fireEvent.blur(tooltipButton);
+      expect(tooltip).toHaveAttribute('aria-hidden', 'true');
     });
   });
 });

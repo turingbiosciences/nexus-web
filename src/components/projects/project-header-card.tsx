@@ -85,6 +85,8 @@ export function ProjectHeaderCard({
                 onKeyDown={handleKeyDown}
                 onBlur={handleBlur}
                 onFocus={() => setIsTooltipVisible(true)}
+                onMouseEnter={() => setIsTooltipVisible(true)}
+                onMouseLeave={() => setIsTooltipVisible(false)}
               >
                 <Info className="h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
               </button>
@@ -93,6 +95,7 @@ export function ProjectHeaderCard({
             <div
               id={tooltipId}
               role="tooltip"
+              aria-hidden={!isTooltipVisible}
               className={`absolute left-0 top-full mt-2 w-80 bg-gray-900 text-white text-sm rounded-lg p-3 shadow-lg transition-all duration-200 z-10 ${
                 isTooltipVisible
                   ? 'opacity-100 visible'
