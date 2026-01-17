@@ -1,5 +1,10 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  RenderResult,
+} from '@testing-library/react';
 import { ProjectHeaderCard } from '@/components/projects/project-header-card';
 import { Project } from '@/types/project';
 import { createMockProject } from '@/lib/mock-factories';
@@ -13,44 +18,60 @@ describe('ProjectHeaderCard', () => {
     description: 'Test project description',
   });
 
+  // Helper function to reduce duplication in render calls
+  type RenderCardOptions = {
+    project?: Partial<Project>;
+    isRunning?: boolean;
+    onRun?: jest.Mock;
+  };
+
+  const renderCard = (options: RenderCardOptions = {}): RenderResult => {
+    const {
+      project: projectOverrides = {},
+      isRunning = false,
+      onRun = mockOnRun,
+    } = options;
+
+    const project = { ...baseProject, ...projectOverrides };
+
+    return render(
+      <ProjectHeaderCard
+        project={project}
+        isRunning={isRunning}
+        onRun={onRun}
+      />
+    );
+  };
+
+  // Helper to get tooltip elements
+  const getTooltipElements = (container: HTMLElement) => {
+    const tooltipButton = screen.getByRole('button', {
+      name: 'Project description',
+    });
+    const tooltip = container.querySelector('[role="tooltip"]');
+    return { tooltipButton, tooltip };
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('Basic Rendering', () => {
     it('renders project name and description', () => {
-      render(
-        <ProjectHeaderCard
-          project={baseProject}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
+      renderCard();
 
       expect(screen.getByText('Test Project')).toBeInTheDocument();
       expect(screen.getByText('Test project description')).toBeInTheDocument();
     });
 
     it('renders Run button', () => {
-      render(
-        <ProjectHeaderCard
-          project={baseProject}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
+      renderCard();
 
       expect(screen.getByRole('button', { name: /run/i })).toBeInTheDocument();
     });
 
     it('renders project metadata inline', () => {
-      render(
-        <ProjectHeaderCard
-          project={baseProject}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
+      renderCard();
 
       // New component shows status label inline and dataset count
       expect(screen.getByText('Setup')).toBeInTheDocument();
@@ -59,221 +80,81 @@ describe('ProjectHeaderCard', () => {
   });
 
   describe('Status Display', () => {
-    it("displays 'Setup' status for setup projects", () => {
-      const setupProject = { ...baseProject, status: 'setup' as const };
+    it.each([
+      ['setup' as const, 'Setup'],
+      ['complete' as const, 'Complete'],
+      ['running' as const, 'Running'],
+    ])('displays %s status correctly', (status, expectedText) => {
+      renderCard({ project: { status } });
 
-      render(
-        <ProjectHeaderCard
-          project={setupProject}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
-
-      expect(screen.getByText('Setup')).toBeInTheDocument();
-    });
-
-    it("displays 'Complete' status for complete projects", () => {
-      const completeProject = { ...baseProject, status: 'complete' as const };
-
-      render(
-        <ProjectHeaderCard
-          project={completeProject}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
-
-      expect(screen.getByText('Complete')).toBeInTheDocument();
-    });
-
-    it("displays 'Running' status for running projects", () => {
-      const runningProject = { ...baseProject, status: 'running' as const };
-
-      render(
-        <ProjectHeaderCard
-          project={runningProject}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
-
-      expect(screen.getByText('Running')).toBeInTheDocument();
+      expect(screen.getByText(expectedText)).toBeInTheDocument();
     });
   });
 
   describe('Last Run Display', () => {
     it('displays formatted date when completedAt is set', () => {
-      const projectWithCompletion: Project = {
-        ...baseProject,
-        completedAt: new Date('2024-06-15T12:00:00'),
-      };
-
-      render(
-        <ProjectHeaderCard
-          project={projectWithCompletion}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
+      renderCard({
+        project: { completedAt: new Date('2024-06-15T12:00:00') },
+      });
 
       expect(screen.getByText(/Jun 15, 2024/)).toBeInTheDocument();
     });
 
     it("displays 'Never run' when completedAt is not set", () => {
-      const projectWithoutCompletion = {
-        ...baseProject,
-        completedAt: undefined,
-      };
-
-      render(
-        <ProjectHeaderCard
-          project={projectWithoutCompletion}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
+      renderCard({ project: { completedAt: undefined } });
 
       expect(screen.getByText('Never run')).toBeInTheDocument();
     });
   });
 
   describe('Dataset Count Display', () => {
-    it('displays dataset count when present', () => {
-      const projectWithDatasets = {
-        ...baseProject,
-        datasetCount: 5,
-      };
+    it.each([
+      [5, /5 datasets/],
+      [undefined, /0 datasets/],
+      [0, /0 datasets/],
+    ])(
+      'displays correct count when datasetCount is %s',
+      (datasetCount, expectedPattern) => {
+        renderCard({ project: { datasetCount } });
 
-      render(
-        <ProjectHeaderCard
-          project={projectWithDatasets}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
-
-      expect(screen.getByText(/5 datasets/)).toBeInTheDocument();
-    });
-
-    it('displays 0 when datasetCount is undefined', () => {
-      const projectWithoutDatasets = {
-        ...baseProject,
-        datasetCount: undefined,
-      };
-
-      render(
-        <ProjectHeaderCard
-          project={projectWithoutDatasets}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
-
-      expect(screen.getByText(/0 datasets/)).toBeInTheDocument();
-    });
-
-    it('displays 0 when datasetCount is 0', () => {
-      const projectWithZeroDatasets = {
-        ...baseProject,
-        datasetCount: 0,
-      };
-
-      render(
-        <ProjectHeaderCard
-          project={projectWithZeroDatasets}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
-
-      expect(screen.getByText(/0 datasets/)).toBeInTheDocument();
-    });
+        expect(screen.getByText(expectedPattern)).toBeInTheDocument();
+      }
+    );
   });
 
   describe('Run Button Behavior', () => {
     it('enables Run button when not running and has datasets', () => {
-      render(
-        <ProjectHeaderCard
-          project={baseProject}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
+      renderCard();
 
       const runButton = screen.getByRole('button', { name: /run/i });
       expect(runButton).not.toBeDisabled();
     });
 
     it('disables Run button when project is running', () => {
-      render(
-        <ProjectHeaderCard
-          project={baseProject}
-          isRunning={true}
-          onRun={mockOnRun}
-        />
-      );
+      renderCard({ isRunning: true });
 
       const runButton = screen.getByRole('button', { name: /running/i });
       expect(runButton).toBeDisabled();
     });
 
     it("shows 'Running...' text when project is running", () => {
-      render(
-        <ProjectHeaderCard
-          project={baseProject}
-          isRunning={true}
-          onRun={mockOnRun}
-        />
-      );
+      renderCard({ isRunning: true });
 
       expect(screen.getByText('Running...')).toBeInTheDocument();
     });
 
-    it('disables Run button when no datasets are present', () => {
-      const projectWithoutDatasets = {
-        ...baseProject,
-        datasetCount: 0,
-      };
-
-      render(
-        <ProjectHeaderCard
-          project={projectWithoutDatasets}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
-
-      const runButton = screen.getByRole('button', { name: /run/i });
-      expect(runButton).toBeDisabled();
-    });
-
-    it('disables Run button when datasetCount is undefined', () => {
-      const projectWithoutDatasets = {
-        ...baseProject,
-        datasetCount: undefined,
-      };
-
-      render(
-        <ProjectHeaderCard
-          project={projectWithoutDatasets}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
+    it.each([
+      [0, 'datasetCount is 0'],
+      [undefined, 'datasetCount is undefined'],
+    ])('disables Run button when %s', (datasetCount, _description) => {
+      renderCard({ project: { datasetCount } });
 
       const runButton = screen.getByRole('button', { name: /run/i });
       expect(runButton).toBeDisabled();
     });
 
     it('calls onRun when Run button is clicked', () => {
-      render(
-        <ProjectHeaderCard
-          project={baseProject}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
+      renderCard();
 
       const runButton = screen.getByRole('button', { name: /run/i });
       fireEvent.click(runButton);
@@ -282,13 +163,7 @@ describe('ProjectHeaderCard', () => {
     });
 
     it('does not call onRun when button is disabled', () => {
-      render(
-        <ProjectHeaderCard
-          project={baseProject}
-          isRunning={true}
-          onRun={mockOnRun}
-        />
-      );
+      renderCard({ isRunning: true });
 
       const runButton = screen.getByRole('button', { name: /running/i });
       fireEvent.click(runButton);
@@ -299,35 +174,17 @@ describe('ProjectHeaderCard', () => {
 
   describe('Edge Cases', () => {
     it('handles project with empty description', () => {
-      const projectWithEmptyDesc = {
-        ...baseProject,
-        description: '',
-      };
-
-      render(
-        <ProjectHeaderCard
-          project={projectWithEmptyDesc}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
+      renderCard({ project: { description: '' } });
 
       expect(screen.getByText('Test Project')).toBeInTheDocument();
     });
 
     it('handles very long project names gracefully', () => {
-      const projectWithLongName = {
-        ...baseProject,
-        name: 'This is a very long project name that should wrap properly in the UI without breaking the layout',
-      };
-
-      render(
-        <ProjectHeaderCard
-          project={projectWithLongName}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
+      renderCard({
+        project: {
+          name: 'This is a very long project name that should wrap properly in the UI without breaking the layout',
+        },
+      });
 
       expect(
         screen.getByText(/This is a very long project name/)
@@ -335,19 +192,12 @@ describe('ProjectHeaderCard', () => {
     });
 
     it('handles very long descriptions gracefully', () => {
-      const projectWithLongDesc = {
-        ...baseProject,
-        description:
-          'This is a very long description that contains a lot of text and should wrap properly without breaking the layout or causing any visual issues in the component rendering',
-      };
-
-      render(
-        <ProjectHeaderCard
-          project={projectWithLongDesc}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
+      renderCard({
+        project: {
+          description:
+            'This is a very long description that contains a lot of text and should wrap properly without breaking the layout or causing any visual issues in the component rendering',
+        },
+      });
 
       expect(
         screen.getByText(/This is a very long description/)
@@ -355,86 +205,29 @@ describe('ProjectHeaderCard', () => {
     });
 
     it('renders correctly with large dataset count', () => {
-      const projectWithManyDatasets = {
-        ...baseProject,
-        datasetCount: 9999,
-      };
-
-      render(
-        <ProjectHeaderCard
-          project={projectWithManyDatasets}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
+      renderCard({ project: { datasetCount: 9999 } });
 
       expect(screen.getByText(/9999 datasets/)).toBeInTheDocument();
     });
   });
 
   describe('Visual States', () => {
-    it('renders with complete status styling', () => {
-      const completeProject = {
-        ...baseProject,
-        status: 'complete' as const,
-        completedAt: new Date('2024-06-15'),
-      };
+    it.each([
+      ['complete' as const, '.text-green-600', new Date('2024-06-15')],
+      ['running' as const, '.text-blue-600', undefined],
+      ['setup' as const, '.text-yellow-600', undefined],
+    ])('renders with %s status styling', (status, selector, completedAt) => {
+      const { container } = renderCard({
+        project: { status, completedAt },
+      });
 
-      const { container } = render(
-        <ProjectHeaderCard
-          project={completeProject}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
-
-      expect(container.querySelector('.text-green-600')).toBeInTheDocument();
-    });
-
-    it('renders with running status styling', () => {
-      const runningProject = {
-        ...baseProject,
-        status: 'running' as const,
-      };
-
-      const { container } = render(
-        <ProjectHeaderCard
-          project={runningProject}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
-
-      expect(container.querySelector('.text-blue-600')).toBeInTheDocument();
-    });
-
-    it('renders with setup status styling', () => {
-      const setupProject = {
-        ...baseProject,
-        status: 'setup' as const,
-      };
-
-      const { container } = render(
-        <ProjectHeaderCard
-          project={setupProject}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
-
-      expect(container.querySelector('.text-yellow-600')).toBeInTheDocument();
+      expect(container.querySelector(selector)).toBeInTheDocument();
     });
   });
 
   describe('Metadata Grid Layout', () => {
     it('renders with correct layout', () => {
-      const { container } = render(
-        <ProjectHeaderCard
-          project={baseProject}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
+      const { container } = renderCard();
 
       // Check for the main card container
       const cardElement = container.querySelector('.card');
@@ -442,18 +235,147 @@ describe('ProjectHeaderCard', () => {
     });
 
     it('renders all metadata items with icons', () => {
-      const { container } = render(
-        <ProjectHeaderCard
-          project={baseProject}
-          isRunning={false}
-          onRun={mockOnRun}
-        />
-      );
+      const { container } = renderCard();
 
       // Check for lucide icons (svg elements)
       const icons = container.querySelectorAll('svg');
       // Expect at least 4 icons: status icon, calendar, database, and play button icon
       expect(icons.length).toBeGreaterThanOrEqual(4);
+    });
+  });
+
+  describe('Tooltip Accessibility', () => {
+    it('tooltip button has correct ARIA attributes', () => {
+      renderCard();
+
+      const tooltipButton = screen.getByRole('button', {
+        name: 'Project description',
+      });
+      expect(tooltipButton).toBeInTheDocument();
+      expect(tooltipButton).toHaveAttribute('aria-describedby');
+      expect(tooltipButton).toHaveAttribute('type', 'button');
+    });
+
+    it("tooltip element has role='tooltip'", () => {
+      const { container } = renderCard();
+
+      const tooltip = container.querySelector('[role="tooltip"]');
+      expect(tooltip).toBeInTheDocument();
+      expect(tooltip).toHaveTextContent('Test project description');
+    });
+
+    it('tooltip button and tooltip are linked via aria-describedby', () => {
+      const { container } = renderCard();
+      const { tooltipButton, tooltip } = getTooltipElements(container);
+
+      const ariaDescribedby = tooltipButton.getAttribute('aria-describedby');
+      expect(tooltip).toBeInTheDocument();
+      expect(ariaDescribedby).toBe(tooltip!.id);
+    });
+
+    it('shows tooltip on focus', () => {
+      const { container } = renderCard();
+      const { tooltipButton, tooltip } = getTooltipElements(container);
+
+      // Initially hidden
+      expect(tooltip).toHaveClass('opacity-0');
+
+      // Focus the button
+      fireEvent.focus(tooltipButton);
+
+      // Should be visible
+      expect(tooltip).toHaveClass('opacity-100');
+    });
+
+    it('hides tooltip on blur', () => {
+      const { container } = renderCard();
+      const { tooltipButton, tooltip } = getTooltipElements(container);
+
+      // Focus to show
+      fireEvent.focus(tooltipButton);
+      expect(tooltip).toHaveClass('opacity-100');
+
+      // Blur to hide
+      fireEvent.blur(tooltipButton);
+      expect(tooltip).toHaveClass('opacity-0');
+    });
+
+    it.each([
+      ['Enter', { key: 'Enter' }],
+      ['Space', { key: ' ' }],
+    ])('shows tooltip when %s key is pressed', (_keyName, keyEvent) => {
+      const { container } = renderCard();
+      const { tooltipButton, tooltip } = getTooltipElements(container);
+
+      fireEvent.keyDown(tooltipButton, keyEvent);
+      expect(tooltip).toHaveClass('opacity-100');
+    });
+
+    it('hides tooltip when Escape key is pressed', () => {
+      const { container } = renderCard();
+      const { tooltipButton, tooltip } = getTooltipElements(container);
+
+      // Show tooltip first
+      fireEvent.focus(tooltipButton);
+      expect(tooltip).toHaveClass('opacity-100');
+
+      // Hide with Escape
+      fireEvent.keyDown(tooltipButton, { key: 'Escape' });
+      expect(tooltip).toHaveClass('opacity-0');
+    });
+
+    it('tooltip button has visible focus indicator', () => {
+      renderCard();
+
+      const tooltipButton = screen.getByRole('button', {
+        name: 'Project description',
+      });
+
+      expect(tooltipButton).toHaveClass('focus:ring-2');
+      expect(tooltipButton).toHaveClass('focus:ring-blue-500');
+    });
+
+    it('shows tooltip on mouse enter', () => {
+      const { container } = renderCard();
+      const { tooltipButton, tooltip } = getTooltipElements(container);
+
+      // Initially hidden
+      expect(tooltip).toHaveClass('opacity-0');
+
+      // Mouse enter the button
+      fireEvent.mouseEnter(tooltipButton);
+
+      // Should be visible
+      expect(tooltip).toHaveClass('opacity-100');
+    });
+
+    it('hides tooltip on mouse leave', () => {
+      const { container } = renderCard();
+      const { tooltipButton, tooltip } = getTooltipElements(container);
+
+      // Mouse enter to show
+      fireEvent.mouseEnter(tooltipButton);
+      expect(tooltip).toHaveClass('opacity-100');
+
+      // Mouse leave to hide
+      fireEvent.mouseLeave(tooltipButton);
+      expect(tooltip).toHaveClass('opacity-0');
+    });
+
+    it('tooltip has aria-hidden attribute that toggles with visibility', () => {
+      const { container } = renderCard();
+      const { tooltipButton, tooltip } = getTooltipElements(container);
+
+      // Initially hidden
+      expect(tooltip).toHaveAttribute('aria-hidden', 'true');
+
+      // Focus to show
+      fireEvent.focus(tooltipButton);
+      expect(tooltip).toHaveAttribute('aria-hidden', 'false');
+
+      // Blur to hide
+      fireEvent.blur(tooltipButton);
+      expect(tooltip).toHaveAttribute('aria-hidden', 'true');
     });
   });
 });
