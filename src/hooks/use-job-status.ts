@@ -245,7 +245,7 @@ export function useJobStatus(
 
     const baseUrl = getApiBaseUrl();
     // Pass token via query string since EventSource doesn't support headers
-    const url = `${baseUrl}/projects/${projectId}/jobs/${jobId}/stream?token=${encodeURIComponent(accessToken)}`;
+    const url = `${baseUrl}/projects/${projectId}/training/${jobId}/stream?token=${encodeURIComponent(accessToken)}`;
 
     logger.info({ projectId, jobId }, 'Connecting to job status SSE stream');
 

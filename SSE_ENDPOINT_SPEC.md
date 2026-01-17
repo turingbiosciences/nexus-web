@@ -5,7 +5,7 @@ This document describes the Server-Sent Events (SSE) endpoint required for real-
 ## Endpoint
 
 ```
-GET /projects/{project_id}/jobs/{job_id}/stream
+GET /projects/{project_id}/training/{job_id}/stream
 ```
 
 ### Authentication
@@ -13,7 +13,7 @@ GET /projects/{project_id}/jobs/{job_id}/stream
 Since `EventSource` doesn't support custom headers, authentication is passed via query parameter:
 
 ```
-GET /projects/{project_id}/jobs/{job_id}/stream?token={access_token}
+GET /projects/{project_id}/training/{job_id}/stream?token={access_token}
 ```
 
 > **Security Note**: The token parameter should be validated on every request. Consider using short-lived tokens or implementing token rotation for long-running SSE connections.
@@ -165,7 +165,7 @@ def format_sse_event(event_type: str, data: dict) -> str:
     return f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
 
 
-@app.get("/projects/{project_id}/jobs/{job_id}/stream")
+@app.get("/projects/{project_id}/training/{job_id}/stream")
 async def stream_job_status(
     project_id: str,
     job_id: str,
@@ -176,7 +176,7 @@ async def stream_job_status(
 
     The client should connect using EventSource:
     ```javascript
-    const eventSource = new EventSource(`/projects/${projectId}/jobs/${jobId}/stream?token=${token}`);
+    const eventSource = new EventSource(`/projects/${projectId}/training/${jobId}/stream?token=${token}`);
     eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
         console.log('Job update:', data);
@@ -246,14 +246,14 @@ app.add_middleware(
 
 ## Testing the Endpoint
 
-### Using curl:
+### Using curl
 
 ```bash
-curl -N "http://localhost:8000/projects/123/jobs/456/stream?token=your_token"
+curl -N "http://localhost:8000/projects/123/training/456/stream?token=your_token"
 ```
 
-### Using httpie:
+### Using httpie
 
 ```bash
-http --stream GET "localhost:8000/projects/123/jobs/456/stream?token=your_token"
+http --stream GET "localhost:8000/projects/123/training/456/stream?token=your_token"
 ```
