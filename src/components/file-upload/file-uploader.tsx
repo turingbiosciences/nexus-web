@@ -9,6 +9,10 @@ import { cn, formatBytes, formatUploadProgress } from '@/lib/utils';
 import { useAccessToken } from '@/components/providers/token-provider';
 import { logger } from '@/lib/logger';
 
+// Feature flag: Set to false to use traditional XHR uploads instead of TUS
+// TODO: Re-enable when API supports TUS protocol
+const USE_TUS_UPLOADS = false;
+
 interface FileUploadItem {
   file: File;
   id: string;
@@ -231,6 +235,16 @@ export function FileUploader({
           u.id === upload.id ? { ...u, status: 'uploading' } : u
         )
       );
+
+      // Skip TUS and use XHR directly if TUS is disabled
+      if (!USE_TUS_UPLOADS) {
+        logger.debug(
+          { uploadId: upload.id, filename: upload.file.name },
+          'TUS disabled, using XHR upload'
+        );
+        startUploadWithXHR(upload, accessToken, projectId!);
+        return;
+      }
 
       // Try TUS protocol first
       logger.debug(
