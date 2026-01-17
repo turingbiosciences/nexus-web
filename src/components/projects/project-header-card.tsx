@@ -97,9 +97,7 @@ export function ProjectHeaderCard({
               role="tooltip"
               aria-hidden={!isTooltipVisible}
               className={`absolute left-0 top-full mt-2 w-80 bg-gray-900 text-white text-sm rounded-lg p-3 shadow-lg transition-all duration-200 z-10 ${
-                isTooltipVisible
-                  ? 'opacity-100 visible'
-                  : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'
+                isTooltipVisible ? 'opacity-100 visible' : 'opacity-0 invisible'
               }`}
             >
               {project.description}

@@ -504,7 +504,8 @@ describe('ProjectHeaderCard', () => {
       const tooltip = container.querySelector('[role="tooltip"]');
 
       const ariaDescribedby = tooltipButton.getAttribute('aria-describedby');
-      expect(ariaDescribedby).toBe(tooltip?.id);
+      expect(tooltip).toBeInTheDocument();
+      expect(ariaDescribedby).toBe(tooltip!.id);
     });
 
     it('shows tooltip on focus', () => {
