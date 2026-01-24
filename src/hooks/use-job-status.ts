@@ -108,39 +108,97 @@ export function useJobStatus(
   }, []);
 
   // Handle incoming SSE events - no dependencies on changing values
-  const handleEvent = useCallback((event: MessageEvent) => {
-    try {
-      const data = JSON.parse(event.data) as JobStatusEvent;
-      logger.debug({ event: data }, 'SSE event received');
+  const handleEvent = useCallback(
+    (event: MessageEvent) => {
+      try {
+        const eventType = event.type || 'message';
+        const data = JSON.parse(event.data);
 
-      // Update job state based on event
-      setJob((prev) => {
-        if (!prev) return null;
-        const updated = {
-          ...prev,
-          status: data.status,
-          progress_percent: data.progress_percent,
-          message: data.message,
-          error: data.error || null,
-        };
-        return updated;
-      });
+        // Upgrade to info level for easier debugging as requested
+        logger.info({ eventType, data }, 'SSE event received');
 
-      // Handle completion
-      if (data.type === 'complete' && isJobComplete(data.status)) {
-        if (data.status === 'completed') {
-          const currentJob = jobRef.current;
-          if (currentJob) {
-            onCompleteRef.current?.(currentJob);
-          }
-        } else if (data.status === 'failed') {
-          onErrorRef.current?.(data.error || 'Job failed');
+        if (eventType === 'heartbeat' || eventType === 'connected') {
+          return;
         }
+
+        if (eventType === 'error') {
+          const errorMessage = data.error || 'Unknown streaming error';
+          setError(errorMessage);
+          onErrorRef.current?.(errorMessage);
+          setJob((prev) =>
+            prev
+              ? { ...prev, status: 'failed' as JobStatus, error: errorMessage }
+              : null
+          );
+          return;
+        }
+
+        const jobData = data as JobStatusEvent;
+
+        // Update job state based on event
+        setJob((prev) => {
+          // BUG FIX: If prev is null, we should initialize it from the event data
+          if (!prev) {
+            if (!projectId) {
+              const errorMessage =
+                'Missing projectId while processing job status event';
+              logger.error(
+                { jobId: jobData.job_id, eventData: jobData },
+                errorMessage
+              );
+              setError(errorMessage);
+              onErrorRef.current?.(errorMessage);
+              return prev;
+            }
+
+            return {
+              job_id: jobData.job_id,
+              project_id: projectId,
+              status: jobData.status,
+              progress_percent: jobData.progress_percent,
+              message: jobData.message,
+              error: jobData.error || null,
+              created_at: jobData.timestamp || new Date().toISOString(),
+              completed_at: null,
+              best_model: null,
+              metrics: null,
+              models_trained: null,
+              feature_importance: null,
+              results_csv_url: null,
+              graph_svg_url: null,
+            } as Job;
+          }
+
+          const updated = {
+            ...prev,
+            status: jobData.status,
+            progress_percent: jobData.progress_percent,
+            message: jobData.message,
+            error: jobData.error || null,
+          };
+          return updated;
+        });
+
+        // Handle completion
+        if (jobData.type === 'complete' && isJobComplete(jobData.status)) {
+          if (jobData.status === 'completed') {
+            const currentJob = jobRef.current;
+            if (currentJob) {
+              onCompleteRef.current?.(currentJob);
+            }
+          } else if (jobData.status === 'failed') {
+            onErrorRef.current?.(jobData.error || 'Job failed');
+          }
+        }
+      } catch (err) {
+        logger.error(
+          { error: err, eventData: event.data },
+          'Failed to parse SSE event'
+        );
       }
-    } catch (err) {
-      logger.error({ error: err }, 'Failed to parse SSE event');
-    }
-  }, []);
+    },
+    [projectId]
+  );
 
   // Mock SSE for development/testing
   const startMockSSE = useCallback((pId: string, jId: string) => {
@@ -261,17 +319,21 @@ export function useJobStatus(
 
     eventSource.onmessage = handleEvent;
 
+    // Explicitly listen for all event types defined in SSE_ENDPOINT_SPEC.md
+    eventSource.addEventListener('connected', handleEvent);
+    eventSource.addEventListener('heartbeat', handleEvent);
     eventSource.addEventListener('status', handleEvent);
     eventSource.addEventListener('progress', handleEvent);
     eventSource.addEventListener('complete', handleEvent);
+
     eventSource.addEventListener('error', (event: Event) => {
       if ((event as MessageEvent).data) {
         handleEvent(event as MessageEvent);
       }
     });
 
-    eventSource.onerror = () => {
-      logger.error({ projectId, jobId }, 'SSE connection error');
+    eventSource.onerror = (e) => {
+      logger.error({ projectId, jobId, event: e }, 'SSE connection error');
       setIsConnected(false);
       eventSource.close();
 
