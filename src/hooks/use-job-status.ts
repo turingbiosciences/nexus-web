@@ -136,9 +136,20 @@ export function useJobStatus(
       setJob((prev) => {
         // BUG FIX: If prev is null, we should initialize it from the event data
         if (!prev) {
+          if (!projectId) {
+            const errorMessage = 'Missing projectId while processing job status event';
+            logger.error(
+              { jobId: jobData.job_id, eventData: jobData },
+              errorMessage
+            );
+            setError(errorMessage);
+            onErrorRef.current?.(errorMessage);
+            return prev;
+          }
+
           return {
             job_id: jobData.job_id,
-            project_id: projectId || 'unknown',
+            project_id: projectId,
             status: jobData.status,
             progress_percent: jobData.progress_percent,
             message: jobData.message,
