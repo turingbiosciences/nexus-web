@@ -108,88 +108,97 @@ export function useJobStatus(
   }, []);
 
   // Handle incoming SSE events - no dependencies on changing values
-  const handleEvent = useCallback((event: MessageEvent) => {
-    try {
-      const eventType = event.type || 'message';
-      const data = JSON.parse(event.data);
+  const handleEvent = useCallback(
+    (event: MessageEvent) => {
+      try {
+        const eventType = event.type || 'message';
+        const data = JSON.parse(event.data);
 
-      // Upgrade to info level for easier debugging as requested
-      logger.info({ eventType, data }, 'SSE event received');
+        // Upgrade to info level for easier debugging as requested
+        logger.info({ eventType, data }, 'SSE event received');
 
-      if (eventType === 'heartbeat' || eventType === 'connected') {
-        return;
-      }
+        if (eventType === 'heartbeat' || eventType === 'connected') {
+          return;
+        }
 
-      if (eventType === 'error') {
-        const errorMessage = data.error || 'Unknown streaming error';
-        setError(errorMessage);
-        onErrorRef.current?.(errorMessage);
-        setJob((prev) =>
-          prev ? { ...prev, status: 'failed' as JobStatus, error: errorMessage } : null
-        );
-        return;
-      }
+        if (eventType === 'error') {
+          const errorMessage = data.error || 'Unknown streaming error';
+          setError(errorMessage);
+          onErrorRef.current?.(errorMessage);
+          setJob((prev) =>
+            prev
+              ? { ...prev, status: 'failed' as JobStatus, error: errorMessage }
+              : null
+          );
+          return;
+        }
 
-      const jobData = data as JobStatusEvent;
+        const jobData = data as JobStatusEvent;
 
-      // Update job state based on event
-      setJob((prev) => {
-        // BUG FIX: If prev is null, we should initialize it from the event data
-        if (!prev) {
-          if (!projectId) {
-            const errorMessage = 'Missing projectId while processing job status event';
-            logger.error(
-              { jobId: jobData.job_id, eventData: jobData },
-              errorMessage
-            );
-            setError(errorMessage);
-            onErrorRef.current?.(errorMessage);
-            return prev;
+        // Update job state based on event
+        setJob((prev) => {
+          // BUG FIX: If prev is null, we should initialize it from the event data
+          if (!prev) {
+            if (!projectId) {
+              const errorMessage =
+                'Missing projectId while processing job status event';
+              logger.error(
+                { jobId: jobData.job_id, eventData: jobData },
+                errorMessage
+              );
+              setError(errorMessage);
+              onErrorRef.current?.(errorMessage);
+              return prev;
+            }
+
+            return {
+              job_id: jobData.job_id,
+              project_id: projectId,
+              status: jobData.status,
+              progress_percent: jobData.progress_percent,
+              message: jobData.message,
+              error: jobData.error || null,
+              created_at: jobData.timestamp || new Date().toISOString(),
+              completed_at: null,
+              best_model: null,
+              metrics: null,
+              models_trained: null,
+              feature_importance: null,
+              results_csv_url: null,
+              graph_svg_url: null,
+            } as Job;
           }
 
-          return {
-            job_id: jobData.job_id,
-            project_id: projectId,
+          const updated = {
+            ...prev,
             status: jobData.status,
             progress_percent: jobData.progress_percent,
             message: jobData.message,
             error: jobData.error || null,
-            created_at: jobData.timestamp || new Date().toISOString(),
-            completed_at: null,
-            best_model: null,
-            metrics: null,
-            models_trained: null,
-            feature_importance: null,
-            results_csv_url: null,
-            graph_svg_url: null,
-          } as Job;
-        }
+          };
+          return updated;
+        });
 
-        const updated = {
-          ...prev,
-          status: jobData.status,
-          progress_percent: jobData.progress_percent,
-          message: jobData.message,
-          error: jobData.error || null,
-        };
-        return updated;
-      });
-
-      // Handle completion
-      if (jobData.type === 'complete' && isJobComplete(jobData.status)) {
-        if (jobData.status === 'completed') {
-          const currentJob = jobRef.current;
-          if (currentJob) {
-            onCompleteRef.current?.(currentJob);
+        // Handle completion
+        if (jobData.type === 'complete' && isJobComplete(jobData.status)) {
+          if (jobData.status === 'completed') {
+            const currentJob = jobRef.current;
+            if (currentJob) {
+              onCompleteRef.current?.(currentJob);
+            }
+          } else if (jobData.status === 'failed') {
+            onErrorRef.current?.(jobData.error || 'Job failed');
           }
-        } else if (jobData.status === 'failed') {
-          onErrorRef.current?.(jobData.error || 'Job failed');
         }
+      } catch (err) {
+        logger.error(
+          { error: err, eventData: event.data },
+          'Failed to parse SSE event'
+        );
       }
-    } catch (err) {
-      logger.error({ error: err, eventData: event.data }, 'Failed to parse SSE event');
-    }
-  }, [projectId]);
+    },
+    [projectId]
+  );
 
   // Mock SSE for development/testing
   const startMockSSE = useCallback((pId: string, jId: string) => {
@@ -264,11 +273,11 @@ export function useJobStatus(
         setJob((prev) =>
           prev
             ? {
-              ...prev,
-              status: 'running' as JobStatus,
-              progress_percent: progress,
-              message: messages[messageIndex] || 'Processing...',
-            }
+                ...prev,
+                status: 'running' as JobStatus,
+                progress_percent: progress,
+                message: messages[messageIndex] || 'Processing...',
+              }
             : null
         );
       }
