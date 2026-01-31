@@ -13,18 +13,9 @@ import { NewProjectDialog } from '@/components/projects/new-project-dialog';
 import { logger } from '@/lib/logger';
 import { Plus, FolderOpen, Play, Trophy, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-// Mock dashboard stats - will be replaced with API data from /dashboard/stats
-const MOCK_DASHBOARD_STATS = {
-  totalRuns: 47,
-  algorithmWins: {
-    'Random Forest': 20,
-    XGBoost: 15,
-    LightGBM: 8,
-    CatBoost: 4,
-  },
-  totalRuntimeMinutes: 2912, // ~48.5 hours
-};
+import { useDashboardStats } from '@/lib/queries/dashboard-stats';
+import { Skeleton } from '@/components/ui/skeleton';
+import { formatDateTime } from '@/lib/utils/format-date';
 
 // Mock runs data - will be replaced with API data
 const MOCK_RUNS = [
@@ -83,7 +74,7 @@ function StatBlock({
   children,
 }: {
   title: string;
-  value?: string | number;
+  value?: string | number | React.ReactNode;
   icon: React.ComponentType<{ className?: string }>;
   children?: React.ReactNode;
 }) {
@@ -115,6 +106,8 @@ export function HomePageClient() {
     loading: projectsLoading,
     error: projectsError,
   } = useProjects();
+
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
 
   const isLoading = authLoading || projectsLoading;
 
@@ -202,33 +195,63 @@ export function HomePageClient() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <StatBlock
                   title="Total Projects"
-                  value={projects.length}
+                  value={
+                    statsLoading ? (
+                      <Skeleton className="h-8 w-16" />
+                    ) : (
+                      (stats?.total_projects ?? projects.length)
+                    )
+                  }
                   icon={FolderOpen}
                 />
                 <StatBlock
                   title="Total ML Runs"
-                  value={MOCK_DASHBOARD_STATS.totalRuns}
+                  value={
+                    statsLoading ? (
+                      <Skeleton className="h-8 w-16" />
+                    ) : (
+                      (stats?.total_ml_runs ?? '-')
+                    )
+                  }
                   icon={Play}
                 />
                 <StatBlock title="Algorithm Wins" icon={Trophy}>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                    {Object.entries(MOCK_DASHBOARD_STATS.algorithmWins).map(
-                      ([algo, wins]) => (
-                        <div key={algo} className="flex justify-between">
-                          <span className="text-gray-600 truncate">{algo}</span>
-                          <span className="font-semibold text-gray-900">
-                            {wins}
-                          </span>
-                        </div>
-                      )
-                    )}
-                  </div>
+                  {statsLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                      {stats &&
+                        Object.entries(stats.algorithm_wins).map(
+                          ([algo, wins]) => (
+                            <div key={algo} className="flex justify-between">
+                              <span className="text-gray-600 truncate capitalize">
+                                {algo.replace('_', ' ')}
+                              </span>
+                              <span className="font-semibold text-gray-900">
+                                {wins}
+                              </span>
+                            </div>
+                          )
+                        )}
+                    </div>
+                  )}
                 </StatBlock>
                 <StatBlock
                   title="Total Runtime"
-                  value={formatRuntime(
-                    MOCK_DASHBOARD_STATS.totalRuntimeMinutes
-                  )}
+                  value={
+                    statsLoading ? (
+                      <Skeleton className="h-8 w-24" />
+                    ) : stats ? (
+                      formatRuntime(
+                        Math.round(stats.total_runtime_seconds / 60)
+                      )
+                    ) : (
+                      '-'
+                    )
+                  }
                   icon={Clock}
                 />
               </div>
@@ -305,11 +328,7 @@ export function HomePageClient() {
                                 {run.runtime}m
                               </td>
                               <td className="px-4 py-3 text-sm text-gray-600">
-                                {run.createdAt.toLocaleDateString()}{' '}
-                                {run.createdAt.toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
+                                {formatDateTime(run.createdAt)}
                               </td>
                             </tr>
                           ))}

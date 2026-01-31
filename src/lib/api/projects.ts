@@ -3,8 +3,8 @@
  * Handles fetching and managing projects from the backend API
  */
 
-import { Project } from '@/types/project';
-import { mockProjects } from '@/lib/mock-data';
+import { Project, DashboardStats } from '@/types/project';
+import { mockProjects, mockDashboardStats } from '@/lib/mock-data';
 import { logger } from '@/lib/logger';
 import { getRelativeTime } from '@/lib/utils/date-utils';
 import { getApiUrl } from '@/lib/api/utils';
@@ -238,4 +238,48 @@ export async function createProject(
     lastActivity,
     datasets: [],
   };
+}
+
+/**
+ * Fetch dashboard statistics from the backend API or mock data
+ * @param accessToken - Logto access token for authentication
+ * @returns Promise resolving to dashboard statistics
+ */
+export async function getDashboardStats(
+  accessToken: string
+): Promise<DashboardStats> {
+  // Check if mock mode is enabled
+  const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
+
+  if (dataMode === 'mock') {
+    logger.debug('Using mock data for stats (NEXT_PUBLIC_DATA_MODE=mock)');
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return mockDashboardStats;
+  }
+
+  const apiUrl = getApiUrl();
+
+  logger.debug(
+    { url: `${apiUrl}/dashboard/stats` },
+    'Fetching dashboard stats from API'
+  );
+
+  const response = await fetch(`${apiUrl}/dashboard/stats`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => 'Unknown error');
+    throw new Error(
+      `Failed to fetch dashboard stats: ${response.status} ${response.statusText} - ${errorText}`
+    );
+  }
+
+  const data = await response.json();
+  return data;
 }

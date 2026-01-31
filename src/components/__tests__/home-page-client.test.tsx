@@ -38,11 +38,17 @@ jest.mock('@/components/providers/projects-provider', () => ({
   useProjects: jest.fn(),
 }));
 
+jest.mock('@/lib/queries/dashboard-stats', () => ({
+  useDashboardStats: jest.fn(),
+}));
+
 import { useAccessToken } from '@/components/providers/token-provider';
 import { useProjects } from '@/components/providers/projects-provider';
+import { useDashboardStats } from '@/lib/queries/dashboard-stats';
 
 const mockedUseAccessToken = useAccessToken as jest.Mock;
 const mockedUseProjects = useProjects as jest.Mock;
+const mockedUseDashboardStats = useDashboardStats as jest.Mock;
 
 describe('HomePageClient', () => {
   beforeEach(() => {
@@ -60,10 +66,24 @@ describe('HomePageClient', () => {
       projects: [],
       loading: false,
       error: null,
-      createProject: jest.fn(),
-      updateProject: jest.fn(),
       getProjectById: jest.fn(),
       addDataset: jest.fn(),
+    });
+
+    mockedUseDashboardStats.mockReturnValue({
+      data: {
+        total_projects: 3,
+        total_ml_runs: 10,
+        algorithm_wins: {
+          random_forest: 4,
+          xgboost: 3,
+          catboost: 2,
+          lightgbm: 1,
+        },
+        total_runtime_seconds: 7200,
+      },
+      isLoading: false,
+      error: null,
     });
   });
 

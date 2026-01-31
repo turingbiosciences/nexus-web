@@ -34,3 +34,15 @@ export interface ProjectResult {
   size?: number;
   url?: string;
 }
+
+export interface DashboardStats {
+  total_projects: number;
+  total_ml_runs: number;
+  algorithm_wins: {
+    random_forest: number;
+    xgboost: number;
+    catboost: number;
+    lightgbm: number;
+  };
+  total_runtime_seconds: number;
+}

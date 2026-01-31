@@ -1,4 +1,4 @@
-import { Project } from '@/types/project';
+import { Project, DashboardStats } from '@/types/project';
 
 // Helper function to create dates relative to now
 function daysAgo(days: number): Date {
@@ -302,6 +302,18 @@ export const mockProjects: Project[] = [
     lastActivity: '3 hours ago',
   },
 ];
+
+export const mockDashboardStats: DashboardStats = {
+  total_projects: 3,
+  total_ml_runs: 5,
+  algorithm_wins: {
+    random_forest: 2,
+    xgboost: 1,
+    catboost: 1,
+    lightgbm: 1,
+  },
+  total_runtime_seconds: 6300.5,
+};
 
 export function getProjectById(id: string): Project | undefined {
   return mockProjects.find((p) => p.id === id);
