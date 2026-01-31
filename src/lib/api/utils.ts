@@ -2,8 +2,6 @@
  * Shared API utilities
  */
 
-import { Project } from '@/types/project';
-
 /**
  * Get the base API URL, validated and normalized
  * @throws {Error} If NEXT_PUBLIC_TURING_API is not set
@@ -19,15 +17,6 @@ export function getApiUrl(): string {
   // Remove trailing slash if present
   return baseUrl.replace(/\/$/, '');
 }
-
-/**
- * Map API status to internal project status
- */
-export const API_STATUS_MAP: Record<string, Project['status']> = {
-  active: 'setup',
-  running: 'running',
-  complete: 'complete',
-};
 
 /**
  * Get error message for missing/invalid access token

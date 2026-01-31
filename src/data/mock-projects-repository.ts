@@ -29,7 +29,6 @@ export class MockProjectsRepository implements ProjectsRepository {
       id: crypto.randomUUID(),
       name: input.name.trim(),
       description: input.description.trim(),
-      status: 'setup',
       createdAt: now,
       updatedAt: now,
       datasetCount: 0,

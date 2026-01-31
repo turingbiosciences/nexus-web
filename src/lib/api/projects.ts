@@ -3,11 +3,11 @@
  * Handles fetching and managing projects from the backend API
  */
 
-import { Project } from '@/types/project';
-import { mockProjects } from '@/lib/mock-data';
+import { Project, DashboardStats } from '@/types/project';
+import { mockProjects, mockDashboardStats } from '@/lib/mock-data';
 import { logger } from '@/lib/logger';
 import { getRelativeTime } from '@/lib/utils/date-utils';
-import { getApiUrl, API_STATUS_MAP } from '@/lib/api/utils';
+import { getApiUrl } from '@/lib/api/utils';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RawProject = any;
@@ -80,7 +80,6 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
     logger.debug(
       {
         id: project.id,
-        status: project.status,
         file_count: project.file_count,
         created_at: project.created_at,
         updated_at: project.updated_at,
@@ -88,9 +87,6 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
       },
       'Raw project data from API'
     );
-
-    // Map API status to internal status
-    const status = API_STATUS_MAP[project.status] || 'setup';
 
     // Use last_activity.created_at for relative time calculation
     const lastActivityDate = project.last_activity?.created_at
@@ -102,7 +98,6 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
       id: project.id,
       name: project.name,
       description: project.description,
-      status,
       createdAt: parseDate(project.created_at),
       updatedAt: parseDate(project.updated_at),
       completedAt: undefined, // API doesn't provide this yet
@@ -186,7 +181,6 @@ export async function createProject(
       id: `mock-${Date.now()}`,
       name: data.name,
       description: data.description,
-      status: 'setup',
       createdAt: new Date(),
       updatedAt: new Date(),
       datasets: [],
@@ -227,9 +221,6 @@ export async function createProject(
     'Project created via API'
   );
 
-  // Map API status to internal status
-  const status = API_STATUS_MAP[project.status] || 'setup';
-
   // Use last_activity.created_at for relative time calculation
   const lastActivityDate = project.last_activity?.created_at
     ? parseDate(project.last_activity.created_at)
@@ -240,7 +231,6 @@ export async function createProject(
     id: project.id,
     name: project.name,
     description: project.description,
-    status,
     createdAt: parseDate(project.created_at),
     updatedAt: parseDate(project.updated_at),
     completedAt: undefined,
@@ -248,4 +238,48 @@ export async function createProject(
     lastActivity,
     datasets: [],
   };
+}
+
+/**
+ * Fetch dashboard statistics from the backend API or mock data
+ * @param accessToken - Logto access token for authentication
+ * @returns Promise resolving to dashboard statistics
+ */
+export async function getDashboardStats(
+  accessToken: string
+): Promise<DashboardStats> {
+  // Check if mock mode is enabled
+  const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
+
+  if (dataMode === 'mock') {
+    logger.debug('Using mock data for stats (NEXT_PUBLIC_DATA_MODE=mock)');
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return mockDashboardStats;
+  }
+
+  const apiUrl = getApiUrl();
+
+  logger.debug(
+    { url: `${apiUrl}/dashboard/stats` },
+    'Fetching dashboard stats from API'
+  );
+
+  const response = await fetch(`${apiUrl}/dashboard/stats`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => 'Unknown error');
+    throw new Error(
+      `Failed to fetch dashboard stats: ${response.status} ${response.statusText} - ${errorText}`
+    );
+  }
+
+  const data = await response.json();
+  return data;
 }

@@ -1,4 +1,4 @@
-import { Project, ProjectStatusCount, STATUS_ORDER } from '@/types/project';
+import { Project, DashboardStats } from '@/types/project';
 
 // Helper function to create dates relative to now
 function daysAgo(days: number): Date {
@@ -20,7 +20,6 @@ export const mockProjects: Project[] = [
     name: 'sJIA Metabolites Analysis',
     description:
       'Comprehensive metabolite profiling for systemic juvenile idiopathic arthritis patients. Analyzing biomarkers and disease progression indicators.',
-    status: 'running',
     createdAt: daysAgo(12),
     updatedAt: hoursAgo(2),
     datasets: [
@@ -51,7 +50,6 @@ export const mockProjects: Project[] = [
     name: 'COVID-19 Proteomics',
     description:
       'Multi-omics study of protein expression patterns in COVID-19 patients across disease severity stages.',
-    status: 'complete',
     createdAt: daysAgo(56),
     updatedAt: daysAgo(7),
     completedAt: daysAgo(7),
@@ -136,7 +134,6 @@ export const mockProjects: Project[] = [
     name: "Alzheimer's Biomarker Discovery",
     description:
       "Identification of novel biomarkers for early detection of Alzheimer's disease using machine learning approaches.",
-    status: 'setup',
     createdAt: daysAgo(3),
     updatedAt: daysAgo(2),
     datasets: [],
@@ -148,7 +145,6 @@ export const mockProjects: Project[] = [
     name: 'Cancer Cell Line Screening',
     description:
       'High-throughput screening of drug responses across multiple cancer cell lines to identify therapeutic targets.',
-    status: 'running',
     createdAt: daysAgo(17),
     updatedAt: hoursAgo(5),
     datasets: [
@@ -233,7 +229,6 @@ export const mockProjects: Project[] = [
     name: 'Diabetes Risk Prediction',
     description:
       'Predictive modeling of type 2 diabetes risk using clinical and genomic data from longitudinal cohort studies.',
-    status: 'complete',
     createdAt: daysAgo(73),
     updatedAt: daysAgo(27),
     completedAt: daysAgo(27),
@@ -300,7 +295,6 @@ export const mockProjects: Project[] = [
     name: 'Rare Disease Genomics',
     description:
       'Whole genome sequencing analysis for rare genetic disorders to identify causative mutations and inheritance patterns.',
-    status: 'setup',
     createdAt: daysAgo(1),
     updatedAt: hoursAgo(3),
     datasets: [],
@@ -309,18 +303,17 @@ export const mockProjects: Project[] = [
   },
 ];
 
-export function getProjectStatusCount(projects: Project[]): ProjectStatusCount {
-  // Initialize counts using STATUS_ORDER to ensure consistency
-  const initialCounts = STATUS_ORDER.reduce((acc, status) => {
-    acc[status] = 0;
-    return acc;
-  }, {} as ProjectStatusCount);
-
-  return projects.reduce((acc, project) => {
-    acc[project.status]++;
-    return acc;
-  }, initialCounts);
-}
+export const mockDashboardStats: DashboardStats = {
+  total_projects: 3,
+  total_ml_runs: 5,
+  algorithm_wins: {
+    random_forest: 2,
+    xgboost: 1,
+    catboost: 1,
+    lightgbm: 1,
+  },
+  total_runtime_seconds: 6300.5,
+};
 
 export function getProjectById(id: string): Project | undefined {
   return mockProjects.find((p) => p.id === id);

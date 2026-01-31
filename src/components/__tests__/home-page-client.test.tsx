@@ -18,10 +18,6 @@ jest.mock('@/components/file-upload/file-uploader', () => ({
   FileUploader: () => <div>File Uploader</div>,
 }));
 
-jest.mock('@/components/projects/project-list', () => ({
-  ProjectList: () => <div>Project List</div>,
-}));
-
 jest.mock('@/components/projects/new-project-dialog', () => ({
   NewProjectDialog: () => <div>New Project Dialog</div>,
 }));
@@ -42,11 +38,17 @@ jest.mock('@/components/providers/projects-provider', () => ({
   useProjects: jest.fn(),
 }));
 
+jest.mock('@/lib/queries/dashboard-stats', () => ({
+  useDashboardStats: jest.fn(),
+}));
+
 import { useAccessToken } from '@/components/providers/token-provider';
 import { useProjects } from '@/components/providers/projects-provider';
+import { useDashboardStats } from '@/lib/queries/dashboard-stats';
 
 const mockedUseAccessToken = useAccessToken as jest.Mock;
 const mockedUseProjects = useProjects as jest.Mock;
+const mockedUseDashboardStats = useDashboardStats as jest.Mock;
 
 describe('HomePageClient', () => {
   beforeEach(() => {
@@ -64,17 +66,24 @@ describe('HomePageClient', () => {
       projects: [],
       loading: false,
       error: null,
-      createProject: jest.fn(),
-      updateProject: jest.fn(),
       getProjectById: jest.fn(),
-      getStatusCounts: jest.fn(() => ({
-        setup: 0,
-        'data-upload': 0,
-        processing: 0,
-        completed: 0,
-        archived: 0,
-      })),
       addDataset: jest.fn(),
+    });
+
+    mockedUseDashboardStats.mockReturnValue({
+      data: {
+        total_projects: 3,
+        total_ml_runs: 10,
+        algorithm_wins: {
+          random_forest: 4,
+          xgboost: 3,
+          catboost: 2,
+          lightgbm: 1,
+        },
+        total_runtime_seconds: 7200,
+      },
+      isLoading: false,
+      error: null,
     });
   });
 
@@ -108,15 +117,14 @@ describe('HomePageClient', () => {
 
     render(<HomePageClient />);
 
-    expect(
-      screen.getByRole('heading', { name: 'Projects' })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Manage and monitor your biosciences research projects')
-    ).toBeInTheDocument();
+    // New layout has "Projects" heading with project count
+    expect(screen.getByText('Projects')).toBeInTheDocument();
+    // Check for the stat blocks
+    expect(screen.getByText('Total Projects')).toBeInTheDocument();
+    expect(screen.getByText('Total ML Runs')).toBeInTheDocument();
   });
 
-  it('renders project list when authenticated', () => {
+  it('renders project list section when authenticated', () => {
     mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
@@ -126,10 +134,11 @@ describe('HomePageClient', () => {
 
     render(<HomePageClient />);
 
-    expect(screen.getByText('Project List')).toBeInTheDocument();
+    // Check for inline project section - shows empty state when no projects
+    expect(screen.getByText('No projects yet')).toBeInTheDocument();
   });
 
-  it('renders project status chart when authenticated', () => {
+  it('renders stat blocks when authenticated', () => {
     mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
@@ -139,10 +148,13 @@ describe('HomePageClient', () => {
 
     render(<HomePageClient />);
 
-    expect(screen.getByText('Project Status Overview')).toBeInTheDocument();
+    expect(screen.getByText('Total Projects')).toBeInTheDocument();
+    expect(screen.getByText('Total ML Runs')).toBeInTheDocument();
+    expect(screen.getByText('Algorithm Wins')).toBeInTheDocument();
+    expect(screen.getByText('Total Runtime')).toBeInTheDocument();
   });
 
-  it('renders new project button when authenticated', () => {
+  it('renders recent ML runs section when authenticated', () => {
     mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
@@ -152,7 +164,7 @@ describe('HomePageClient', () => {
 
     render(<HomePageClient />);
 
-    expect(screen.getByText('New Project')).toBeInTheDocument();
+    expect(screen.getByText('Recent ML Runs')).toBeInTheDocument();
   });
 
   it('renders new project dialog when authenticated', () => {
@@ -203,13 +215,6 @@ describe('HomePageClient', () => {
       createProject: jest.fn(),
       updateProject: jest.fn(),
       getProjectById: jest.fn(),
-      getStatusCounts: jest.fn(() => ({
-        setup: 0,
-        'data-upload': 0,
-        processing: 0,
-        completed: 0,
-        archived: 0,
-      })),
       addDataset: jest.fn(),
     });
 

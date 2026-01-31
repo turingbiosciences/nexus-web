@@ -1,5 +1,5 @@
-import { fetchProjects, createProject } from '../projects';
-import { mockProjects } from '@/lib/mock-data';
+import { fetchProjects, createProject, getDashboardStats } from '../projects';
+import { mockProjects, mockDashboardStats } from '@/lib/mock-data';
 
 describe('projects API', () => {
   const ORIGINAL_ENV = process.env;
@@ -45,7 +45,6 @@ describe('projects API', () => {
             id: '1',
             name: 'Test Project',
             description: 'Test description',
-            status: 'active' as const,
             createdAt: new Date(now.getTime() - 86400000), // 1 day ago
             updatedAt: new Date(now.getTime() - 3600000), // 1 hour ago
             datasets: [],
@@ -61,13 +60,11 @@ describe('projects API', () => {
 
       const result = await fetchProjects('test-token');
 
-      // Expect normalized result - invalid status "active" becomes "setup"
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
         id: '1',
         name: 'Test Project',
         description: 'Test description',
-        status: 'setup', // Invalid status normalized to "setup"
         datasets: [],
         datasetCount: 0,
       });
@@ -150,42 +147,6 @@ describe('projects API', () => {
 
       expect(result).toEqual([]);
     });
-
-    it('normalizes invalid status values to setup', async () => {
-      process.env.NEXT_PUBLIC_DATA_MODE = 'api';
-      process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
-
-      const mockResponse = {
-        projects: [
-          {
-            id: '1',
-            name: 'Project with invalid status',
-            description: 'Test',
-            status: 'pending' as const, // Invalid status
-            createdAt: new Date('2024-01-01'),
-            updatedAt: new Date('2024-01-02'),
-          },
-          {
-            id: '2',
-            name: 'Project with valid status',
-            description: 'Test',
-            status: 'running' as const, // Valid status
-            createdAt: new Date('2024-01-01'),
-            updatedAt: new Date('2024-01-02'),
-          },
-        ],
-      };
-
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
-
-      const result = await fetchProjects('test-token');
-
-      expect(result[0].status).toBe('setup'); // Invalid normalized to setup
-      expect(result[1].status).toBe('running'); // Valid kept as-is
-    });
   });
 
   describe('createProject', () => {
@@ -202,7 +163,6 @@ describe('projects API', () => {
       expect(result).toMatchObject({
         name: projectData.name,
         description: projectData.description,
-        status: 'setup',
         datasets: [],
         datasetCount: 0,
       });
@@ -231,7 +191,6 @@ describe('projects API', () => {
       const mockCreatedProject = {
         id: 'new-123',
         ...projectData,
-        status: 'setup' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
         datasets: [],
@@ -250,7 +209,6 @@ describe('projects API', () => {
         id: 'new-123',
         name: projectData.name,
         description: projectData.description,
-        status: 'setup',
         datasets: [],
         datasetCount: 0,
         lastActivity: 'just now',
@@ -327,31 +285,72 @@ describe('projects API', () => {
         'Failed to create project: 500 Internal Server Error - Unknown error'
       );
     });
+  });
 
-    it('normalizes invalid status in created project', async () => {
+  describe('getDashboardStats', () => {
+    it('returns mock data when in mock mode', async () => {
+      process.env.NEXT_PUBLIC_DATA_MODE = 'mock';
+
+      const result = await getDashboardStats('fake-token');
+
+      expect(result).toEqual(mockDashboardStats);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('throws error when NEXT_PUBLIC_TURING_API is missing', async () => {
+      process.env.NEXT_PUBLIC_DATA_MODE = 'api';
+      delete process.env.NEXT_PUBLIC_TURING_API;
+
+      await expect(getDashboardStats('test-token')).rejects.toThrow(
+        'Missing NEXT_PUBLIC_TURING_API environment variable'
+      );
+    });
+
+    it('fetches dashboard stats from API successfully', async () => {
       process.env.NEXT_PUBLIC_DATA_MODE = 'api';
       process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
 
-      const mockCreatedProject = {
-        id: 'new-123',
-        name: 'Test Project',
-        description: 'Test',
-        status: 'pending' as const, // Invalid status
-        createdAt: new Date(),
-        updatedAt: new Date(),
+      const mockResponse = {
+        total_projects: 5,
+        total_ml_runs: 12,
+        algorithm_wins: { random_forest: 4 },
+        total_runtime_seconds: 5000,
       };
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockCreatedProject,
+        json: async () => mockResponse,
       });
 
-      const result = await createProject('test-token', {
-        name: 'Test Project',
-        description: 'Test',
+      const result = await getDashboardStats('test-token');
+
+      expect(result).toEqual(mockResponse);
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://api.example.com/dashboard/stats',
+        {
+          method: 'GET',
+          headers: {
+            Authorization: 'Bearer test-token',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    });
+
+    it('throws error when API request fails', async () => {
+      process.env.NEXT_PUBLIC_DATA_MODE = 'api';
+      process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        text: async () => 'Server error',
       });
 
-      expect(result.status).toBe('setup'); // Invalid status normalized to setup
+      await expect(getDashboardStats('test-token')).rejects.toThrow(
+        'Failed to fetch dashboard stats: 500 Internal Server Error - Server error'
+      );
     });
   });
 });

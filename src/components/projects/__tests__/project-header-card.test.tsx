@@ -73,21 +73,8 @@ describe('ProjectHeaderCard', () => {
     it('renders project metadata inline', () => {
       renderCard();
 
-      // New component shows status label inline and dataset count
-      expect(screen.getByText('Setup')).toBeInTheDocument();
+      // Component shows dataset count
       expect(screen.getByText(/3 datasets/)).toBeInTheDocument();
-    });
-  });
-
-  describe('Status Display', () => {
-    it.each([
-      ['setup' as const, 'Setup'],
-      ['complete' as const, 'Complete'],
-      ['running' as const, 'Running'],
-    ])('displays %s status correctly', (status, expectedText) => {
-      renderCard({ project: { status } });
-
-      expect(screen.getByText(expectedText)).toBeInTheDocument();
     });
   });
 
@@ -211,20 +198,6 @@ describe('ProjectHeaderCard', () => {
     });
   });
 
-  describe('Visual States', () => {
-    it.each([
-      ['complete' as const, '.text-green-600', new Date('2024-06-15')],
-      ['running' as const, '.text-blue-600', undefined],
-      ['setup' as const, '.text-yellow-600', undefined],
-    ])('renders with %s status styling', (status, selector, completedAt) => {
-      const { container } = renderCard({
-        project: { status, completedAt },
-      });
-
-      expect(container.querySelector(selector)).toBeInTheDocument();
-    });
-  });
-
   describe('Metadata Grid Layout', () => {
     it('renders with correct layout', () => {
       const { container } = renderCard();
@@ -239,8 +212,8 @@ describe('ProjectHeaderCard', () => {
 
       // Check for lucide icons (svg elements)
       const icons = container.querySelectorAll('svg');
-      // Expect at least 4 icons: status icon, calendar, database, and play button icon
-      expect(icons.length).toBeGreaterThanOrEqual(4);
+      // Expect at least 3 icons: calendar, database, and play button icon
+      expect(icons.length).toBeGreaterThanOrEqual(3);
     });
   });
 

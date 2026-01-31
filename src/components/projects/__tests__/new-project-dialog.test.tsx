@@ -27,11 +27,6 @@ jest.mock('@/components/providers/projects-provider', () => ({
     updateProject: jest.fn(),
     getProjectById: jest.fn(),
     addDataset: jest.fn(),
-    getStatusCounts: jest.fn(() => ({
-      complete: 0,
-      running: 0,
-      setup: 0,
-    })),
   }),
 }));
 
@@ -111,7 +106,6 @@ describe('NewProjectDialog', () => {
       id: 'new-project-id',
       name: 'Test Project',
       description: '',
-      status: 'setup',
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -149,7 +143,6 @@ describe('NewProjectDialog', () => {
       id: 'new-project-id',
       name: 'Test Project',
       description: 'Test description',
-      status: 'setup',
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -249,7 +242,6 @@ describe('NewProjectDialog', () => {
       id: 'new-project-id',
       name: 'Test Project',
       description: '',
-      status: 'setup',
       createdAt: new Date(),
       updatedAt: new Date(),
     });

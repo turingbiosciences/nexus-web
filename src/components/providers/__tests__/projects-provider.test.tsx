@@ -24,7 +24,6 @@ jest.mock('@/lib/api/projects', () => ({
       id: 'p1',
       name: 'Project 1',
       description: 'Desc',
-      status: 'setup',
       datasets: [],
       datasetCount: 0,
       lastActivity: 'just now',
@@ -36,7 +35,6 @@ jest.mock('@/lib/api/projects', () => ({
     id: 'new',
     name: 'New',
     description: 'New Desc',
-    status: 'setup',
     datasets: [],
     datasetCount: 0,
     lastActivity: 'just now',
@@ -52,7 +50,7 @@ function Consumer() {
       <ul data-testid="project-list">
         {projects.map((p) => (
           <li key={p.id} data-testid={`project-${p.id}`}>
-            {p.name}:{p.status}:{p.datasetCount}
+            {p.name}:{p.datasetCount}
           </li>
         ))}
       </ul>
@@ -75,15 +73,13 @@ function Consumer() {
       <button
         onClick={() => {
           if (projects[0]) {
-            updateProject(projects[0].id, { status: 'running' });
+            updateProject(projects[0].id, { name: 'Updated Name' });
           }
         }}
       >
-        update-status
+        update-name
       </button>
-      <div data-testid="first-project-status">
-        {projects[0]?.status ?? 'none'}
-      </div>
+      <div data-testid="first-project-name">{projects[0]?.name ?? 'none'}</div>
     </div>
   );
 }
@@ -124,24 +120,24 @@ describe('ProjectsProvider', () => {
     await waitFor(() => {
       const after = screen.getByTestId('project-p1').textContent;
       expect(after).not.toEqual(before);
-      expect(after).toMatch(/:setup:1$/); // datasetCount 1
+      expect(after).toMatch(/:1$/); // datasetCount 1
     });
   });
 
-  it('updates status and reflects change', async () => {
+  it('updates name and reflects change', async () => {
     render(
       <ProjectsProvider>
         <Consumer />
       </ProjectsProvider>
     );
     await screen.findByTestId('project-p1');
-    expect(screen.getByTestId('first-project-status')).toHaveTextContent(
-      /setup/
+    expect(screen.getByTestId('first-project-name')).toHaveTextContent(
+      /Project 1/
     );
-    screen.getByText(/update-status/i).click();
+    screen.getByText(/update-name/i).click();
     await waitFor(() => {
-      expect(screen.getByTestId('first-project-status')).toHaveTextContent(
-        /running/
+      expect(screen.getByTestId('first-project-name')).toHaveTextContent(
+        /Updated Name/
       );
     });
   });
@@ -162,7 +158,6 @@ describe('ProjectsProvider', () => {
         id: 'user-a-project',
         name: 'User A Project',
         description: "A's project",
-        status: 'setup',
         datasets: [],
         datasetCount: 0,
         lastActivity: 'just now',
@@ -216,7 +211,6 @@ describe('ProjectsProvider', () => {
         id: 'user-b-project',
         name: 'User B Project',
         description: "B's project",
-        status: 'running',
         datasets: [],
         datasetCount: 0,
         lastActivity: 'just now',
