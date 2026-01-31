@@ -18,10 +18,6 @@ jest.mock('@/components/file-upload/file-uploader', () => ({
   FileUploader: () => <div>File Uploader</div>,
 }));
 
-jest.mock('@/components/projects/project-list', () => ({
-  ProjectList: () => <div>Project List</div>,
-}));
-
 jest.mock('@/components/projects/new-project-dialog', () => ({
   NewProjectDialog: () => <div>New Project Dialog</div>,
 }));
@@ -67,13 +63,6 @@ describe('HomePageClient', () => {
       createProject: jest.fn(),
       updateProject: jest.fn(),
       getProjectById: jest.fn(),
-      getStatusCounts: jest.fn(() => ({
-        setup: 0,
-        'data-upload': 0,
-        processing: 0,
-        completed: 0,
-        archived: 0,
-      })),
       addDataset: jest.fn(),
     });
   });
@@ -108,15 +97,14 @@ describe('HomePageClient', () => {
 
     render(<HomePageClient />);
 
-    expect(
-      screen.getByRole('heading', { name: 'Projects' })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Manage and monitor your biosciences research projects')
-    ).toBeInTheDocument();
+    // New layout has "Projects" heading with project count
+    expect(screen.getByText('Projects')).toBeInTheDocument();
+    // Check for the stat blocks
+    expect(screen.getByText('Total Projects')).toBeInTheDocument();
+    expect(screen.getByText('Total ML Runs')).toBeInTheDocument();
   });
 
-  it('renders project list when authenticated', () => {
+  it('renders project list section when authenticated', () => {
     mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
@@ -126,10 +114,11 @@ describe('HomePageClient', () => {
 
     render(<HomePageClient />);
 
-    expect(screen.getByText('Project List')).toBeInTheDocument();
+    // Check for inline project section - shows empty state when no projects
+    expect(screen.getByText('No projects yet')).toBeInTheDocument();
   });
 
-  it('renders project status chart when authenticated', () => {
+  it('renders stat blocks when authenticated', () => {
     mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
@@ -139,10 +128,13 @@ describe('HomePageClient', () => {
 
     render(<HomePageClient />);
 
-    expect(screen.getByText('Project Status Overview')).toBeInTheDocument();
+    expect(screen.getByText('Total Projects')).toBeInTheDocument();
+    expect(screen.getByText('Total ML Runs')).toBeInTheDocument();
+    expect(screen.getByText('Algorithm Wins')).toBeInTheDocument();
+    expect(screen.getByText('Total Runtime')).toBeInTheDocument();
   });
 
-  it('renders new project button when authenticated', () => {
+  it('renders recent ML runs section when authenticated', () => {
     mockedUseAccessToken.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
@@ -152,7 +144,7 @@ describe('HomePageClient', () => {
 
     render(<HomePageClient />);
 
-    expect(screen.getByText('New Project')).toBeInTheDocument();
+    expect(screen.getByText('Recent ML Runs')).toBeInTheDocument();
   });
 
   it('renders new project dialog when authenticated', () => {
@@ -203,13 +195,6 @@ describe('HomePageClient', () => {
       createProject: jest.fn(),
       updateProject: jest.fn(),
       getProjectById: jest.fn(),
-      getStatusCounts: jest.fn(() => ({
-        setup: 0,
-        'data-upload': 0,
-        processing: 0,
-        completed: 0,
-        archived: 0,
-      })),
       addDataset: jest.fn(),
     });
 

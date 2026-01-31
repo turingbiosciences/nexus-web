@@ -2,14 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  CheckCircle,
-  Play,
-  Settings2,
-  Calendar,
-  Database,
-  Info,
-} from 'lucide-react';
+import { Play, Calendar, Database, Info } from 'lucide-react';
 import { Project } from '@/types/project';
 
 interface ProjectHeaderCardProps {
@@ -19,39 +12,12 @@ interface ProjectHeaderCardProps {
   latestResultDate?: Date;
 }
 
-const statusConfig = {
-  complete: {
-    icon: CheckCircle,
-    label: 'Complete',
-    color: 'text-green-600',
-    bg: 'bg-green-50',
-    border: 'border-green-200',
-  },
-  running: {
-    icon: Play,
-    label: 'Running',
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-  },
-  setup: {
-    icon: Settings2,
-    label: 'Setup',
-    color: 'text-yellow-600',
-    bg: 'bg-yellow-50',
-    border: 'border-yellow-200',
-  },
-};
-
 export function ProjectHeaderCard({
   project,
   isRunning,
   onRun,
   latestResultDate,
 }: ProjectHeaderCardProps) {
-  const config = statusConfig[project.status] || statusConfig.setup;
-  const StatusIcon = config.icon;
-
   // State for keyboard-controlled tooltip visibility
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const tooltipId = `tooltip-${project.id}`;
@@ -143,23 +109,15 @@ export function ProjectHeaderCard({
           </div>
         </div>
 
-        {/* Status icon and Run button side by side */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <StatusIcon className={`h-5 w-5 ${config.color}`} />
-            <span className="text-sm font-medium text-gray-700">
-              {config.label}
-            </span>
-          </div>
-          <Button
-            onClick={onRun}
-            disabled={isRunning || !project.datasetCount}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <Play className="h-4 w-4 mr-2" />
-            {isRunning ? 'Running...' : 'Run'}
-          </Button>
-        </div>
+        {/* Run button */}
+        <Button
+          onClick={onRun}
+          disabled={isRunning || !project.datasetCount}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          <Play className="h-4 w-4 mr-2" />
+          {isRunning ? 'Running...' : 'Run'}
+        </Button>
       </div>
     </div>
   );

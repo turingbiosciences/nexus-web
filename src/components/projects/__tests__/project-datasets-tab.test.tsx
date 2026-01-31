@@ -51,7 +51,6 @@ describe('ProjectDatasetsTab', () => {
       updateProject: jest.fn(),
       deleteProject: jest.fn(),
       getProjectById: jest.fn(),
-      getStatusCounts: jest.fn(),
       addDataset: jest.fn(),
     });
     mockUseDatasets.mockReturnValue({

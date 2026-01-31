@@ -17,7 +17,6 @@ describe('ProjectStatsCard', () => {
     id: 'project-1',
     name: 'Test Project',
     description: 'Test project description',
-    status: 'setup',
     datasetCount: 3,
     completedAt: new Date('2024-06-15T12:00:00'),
     createdAt: new Date('2024-01-15T12:00:00'),
@@ -39,16 +38,14 @@ describe('ProjectStatsCard', () => {
       expect(screen.getByText('Project Statistics')).toBeInTheDocument();
     });
 
-    it('renders all six statistic items', () => {
+    it('renders all statistic items', () => {
       mockedUseProjects.mockReturnValue({
         getProjectById: jest.fn().mockReturnValue(baseProject),
       });
 
       render(<ProjectStatsCard projectId="project-1" />);
 
-      expect(screen.getByText('Current Status')).toBeInTheDocument();
       expect(screen.getByText('Last Project Run')).toBeInTheDocument();
-      expect(screen.getByText('Number of Runs')).toBeInTheDocument();
       expect(screen.getByText('Number of Datasets')).toBeInTheDocument();
       expect(screen.getByText('Last Updated')).toBeInTheDocument();
       expect(screen.getByText('Created')).toBeInTheDocument();
@@ -64,47 +61,6 @@ describe('ProjectStatsCard', () => {
       );
 
       expect(container.firstChild).toBeNull();
-    });
-  });
-
-  describe('Status Display', () => {
-    it("displays 'Setup' status with yellow styling for setup projects", () => {
-      const setupProject: Project = { ...baseProject, status: 'setup' };
-      mockedUseProjects.mockReturnValue({
-        getProjectById: jest.fn().mockReturnValue(setupProject),
-      });
-
-      render(<ProjectStatsCard projectId="project-1" />);
-
-      const statusBadge = screen.getByText('Setup');
-      expect(statusBadge).toBeInTheDocument();
-      expect(statusBadge).toHaveClass('bg-yellow-50', 'text-yellow-600');
-    });
-
-    it("displays 'Complete' status with green styling for complete projects", () => {
-      const completeProject: Project = { ...baseProject, status: 'complete' };
-      mockedUseProjects.mockReturnValue({
-        getProjectById: jest.fn().mockReturnValue(completeProject),
-      });
-
-      render(<ProjectStatsCard projectId="project-1" />);
-
-      const statusBadge = screen.getByText('Complete');
-      expect(statusBadge).toBeInTheDocument();
-      expect(statusBadge).toHaveClass('bg-green-50', 'text-green-600');
-    });
-
-    it("displays 'Running' status with blue styling for running projects", () => {
-      const runningProject: Project = { ...baseProject, status: 'running' };
-      mockedUseProjects.mockReturnValue({
-        getProjectById: jest.fn().mockReturnValue(runningProject),
-      });
-
-      render(<ProjectStatsCard projectId="project-1" />);
-
-      const statusBadge = screen.getByText('Running');
-      expect(statusBadge).toBeInTheDocument();
-      expect(statusBadge).toHaveClass('bg-blue-50', 'text-blue-600');
     });
   });
 
@@ -131,22 +87,6 @@ describe('ProjectStatsCard', () => {
       render(<ProjectStatsCard projectId="project-1" />);
 
       expect(screen.getByText('Never')).toBeInTheDocument();
-    });
-  });
-
-  describe('Number of Runs Display', () => {
-    it('displays 0 for run count (placeholder)', () => {
-      mockedUseProjects.mockReturnValue({
-        getProjectById: jest.fn().mockReturnValue(baseProject),
-      });
-
-      render(<ProjectStatsCard projectId="project-1" />);
-
-      // Find the Number of Runs row and verify it shows 0
-      const runCountRow = screen
-        .getByText('Number of Runs')
-        .closest('div')!.parentElement;
-      expect(runCountRow).toHaveTextContent('0');
     });
   });
 
@@ -231,7 +171,7 @@ describe('ProjectStatsCard', () => {
 
       // Check for SVG icons (lucide-react renders as SVG elements)
       const icons = container.querySelectorAll('svg');
-      expect(icons.length).toBeGreaterThanOrEqual(6);
+      expect(icons.length).toBeGreaterThanOrEqual(4);
     });
 
     it('renders statistics in vertical list with borders', () => {
@@ -242,7 +182,7 @@ describe('ProjectStatsCard', () => {
       const { container } = render(<ProjectStatsCard projectId="project-1" />);
 
       const statsRows = container.querySelectorAll('.py-3');
-      expect(statsRows.length).toBe(6); // 6 statistics rows
+      expect(statsRows.length).toBe(4); // 4 statistics rows (status removed)
     });
   });
 
@@ -280,47 +220,6 @@ describe('ProjectStatsCard', () => {
       // Should render both dates even though they're the same
       const dateElements = screen.getAllByText('Jun 15, 2024');
       expect(dateElements.length).toBeGreaterThanOrEqual(2);
-    });
-  });
-
-  describe('Status Icon Rendering', () => {
-    it('renders CheckCircle icon for complete status', () => {
-      const completeProject: Project = { ...baseProject, status: 'complete' };
-      mockedUseProjects.mockReturnValue({
-        getProjectById: jest.fn().mockReturnValue(completeProject),
-      });
-
-      const { container } = render(<ProjectStatsCard projectId="project-1" />);
-
-      // CheckCircle icon is rendered with text-green-600 class
-      const greenIcon = container.querySelector('.text-green-600');
-      expect(greenIcon).toBeInTheDocument();
-    });
-
-    it('renders Play icon for running status', () => {
-      const runningProject: Project = { ...baseProject, status: 'running' };
-      mockedUseProjects.mockReturnValue({
-        getProjectById: jest.fn().mockReturnValue(runningProject),
-      });
-
-      const { container } = render(<ProjectStatsCard projectId="project-1" />);
-
-      // Play icon is rendered with text-blue-600 class
-      const blueIcon = container.querySelector('.text-blue-600');
-      expect(blueIcon).toBeInTheDocument();
-    });
-
-    it('renders Settings2 icon for setup status', () => {
-      const setupProject: Project = { ...baseProject, status: 'setup' };
-      mockedUseProjects.mockReturnValue({
-        getProjectById: jest.fn().mockReturnValue(setupProject),
-      });
-
-      const { container } = render(<ProjectStatsCard projectId="project-1" />);
-
-      // Settings2 icon is rendered with text-yellow-600 class
-      const yellowIcon = container.querySelector('.text-yellow-600');
-      expect(yellowIcon).toBeInTheDocument();
     });
   });
 });

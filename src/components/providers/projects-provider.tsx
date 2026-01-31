@@ -9,7 +9,7 @@ import {
   ReactNode,
 } from 'react';
 import { logger } from '@/lib/logger';
-import { Project, ProjectStatusCount, STATUS_ORDER } from '@/types/project';
+import { Project } from '@/types/project';
 import {
   fetchProjects,
   createProject as createProjectAPI,
@@ -29,7 +29,6 @@ interface ProjectsContextValue {
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => Promise<void>;
   getProjectById: (id: string) => Project | undefined;
-  getStatusCounts: () => ProjectStatusCount;
   addDataset: (projectId: string) => void;
 }
 
@@ -262,17 +261,6 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     [projects]
   );
 
-  const getStatusCounts = useCallback((): ProjectStatusCount => {
-    const initial = STATUS_ORDER.reduce((acc, status) => {
-      acc[status] = 0;
-      return acc;
-    }, {} as ProjectStatusCount);
-    return projects.reduce((acc, p) => {
-      acc[p.status]++;
-      return acc;
-    }, initial);
-  }, [projects]);
-
   const value: ProjectsContextValue = {
     projects,
     loading,
@@ -281,7 +269,6 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     updateProject,
     deleteProject,
     getProjectById,
-    getStatusCounts,
     addDataset,
   };
 

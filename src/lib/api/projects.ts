@@ -7,7 +7,7 @@ import { Project } from '@/types/project';
 import { mockProjects } from '@/lib/mock-data';
 import { logger } from '@/lib/logger';
 import { getRelativeTime } from '@/lib/utils/date-utils';
-import { getApiUrl, API_STATUS_MAP } from '@/lib/api/utils';
+import { getApiUrl } from '@/lib/api/utils';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RawProject = any;
@@ -80,7 +80,6 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
     logger.debug(
       {
         id: project.id,
-        status: project.status,
         file_count: project.file_count,
         created_at: project.created_at,
         updated_at: project.updated_at,
@@ -88,9 +87,6 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
       },
       'Raw project data from API'
     );
-
-    // Map API status to internal status
-    const status = API_STATUS_MAP[project.status] || 'setup';
 
     // Use last_activity.created_at for relative time calculation
     const lastActivityDate = project.last_activity?.created_at
@@ -102,7 +98,6 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
       id: project.id,
       name: project.name,
       description: project.description,
-      status,
       createdAt: parseDate(project.created_at),
       updatedAt: parseDate(project.updated_at),
       completedAt: undefined, // API doesn't provide this yet
@@ -186,7 +181,6 @@ export async function createProject(
       id: `mock-${Date.now()}`,
       name: data.name,
       description: data.description,
-      status: 'setup',
       createdAt: new Date(),
       updatedAt: new Date(),
       datasets: [],
@@ -227,9 +221,6 @@ export async function createProject(
     'Project created via API'
   );
 
-  // Map API status to internal status
-  const status = API_STATUS_MAP[project.status] || 'setup';
-
   // Use last_activity.created_at for relative time calculation
   const lastActivityDate = project.last_activity?.created_at
     ? parseDate(project.last_activity.created_at)
@@ -240,7 +231,6 @@ export async function createProject(
     id: project.id,
     name: project.name,
     description: project.description,
-    status,
     createdAt: parseDate(project.created_at),
     updatedAt: parseDate(project.updated_at),
     completedAt: undefined,

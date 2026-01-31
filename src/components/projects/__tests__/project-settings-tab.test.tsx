@@ -29,7 +29,6 @@ describe('ProjectSettingsTab', () => {
     id: 'project-1',
     name: 'Test Project',
     description: 'Test Description',
-    status: 'setup',
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-02'),
     datasetCount: 3,

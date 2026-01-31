@@ -17,7 +17,6 @@ describe('ProjectOverviewTab', () => {
           id: 'test-project-123',
           name: 'Test Project',
           description: 'Test description',
-          status: 'running' as const,
           createdAt: new Date('2024-01-01T00:00:00Z'),
           updatedAt: new Date('2024-01-01T00:00:00Z'),
         },
@@ -28,7 +27,6 @@ describe('ProjectOverviewTab', () => {
       updateProject: jest.fn(),
       deleteProject: jest.fn(),
       getProjectById: jest.fn(),
-      getStatusCounts: jest.fn(),
       addDataset: jest.fn(),
     });
   });

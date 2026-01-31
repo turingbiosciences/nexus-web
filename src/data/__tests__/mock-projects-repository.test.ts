@@ -39,7 +39,6 @@ describe('MockProjectsRepository', () => {
         expect(project).toHaveProperty('id');
         expect(project).toHaveProperty('name');
         expect(project).toHaveProperty('description');
-        expect(project).toHaveProperty('status');
         expect(project).toHaveProperty('createdAt');
         expect(project).toHaveProperty('updatedAt');
         expect(project).toHaveProperty('datasetCount');
@@ -110,14 +109,6 @@ describe('MockProjectsRepository', () => {
       expect(project.id).toBeDefined();
       expect(typeof project.id).toBe('string');
       expect(project.id.length).toBeGreaterThan(0);
-    });
-
-    it("sets initial status to 'setup'", async () => {
-      const project = await repository.create({
-        name: 'Test',
-        description: 'Test',
-      });
-      expect(project.status).toBe('setup');
     });
 
     it('initializes timestamps', async () => {

@@ -47,7 +47,6 @@ describe('ProjectCard', () => {
     id: 'test-project-1',
     name: 'Test Project',
     description: 'A test project description',
-    status: 'running',
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-15'),
     datasetCount: 5,
@@ -84,32 +83,6 @@ describe('ProjectCard', () => {
     const projectWithoutActivity = { ...baseProject, lastActivity: undefined };
     render(<ProjectCard project={projectWithoutActivity} />);
     expect(screen.getByText('No recent activity')).toBeInTheDocument();
-  });
-
-  it('renders complete status with correct styling', () => {
-    const completeProject: Project = { ...baseProject, status: 'complete' };
-    render(<ProjectCard project={completeProject} />);
-
-    const statusBadge = screen.getByText('Complete').parentElement;
-    expect(statusBadge).toHaveClass('bg-green-50', 'text-green-600');
-    expect(screen.getByText('Complete')).toBeInTheDocument();
-  });
-
-  it('renders running status with correct styling', () => {
-    render(<ProjectCard project={baseProject} />);
-
-    const statusBadge = screen.getByText('Running').parentElement;
-    expect(statusBadge).toHaveClass('bg-blue-50', 'text-blue-600');
-    expect(screen.getByText('Running')).toBeInTheDocument();
-  });
-
-  it('renders setup status with correct styling', () => {
-    const setupProject: Project = { ...baseProject, status: 'setup' };
-    render(<ProjectCard project={setupProject} />);
-
-    const statusBadge = screen.getByText('Setup').parentElement;
-    expect(statusBadge).toHaveClass('bg-yellow-50', 'text-yellow-600');
-    expect(screen.getByText('Setup')).toBeInTheDocument();
   });
 
   it('links to project detail page', () => {
@@ -156,25 +129,11 @@ describe('ProjectCard', () => {
     expect(card).toHaveClass('cursor-pointer');
   });
 
-  it('renders all status icons correctly', () => {
-    const { rerender } = render(
-      <ProjectCard project={{ ...baseProject, status: 'complete' }} />
-    );
-    expect(screen.getByText('Complete')).toBeInTheDocument();
-
-    rerender(<ProjectCard project={{ ...baseProject, status: 'running' }} />);
-    expect(screen.getByText('Running')).toBeInTheDocument();
-
-    rerender(<ProjectCard project={{ ...baseProject, status: 'setup' }} />);
-    expect(screen.getByText('Setup')).toBeInTheDocument();
-  });
-
   it('renders with minimum required fields only', () => {
     const minimalProject: Project = {
       id: 'minimal-1',
       name: 'Minimal Project',
       description: 'Minimal description',
-      status: 'setup',
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -183,7 +142,6 @@ describe('ProjectCard', () => {
 
     expect(screen.getByText('Minimal Project')).toBeInTheDocument();
     expect(screen.getByText('Minimal description')).toBeInTheDocument();
-    expect(screen.getByText('Setup')).toBeInTheDocument();
     expect(screen.getByText('0 datasets')).toBeInTheDocument();
     expect(screen.getByText('No recent activity')).toBeInTheDocument();
   });
