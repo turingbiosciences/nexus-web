@@ -1,5 +1,5 @@
-import { fetchProjects, createProject } from '../projects';
-import { mockProjects } from '@/lib/mock-data';
+import { fetchProjects, createProject, getDashboardStats } from '../projects';
+import { mockProjects, mockDashboardStats } from '@/lib/mock-data';
 
 describe('projects API', () => {
   const ORIGINAL_ENV = process.env;
@@ -283,6 +283,73 @@ describe('projects API', () => {
         createProject('test-token', { name: 'Test', description: 'Test' })
       ).rejects.toThrow(
         'Failed to create project: 500 Internal Server Error - Unknown error'
+      );
+    });
+  });
+
+  describe('getDashboardStats', () => {
+    it('returns mock data when in mock mode', async () => {
+      process.env.NEXT_PUBLIC_DATA_MODE = 'mock';
+
+      const result = await getDashboardStats('fake-token');
+
+      expect(result).toEqual(mockDashboardStats);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('throws error when NEXT_PUBLIC_TURING_API is missing', async () => {
+      process.env.NEXT_PUBLIC_DATA_MODE = 'api';
+      delete process.env.NEXT_PUBLIC_TURING_API;
+
+      await expect(getDashboardStats('test-token')).rejects.toThrow(
+        'Missing NEXT_PUBLIC_TURING_API environment variable'
+      );
+    });
+
+    it('fetches dashboard stats from API successfully', async () => {
+      process.env.NEXT_PUBLIC_DATA_MODE = 'api';
+      process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
+
+      const mockResponse = {
+        total_projects: 5,
+        total_ml_runs: 12,
+        algorithm_wins: { random_forest: 4 },
+        total_runtime_seconds: 5000,
+      };
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await getDashboardStats('test-token');
+
+      expect(result).toEqual(mockResponse);
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://api.example.com/dashboard/stats',
+        {
+          method: 'GET',
+          headers: {
+            Authorization: 'Bearer test-token',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    });
+
+    it('throws error when API request fails', async () => {
+      process.env.NEXT_PUBLIC_DATA_MODE = 'api';
+      process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        text: async () => 'Server error',
+      });
+
+      await expect(getDashboardStats('test-token')).rejects.toThrow(
+        'Failed to fetch dashboard stats: 500 Internal Server Error - Server error'
       );
     });
   });
