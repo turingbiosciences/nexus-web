@@ -3,7 +3,7 @@
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { DebugPanel } from '@/components/debug/debug-panel';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAccessToken } from '@/components/providers/token-provider';
 import { LoadingCard } from '@/components/ui/loading-card';
 import { SignInPrompt } from '@/components/auth/sign-in-prompt';
@@ -58,6 +58,7 @@ function StatBlock({
 export function HomePageClient() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const searchParams = useSearchParams();
+  const router = useRouter();
   const authError = searchParams.get('error');
   const { isAuthenticated, authLoading } = useAccessToken();
 
@@ -276,14 +277,14 @@ export function HomePageClient() {
                               <tr
                                 key={run.job_id}
                                 className="hover:bg-gray-50 cursor-pointer"
+                                onClick={() =>
+                                  router.push(`/projects/${run.project_id}`)
+                                }
                               >
                                 <td className="px-4 py-3">
-                                  <a
-                                    href={`/projects/${run.project_id}`}
-                                    className="text-sm font-medium text-blue-600 hover:text-blue-800"
-                                  >
+                                  <span className="text-sm font-medium text-blue-600">
                                     {run.project_name}
-                                  </a>
+                                  </span>
                                 </td>
                                 <td className="px-4 py-3 text-sm text-gray-900">
                                   {run.algorithm}
