@@ -3,9 +3,16 @@ import { render, screen } from '@testing-library/react';
 import { HomePageClient } from '@/components/home-page-client';
 
 // Mock Next.js hooks
+const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
   useSearchParams: jest.fn(() => ({
     get: jest.fn(() => null),
+  })),
+  useRouter: jest.fn(() => ({
+    push: mockPush,
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+    back: jest.fn(),
   })),
 }));
 
