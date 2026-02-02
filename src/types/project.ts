@@ -35,6 +35,22 @@ export interface ProjectResult {
   url?: string;
 }
 
+export interface DashboardRun {
+  job_id: string;
+  project_id: string;
+  project_name: string;
+  algorithm: string;
+  status:
+    | 'pending'
+    | 'queued'
+    | 'running'
+    | 'completed'
+    | 'failed'
+    | 'cancelled';
+  runtime_seconds: number;
+  created_at: string;
+}
+
 export interface DashboardStats {
   total_projects: number;
   total_ml_runs: number;
@@ -45,4 +61,5 @@ export interface DashboardStats {
     lightgbm: number;
   };
   total_runtime_seconds: number;
+  recent_runs: DashboardRun[];
 }

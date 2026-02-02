@@ -313,6 +313,35 @@ export const mockDashboardStats: DashboardStats = {
     lightgbm: 1,
   },
   total_runtime_seconds: 6300.5,
+  recent_runs: [
+    {
+      job_id: 'mock-run-1',
+      project_id: '1',
+      project_name: 'sJIA Metabolites Analysis',
+      algorithm: 'Random Forest',
+      status: 'completed',
+      runtime_seconds: 2700,
+      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      job_id: 'mock-run-2',
+      project_id: '4',
+      project_name: 'Cancer Cell Line Screening',
+      algorithm: 'XGBoost',
+      status: 'running',
+      runtime_seconds: 1380,
+      created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+    },
+    {
+      job_id: 'mock-run-3',
+      project_id: '5',
+      project_name: 'Diabetes Risk Prediction',
+      algorithm: 'LightGBM',
+      status: 'completed',
+      runtime_seconds: 4020,
+      created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ],
 };
 
 export function getProjectById(id: string): Project | undefined {
