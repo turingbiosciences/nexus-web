@@ -3,7 +3,7 @@
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { DebugPanel } from '@/components/debug/debug-panel';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAccessToken } from '@/components/providers/token-provider';
 import { LoadingCard } from '@/components/ui/loading-card';
 import { SignInPrompt } from '@/components/auth/sign-in-prompt';
@@ -16,46 +16,6 @@ import { Button } from '@/components/ui/button';
 import { useDashboardStats } from '@/lib/queries/dashboard-stats';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateTime } from '@/lib/utils/format-date';
-
-// Mock runs data - will be replaced with API data
-const MOCK_RUNS = [
-  {
-    id: 'run-1',
-    projectName: 'sJIA Metabolites Analysis',
-    projectId: '1',
-    algorithm: 'Random Forest',
-    status: 'completed' as const,
-    runtime: 45,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-  },
-  {
-    id: 'run-2',
-    projectName: 'Cancer Cell Line Screening',
-    projectId: '4',
-    algorithm: 'XGBoost',
-    status: 'running' as const,
-    runtime: 23,
-    createdAt: new Date(Date.now() - 30 * 60 * 1000),
-  },
-  {
-    id: 'run-3',
-    projectName: 'Diabetes Risk Prediction',
-    projectId: '5',
-    algorithm: 'LightGBM',
-    status: 'completed' as const,
-    runtime: 67,
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-  },
-  {
-    id: 'run-4',
-    projectName: 'COVID-19 Proteomics',
-    projectId: '2',
-    algorithm: 'CatBoost',
-    status: 'completed' as const,
-    runtime: 89,
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-  },
-];
 
 function formatRuntime(minutes: number): string {
   if (minutes < 60) return `${minutes}m`;
@@ -98,6 +58,7 @@ function StatBlock({
 export function HomePageClient() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const searchParams = useSearchParams();
+  const router = useRouter();
   const authError = searchParams.get('error');
   const { isAuthenticated, authLoading } = useAccessToken();
 
@@ -270,70 +231,96 @@ export function HomePageClient() {
                       </p>
                     </div>
                     <div className="flex-1 overflow-auto">
-                      <table className="w-full">
-                        <thead className="bg-gray-50 sticky top-0">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Project
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Algorithm
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Status
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Runtime
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Started
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                          {MOCK_RUNS.map((run) => (
-                            <tr
-                              key={run.id}
-                              className="hover:bg-gray-50 cursor-pointer"
-                            >
-                              <td className="px-4 py-3">
-                                <a
-                                  href={`/projects/${run.projectId}`}
-                                  className="text-sm font-medium text-blue-600 hover:text-blue-800"
-                                >
-                                  {run.projectName}
-                                </a>
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-900">
-                                {run.algorithm}
-                              </td>
-                              <td className="px-4 py-3">
-                                <span
-                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    run.status === 'completed'
-                                      ? 'bg-green-100 text-green-800'
-                                      : run.status === 'running'
-                                        ? 'bg-blue-100 text-blue-800'
-                                        : 'bg-gray-100 text-gray-800'
-                                  }`}
-                                >
-                                  {run.status === 'running' && (
-                                    <span className="w-2 h-2 mr-1.5 bg-blue-500 rounded-full animate-pulse" />
-                                  )}
-                                  {run.status.charAt(0).toUpperCase() +
-                                    run.status.slice(1)}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-600">
-                                {run.runtime}m
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-600">
-                                {formatDateTime(run.createdAt)}
-                              </td>
-                            </tr>
+                      {statsLoading ? (
+                        <div className="p-4 space-y-3">
+                          {[1, 2, 3].map((i) => (
+                            <div key={i} className="flex gap-4">
+                              <Skeleton className="h-6 w-48" />
+                              <Skeleton className="h-6 w-24" />
+                              <Skeleton className="h-6 w-20" />
+                              <Skeleton className="h-6 w-16" />
+                              <Skeleton className="h-6 w-32" />
+                            </div>
                           ))}
-                        </tbody>
-                      </table>
+                        </div>
+                      ) : !stats?.recent_runs?.length ? (
+                        <div className="text-center py-12 text-gray-500">
+                          <Play className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                          <p className="text-sm">No ML runs yet</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Start a training run from a project
+                          </p>
+                        </div>
+                      ) : (
+                        <table className="w-full">
+                          <thead className="bg-gray-50 sticky top-0">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Project
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Algorithm
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Runtime
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Started
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200">
+                            {stats.recent_runs.map((run) => (
+                              <tr
+                                key={run.job_id}
+                                className="hover:bg-gray-50 cursor-pointer"
+                                onClick={() =>
+                                  router.push(`/projects/${run.project_id}`)
+                                }
+                              >
+                                <td className="px-4 py-3">
+                                  <span className="text-sm font-medium text-blue-600">
+                                    {run.project_name}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-900">
+                                  {run.algorithm}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span
+                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                      run.status === 'completed'
+                                        ? 'bg-green-100 text-green-800'
+                                        : run.status === 'running'
+                                          ? 'bg-blue-100 text-blue-800'
+                                          : run.status === 'failed'
+                                            ? 'bg-red-100 text-red-800'
+                                            : 'bg-gray-100 text-gray-800'
+                                    }`}
+                                  >
+                                    {run.status === 'running' && (
+                                      <span className="w-2 h-2 mr-1.5 bg-blue-500 rounded-full animate-pulse" />
+                                    )}
+                                    {run.status.charAt(0).toUpperCase() +
+                                      run.status.slice(1)}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-600">
+                                  {formatRuntime(
+                                    Math.round(run.runtime_seconds / 60)
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-600">
+                                  {formatDateTime(new Date(run.created_at))}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
                     </div>
                   </div>
                 </div>
