@@ -79,7 +79,7 @@ async function testTokenExchange() {
   console.log('Request Details:');
   console.log(`  URL: ${tokenUrl}`);
   console.log(`  Method: POST`);
-  console.log(`  Authorization: Basic ${credentials.slice(0, 20)}...`);
+  console.log(`  Authorization: Basic [REDACTED]`);
   console.log(`  Content-Type: application/x-www-form-urlencoded`);
   console.log('\n');
 
