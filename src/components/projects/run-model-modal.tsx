@@ -86,7 +86,7 @@ export function RunModelModal({
               onChange={(e) => setSelectedDatasetId(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             >
-              <option value="" className="text-gray-500">
+              <option value="" className="text-gray-600">
                 Choose a dataset...
               </option>
               {datasets.map((dataset) => (
@@ -117,7 +117,7 @@ export function RunModelModal({
             value={targetColumn}
             onChange={(e) => setTargetColumn(e.target.value)}
             placeholder="Enter target column name"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-600"
             disabled={!selectedDatasetId}
           />
           <p className="mt-1 text-xs text-gray-500">
@@ -139,7 +139,7 @@ export function RunModelModal({
             value={excludeColumns}
             onChange={(e) => setExcludeColumns(e.target.value)}
             placeholder="e.g., ID, timestamp, patient_name"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-600"
             disabled={!selectedDatasetId}
           />
           <p className="mt-1 text-xs text-gray-500">
