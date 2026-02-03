@@ -11,7 +11,14 @@ import { useProjects } from '@/components/providers/projects-provider';
 import { useState } from 'react';
 import { NewProjectDialog } from '@/components/projects/new-project-dialog';
 import { logger } from '@/lib/logger';
-import { Plus, FolderOpen, Play, Trophy, Clock } from 'lucide-react';
+import {
+  Plus,
+  FolderOpen,
+  Play,
+  Trophy,
+  Clock,
+  AlertTriangle,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDashboardStats } from '@/lib/queries/dashboard-stats';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -68,7 +75,29 @@ export function HomePageClient() {
     error: projectsError,
   } = useProjects();
 
-  const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const {
+    data: stats,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useDashboardStats();
+
+  // Debug: Log stats to investigate missing recent runs
+  // This will help identify if the API is returning total_ml_runs > 0 but empty recent_runs
+  if (
+    stats &&
+    !statsLoading &&
+    stats.total_ml_runs > 0 &&
+    (!stats.recent_runs || stats.recent_runs.length === 0)
+  ) {
+    logger.warn(
+      {
+        total_ml_runs: stats.total_ml_runs,
+        recentRunsLength: stats.recent_runs?.length,
+        stats,
+      },
+      'MISMATCH: Stats show total_ml_runs > 0 but recent_runs is empty'
+    );
+  }
 
   const isLoading = authLoading || projectsLoading;
 
@@ -124,7 +153,7 @@ export function HomePageClient() {
           ) : (
             <>
               {/* Projects Error Alert */}
-              {projectsError && (
+              {(projectsError || statsError) && (
                 <div className="alert-error mb-6">
                   <div className="flex">
                     <div className="flex-shrink-0">
@@ -135,17 +164,26 @@ export function HomePageClient() {
                       >
                         <path
                           fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L10 8.586 8.707 7.293z"
                           clipRule="evenodd"
                         />
                       </svg>
                     </div>
                     <div className="ml-3">
                       <h3 className="text-sm font-medium text-red-800">
-                        Failed to Load Projects
+                        Failed to Load Data
                       </h3>
                       <div className="mt-2 text-sm text-red-700">
-                        <p>{projectsError.message}</p>
+                        {projectsError && (
+                          <p>Projects: {projectsError.message}</p>
+                        )}
+                        {statsError && <p>Stats: {statsError.message}</p>}
+                        {statsError && (
+                          <p className="mt-1 text-xs">
+                            Please check if the backend API is running and
+                            reachable.
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -230,6 +268,18 @@ export function HomePageClient() {
                         All training runs across projects
                       </p>
                     </div>
+                    {/* Warning if stats exist but runs are missing */}
+                    {stats &&
+                      stats.total_ml_runs > 0 &&
+                      !stats.recent_runs?.length && (
+                        <div className="bg-yellow-50 p-2 border-b border-yellow-100 flex items-center gap-2 text-xs text-yellow-800 px-4">
+                          <AlertTriangle className="h-3 w-3" />
+                          <span>
+                            Note: {stats.total_ml_runs} runs have been recorded,
+                            but recent runs list is empty from API.
+                          </span>
+                        </div>
+                      )}
                     <div className="flex-1 overflow-auto">
                       {statsLoading ? (
                         <div className="p-4 space-y-3">
