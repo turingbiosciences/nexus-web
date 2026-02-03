@@ -227,6 +227,75 @@ describe('HomePageClient', () => {
 
     render(<HomePageClient />);
 
-    expect(screen.getByText('Failed to Load Projects')).toBeInTheDocument();
+    expect(screen.getByText('Failed to Load Data')).toBeInTheDocument();
+    expect(
+      screen.getByText(/Projects: Failed to load projects/)
+    ).toBeInTheDocument();
+  });
+
+  it('sorts projects by updated date (descending)', () => {
+    mockedUseAccessToken.mockReturnValue({
+      isAuthenticated: true,
+      authLoading: false,
+      accessToken: 'mock-token',
+      refreshToken: jest.fn(),
+    });
+
+    const mockProjectsList = [
+      {
+        id: '1',
+        name: 'Old Project',
+        updatedAt: new Date('2025-01-01'),
+        datasetCount: 0,
+      },
+      {
+        id: '2',
+        name: 'New Project',
+        updatedAt: new Date('2025-12-31'),
+        datasetCount: 0,
+      },
+      {
+        id: '3',
+        name: 'Mid Project',
+        updatedAt: new Date('2025-06-15'),
+        datasetCount: 0,
+      },
+    ];
+
+    mockedUseProjects.mockReturnValue({
+      projects: mockProjectsList,
+      loading: false,
+      error: null,
+      getProjectById: jest.fn(),
+      addDataset: jest.fn(),
+    });
+
+    render(<HomePageClient />);
+
+    const projectElements = screen.getAllByRole('link');
+    /* 
+      We assume the project list items are links.
+      The mock projects have names "Old Project", "New Project", "Mid Project".
+      Expected order: New (Dec), Mid (Jun), Old (Jan).
+    */
+
+    // We need to look for the project names within the rendered links
+    // The screen.getAllByRole('link') might grab other links, so let's check specifically for project items.
+    // The component renders project names in a div with font-medium.
+
+    const projectNames = screen
+      .getAllByText(/Project/i)
+      .map((el) => el.textContent);
+
+    // Filter to just our project names (filtering out titles like 'Total Projects')
+    const relevantNames = projectNames.filter((name) =>
+      ['Old Project', 'New Project', 'Mid Project'].includes(name || '')
+    );
+
+    expect(relevantNames).toEqual([
+      'New Project',
+      'Mid Project',
+      'Old Project',
+    ]);
   });
 });

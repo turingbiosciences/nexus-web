@@ -75,6 +75,11 @@ export function HomePageClient() {
     error: projectsError,
   } = useProjects();
 
+  // Sort projects by most recently updated first
+  const sortedProjects = [...projects].sort(
+    (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+  );
+
   const {
     data: stats,
     isLoading: statsLoading,
@@ -408,7 +413,7 @@ export function HomePageClient() {
                         </div>
                       ) : (
                         <ul className="space-y-2">
-                          {projects.map((project) => (
+                          {sortedProjects.map((project) => (
                             <li key={project.id}>
                               <a
                                 href={`/projects/${project.id}`}
