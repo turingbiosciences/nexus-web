@@ -4,7 +4,11 @@ import { LogIn, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAccessToken } from '@/components/providers/token-provider';
 
-export function AuthButton() {
+interface AuthButtonProps {
+  size?: 'default' | 'sm' | 'lg' | 'icon';
+}
+
+export function AuthButton({ size = 'default' }: AuthButtonProps) {
   const { isAuthenticated, authLoading: isLoading } = useAccessToken();
 
   const handleSignIn = () => {
@@ -20,7 +24,7 @@ export function AuthButton() {
 
   if (isLoading) {
     return (
-      <Button disabled>
+      <Button disabled size={size}>
         <User className="mr-2 h-4 w-4" />
         Loading...
       </Button>
@@ -29,7 +33,7 @@ export function AuthButton() {
 
   if (isAuthenticated) {
     return (
-      <Button onClick={handleSignOut} variant="outline">
+      <Button onClick={handleSignOut} variant="outline" size={size}>
         <LogOut className="mr-2 h-4 w-4" />
         Sign Out
       </Button>
@@ -37,7 +41,7 @@ export function AuthButton() {
   }
 
   return (
-    <Button onClick={handleSignIn}>
+    <Button onClick={handleSignIn} size={size}>
       <LogIn className="mr-2 h-4 w-4" />
       Sign In
     </Button>
