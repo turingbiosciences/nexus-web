@@ -84,7 +84,7 @@ export function RunModelModal({
               id="dataset-select"
               value={selectedDatasetId}
               onChange={(e) => setSelectedDatasetId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-xs"
             >
               <option value="" className="text-gray-600">
                 Choose a dataset...
@@ -92,7 +92,11 @@ export function RunModelModal({
               {datasets.map((dataset) => (
                 <option key={dataset.id} value={dataset.id}>
                   {dataset.filename} ({(dataset.size / 1024 / 1024).toFixed(2)}{' '}
-                  MB) - {dataset.uploadedAt.toLocaleDateString()}
+                  MB) - {dataset.uploadedAt.toLocaleDateString()}{' '}
+                  {dataset.uploadedAt.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
                 </option>
               ))}
             </select>

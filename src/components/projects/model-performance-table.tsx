@@ -19,24 +19,24 @@ export function ModelPerformanceTable({
   } | null>(null);
 
   return (
-    <div className="mb-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="mb-8">
+      <h3 className="text-lg font-semibold text-gray-900 mb-1">
         Model Performance (AUROC)
       </h3>
       <div className="overflow-x-auto">
         <table className="min-w-full border border-gray-200 rounded-lg">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 border-b">
+              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900 border-b">
                 Model
               </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 border-b">
+              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900 border-b">
                 AUROC Score
               </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 border-b">
+              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900 border-b">
                 Best Configuration
               </th>
-              <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900 border-b"></th>
+              <th className="px-4 py-2 text-center text-sm font-semibold text-gray-900 border-b"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -100,10 +100,10 @@ export function ModelPerformanceTable({
                     key={modelName}
                     className="hover:bg-gray-50 transition-colors"
                   >
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                    <td className="px-4 py-1.5 text-sm text-gray-900">
                       {formattedModelName}
                     </td>
-                    <td className="px-4 py-3 text-sm">
+                    <td className="px-4 py-1.5 text-sm">
                       <span
                         className={
                           auroc >= 0.9
@@ -116,13 +116,13 @@ export function ModelPerformanceTable({
                         {Number(auroc).toFixed(4)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 font-mono">
+                    <td className="px-4 py-1.5 text-sm text-gray-600 font-mono">
                       {config.best_config || 'N/A'}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-1.5 text-center">
                       {modelParameters && (
                         <Button
-                          size="sm"
+                          size="xs"
                           variant="outline"
                           onClick={() =>
                             setSelectedModel({

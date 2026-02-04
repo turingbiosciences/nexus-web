@@ -16,6 +16,8 @@ import {
   formatTooltipValue,
   getChartColor,
 } from '@/lib/chart-config';
+import { Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface FeatureComparisonChartProps {
   data: Record<string, unknown>;
@@ -98,6 +100,33 @@ export function FeatureComparisonChart({ data }: FeatureComparisonChartProps) {
     );
   }
 
+  const handleExportCSV = () => {
+    if (chartData.length === 0) return;
+
+    const headers = [
+      'Feature',
+      ...modelNames.map((m) => m.replace(/_/g, ' ')),
+    ].join(',');
+    const rows = chartData.map((row) => {
+      const values = [
+        `"${row.name}"`,
+        ...modelNames.map((m) => ((row[m] as number) ?? 0).toFixed(4)),
+      ];
+      return values.join(',');
+    });
+
+    const csvContent = [headers, ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'feature_comparison.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (chartData.length === 0 || modelNames.length === 0) {
     return (
       <div className="border rounded-lg p-4 bg-white">
@@ -111,9 +140,20 @@ export function FeatureComparisonChart({ data }: FeatureComparisonChartProps) {
 
   return (
     <div className="border rounded-lg p-4 bg-white">
-      <h4 className="font-semibold text-gray-900 mb-2">
-        Feature Comparison Across Models
-      </h4>
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="font-semibold text-gray-900">
+          Feature Comparison Across Models
+        </h4>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExportCSV}
+          className="flex items-center gap-2 h-8"
+        >
+          <Download className="h-4 w-4" />
+          Export CSV
+        </Button>
+      </div>
       <p className="text-xs text-gray-500 mb-4">
         Showing the union of the top {TOP_N_PER_MODEL} features from each
         algorithm. Values are normalized (0–100). Features not ranked by an
