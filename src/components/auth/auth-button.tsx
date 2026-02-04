@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useAccessToken } from '@/components/providers/token-provider';
 
 interface AuthButtonProps {
-  size?: 'default' | 'sm' | 'lg' | 'icon';
+  size?: 'default' | 'sm' | 'xs' | 'lg' | 'icon';
 }
 
 export function AuthButton({ size = 'default' }: AuthButtonProps) {

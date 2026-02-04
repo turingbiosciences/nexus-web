@@ -7,11 +7,11 @@ export function Header() {
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="container-page">
-        <div className="flex justify-between items-center py-1">
+        <div className="flex justify-between items-center py-0.5">
           <div className="flex items-center">
-            <Logo className="h-8 w-auto" />
+            <Logo className="h-5 w-auto" />
           </div>
-          <AuthButton size="sm" />
+          <AuthButton size="xs" />
         </div>
       </div>
     </header>
