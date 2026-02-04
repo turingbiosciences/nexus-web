@@ -33,7 +33,6 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
     });
   }, [resultsQuery.data]);
   const resultsLoading = resultsQuery.isLoading;
-  const [showRawData, setShowRawData] = useState(false);
   const [expandedResults, setExpandedResults] = useState<Set<string>>(
     new Set()
   );
@@ -138,8 +137,8 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
 
   return (
     <div className="card">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="card-title">Analysis Results</h3>
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="card-title mb-0">Analysis Results</h3>
         {results.length > 0 && (
           <Button
             size="sm"

@@ -50,7 +50,6 @@ describe('AggregateFeatureImportanceTable', () => {
       expect(screen.getByText('Mean Importance')).toBeInTheDocument();
       expect(screen.getByText('Max Importance')).toBeInTheDocument();
       expect(screen.getByText('Min Importance')).toBeInTheDocument();
-      expect(screen.getByText('Std Dev')).toBeInTheDocument();
       expect(screen.getByText('# Models')).toBeInTheDocument();
       expect(screen.getByText('Models')).toBeInTheDocument();
     });
@@ -85,6 +84,21 @@ describe('AggregateFeatureImportanceTable', () => {
 
       expect(
         screen.getByText(/Top 2 features ranked by weighted score/)
+      ).toBeInTheDocument();
+    });
+
+    it('shows weighted score calculation explanation', () => {
+      render(<AggregateFeatureImportanceTable data={mockData} />);
+
+      expect(
+        screen.getByText(
+          /Weighted Score = Σ \(Model Importance × Model AUROC\)/
+        )
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /This metric rewards features that are consistently important/
+        )
       ).toBeInTheDocument();
     });
   });

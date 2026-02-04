@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
+import { Info } from 'lucide-react';
 import {
   parseFeatureImportance,
   FeatureImportanceData,
@@ -20,6 +21,32 @@ import {
   formatTooltipValue,
   getChartColor,
 } from '@/lib/chart-config';
+
+const ALGORITHM_MEASURES: Record<
+  string,
+  { label: string; description: string }
+> = {
+  random_forest: {
+    label: 'Gini Importance (MDI)',
+    description:
+      'Measures the total reduction of "impurity" (Gini criterion) brought by a feature across all trees.',
+  },
+  xgboost: {
+    label: 'Weight (Frequency)',
+    description:
+      'The number of times a feature is used to split the data across all trees.',
+  },
+  lightgbm: {
+    label: 'Split Count',
+    description:
+      'Counts the raw number of times a feature was used for a split.',
+  },
+  catboost: {
+    label: 'PredictionValuesChange',
+    description:
+      'Measures how much on average the prediction changes when the feature value changes.',
+  },
+};
 
 interface FeatureImportanceChartProps {
   modelName: string;
@@ -59,9 +86,27 @@ export function FeatureImportanceChart({
   return (
     <div className="border rounded-lg p-4 bg-white">
       <div className="mb-4">
-        <h4 className="font-semibold text-gray-900 capitalize">
-          {modelName.replace(/_/g, ' ')}
-        </h4>
+        <div className="flex items-center gap-2">
+          <h4 className="font-semibold text-gray-900 capitalize">
+            {modelName.replace(/_/g, ' ')}
+          </h4>
+          {(() => {
+            const measure = ALGORITHM_MEASURES[modelName.toLowerCase()];
+            if (!measure) return null;
+            return (
+              <div className="group relative">
+                <Info className="h-4 w-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
+                <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl z-50">
+                  <p className="font-bold mb-1">{measure.label}</p>
+                  <p className="opacity-90 leading-relaxed">
+                    {measure.description}
+                  </p>
+                  <div className="absolute left-1.5 -bottom-1 border-4 border-transparent border-t-gray-900" />
+                </div>
+              </div>
+            );
+          })()}
+        </div>
         <p className="text-sm text-gray-600 mt-1">
           Best config: <span className="font-mono text-xs">{bestConfig}</span>
         </p>

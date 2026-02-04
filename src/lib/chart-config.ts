@@ -11,36 +11,46 @@ export const CHART_COLORS = {
    * Blue gradient for single-model feature importance (light to dark)
    */
   blueGradient: [
-    '#3b82f6', // blue-600
+    '#1e3a8a', // blue-900
+    '#1e40af', // blue-800
+    '#1d4ed8', // blue-700
+    '#2563eb', // blue-600
+    '#3b82f6', // blue-500
     '#60a5fa', // blue-400
     '#93c5fd', // blue-300
     '#bfdbfe', // blue-200
     '#dbeafe', // blue-100
+    '#eff6ff', // blue-50
   ],
 
   /**
    * Reverse blue gradient (light to dark for normalized charts)
    */
   blueGradientReverse: [
+    '#eff6ff', // blue-50
+    '#dbeafe', // blue-100
+    '#bfdbfe', // blue-200
     '#93c5fd', // blue-300
     '#60a5fa', // blue-400
-    '#3b82f6', // blue-600
-    '#2563eb', // blue-700
-    '#1d4ed8', // blue-800
+    '#3b82f6', // blue-500
+    '#2563eb', // blue-600
+    '#1d4ed8', // blue-700
+    '#1e40af', // blue-800
+    '#1e3a8a', // blue-900
   ],
 
   /**
    * Multi-color palette for comparing multiple models
    */
   multiModel: [
-    '#3b82f6', // blue
-    '#10b981', // green
-    '#f59e0b', // amber
-    '#ef4444', // red
-    '#8b5cf6', // purple
-    '#ec4899', // pink
-    '#06b6d4', // cyan
-    '#f97316', // orange
+    '#1e3a8a', // blue-900
+    '#3b82f6', // blue-500
+    '#06b6d4', // cyan-500
+    '#6366f1', // indigo-500
+    '#8b5cf6', // purple-500
+    '#0ea5e9', // sky-500
+    '#4f46e5', // indigo-600
+    '#2dd4bf', // teal-400
   ],
 } as const;
 

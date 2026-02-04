@@ -37,14 +37,19 @@ export function AggregateFeatureImportanceTable({
   }
 
   return (
-    <div className="border rounded-lg p-4 bg-white">
-      <div className="mb-4">
+    <div className="border rounded-lg px-4 py-2 bg-white">
+      <div className="mb-2">
         <h4 className="font-semibold text-gray-900">
           Aggregate Feature Importance
         </h4>
         <p className="text-xs text-gray-500 mt-1">
           Top {top_features.length} features ranked by weighted score across all
           models
+        </p>
+        <p className="text-[10px] text-gray-400 mt-1 italic max-w-2xl">
+          * Weighted Score = Σ (Model Importance × Model AUROC) / Σ Model
+          AUROCs. This metric rewards features that are consistently important
+          across the highest-performing models.
         </p>
       </div>
 
@@ -69,9 +74,6 @@ export function AggregateFeatureImportanceTable({
               </th>
               <th className="text-right py-2 px-3 font-semibold text-gray-700">
                 Min Importance
-              </th>
-              <th className="text-right py-2 px-3 font-semibold text-gray-700">
-                Std Dev
               </th>
               <th className="text-center py-2 px-3 font-semibold text-gray-700">
                 # Models
@@ -102,9 +104,6 @@ export function AggregateFeatureImportanceTable({
                 </td>
                 <td className="py-2 px-3 text-right text-gray-700">
                   {feature.min_importance.toFixed(4)}
-                </td>
-                <td className="py-2 px-3 text-right text-gray-700">
-                  {feature.std_importance.toFixed(4)}
                 </td>
                 <td className="py-2 px-3 text-center text-gray-700">
                   {feature.num_models}

@@ -322,6 +322,9 @@ export const mockDashboardStats: DashboardStats = {
       status: 'completed',
       runtime_seconds: 2700,
       created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      ended_at: new Date(
+        Date.now() - 2 * 60 * 60 * 1000 + 2700 * 1000
+      ).toISOString(),
     },
     {
       job_id: 'mock-run-2',
@@ -340,6 +343,9 @@ export const mockDashboardStats: DashboardStats = {
       status: 'completed',
       runtime_seconds: 4020,
       created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      ended_at: new Date(
+        Date.now() - 24 * 60 * 60 * 1000 + 4020 * 1000
+      ).toISOString(),
     },
   ],
 };

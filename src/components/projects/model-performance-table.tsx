@@ -41,39 +41,54 @@ export function ModelPerformanceTable({
           </thead>
           <tbody className="divide-y divide-gray-200">
             {Object.entries(modelConfigs)
-              .filter(
-                ([, config]) =>
-                  config.best_config &&
-                  config.configs?.[config.best_config]?.roc !== undefined
-              )
-              .sort(
-                ([, a], [, b]) =>
-                  ((b.best_config && b.configs?.[b.best_config]?.roc) || 0) -
-                  ((a.best_config && a.configs?.[a.best_config]?.roc) || 0)
-              )
+              .filter(([, config]) => {
+                const hasRoc =
+                  config.best_config_metrics?.roc !== undefined ||
+                  config.test_metrics?.roc !== undefined ||
+                  (config.best_config &&
+                    config.configs?.[config.best_config]?.roc !== undefined);
+                return hasRoc;
+              })
+              .sort(([, a], [, b]) => {
+                const rocA =
+                  a.best_config_metrics?.roc ??
+                  a.test_metrics?.roc ??
+                  (a.best_config && a.configs?.[a.best_config]?.roc) ??
+                  0;
+                const rocB =
+                  b.best_config_metrics?.roc ??
+                  b.test_metrics?.roc ??
+                  (b.best_config && b.configs?.[b.best_config]?.roc) ??
+                  0;
+                return Number(rocB) - Number(rocA);
+              })
               .slice(0, 10)
               .map(([modelName, config]) => {
                 const rocValue =
-                  config.best_config &&
-                  config.configs?.[config.best_config]?.roc;
-                console.log(`Model: ${modelName}`);
-                console.log(`  best_config: ${config.best_config}`);
-                console.log(`  Full config object:`, config);
-                console.log(
-                  `  ROC raw value:`,
-                  rocValue,
-                  'type:',
-                  typeof rocValue
-                );
+                  config.best_config_metrics?.roc ??
+                  config.test_metrics?.roc ??
+                  (config.best_config &&
+                    config.configs?.[config.best_config]?.roc);
+
                 const auroc = Number(rocValue) || 0;
                 const formattedModelName = modelName
                   .split('_')
                   .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
                   .join(' ');
 
-                // Get model parameters from the best config
-                let modelParameters: Record<string, unknown> | null = null;
-                if (config.best_config && config.configs) {
+                // Get model parameters from the best config or metrics
+                let modelParameters: Record<string, unknown> | null =
+                  (config.best_config_metrics?.params as Record<
+                    string,
+                    unknown
+                  >) ||
+                  (config.best_config_metrics?.model_parameters as Record<
+                    string,
+                    unknown
+                  >) ||
+                  null;
+
+                if (!modelParameters && config.best_config && config.configs) {
                   const bestConfigData = config.configs[config.best_config];
                   if (bestConfigData?.model_parameters) {
                     modelParameters = bestConfigData.model_parameters;

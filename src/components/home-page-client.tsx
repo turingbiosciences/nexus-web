@@ -23,6 +23,16 @@ import { Button } from '@/components/ui/button';
 import { useDashboardStats } from '@/lib/queries/dashboard-stats';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateTime } from '@/lib/utils/format-date';
+import { DashboardRun } from '@/types/project';
+
+function getRunEndTime(run: DashboardRun): string {
+  if (run.ended_at) return formatDateTime(new Date(run.ended_at));
+  if (run.status === 'completed' || run.status === 'failed') {
+    const startTime = new Date(run.created_at).getTime();
+    return formatDateTime(new Date(startTime + run.runtime_seconds * 1000));
+  }
+  return '-';
+}
 
 function formatRuntime(minutes: number): string {
   if (minutes < 60) return `${minutes}m`;
@@ -314,9 +324,6 @@ export function HomePageClient() {
                                 Project
                               </th>
                               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Algorithm
-                              </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Status
                               </th>
                               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -324,6 +331,9 @@ export function HomePageClient() {
                               </th>
                               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Started
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Ended
                               </th>
                             </tr>
                           </thead>
@@ -340,9 +350,6 @@ export function HomePageClient() {
                                   <span className="text-sm font-medium text-blue-600">
                                     {run.project_name}
                                   </span>
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-900">
-                                  {run.algorithm}
                                 </td>
                                 <td className="px-4 py-3">
                                   <span
@@ -370,6 +377,9 @@ export function HomePageClient() {
                                 </td>
                                 <td className="px-4 py-3 text-sm text-gray-600">
                                   {formatDateTime(new Date(run.created_at))}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-600">
+                                  {getRunEndTime(run)}
                                 </td>
                               </tr>
                             ))}
