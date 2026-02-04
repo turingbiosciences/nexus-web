@@ -4,6 +4,13 @@ import { ProjectResultsTab } from '../project-results-tab';
 import { useAccessToken } from '@/components/providers/token-provider';
 
 // Mock dependencies
+jest.mock('@/components/ui/toast-provider', () => ({
+  useToast: jest.fn(() => ({
+    push: jest.fn(),
+    toasts: [],
+    dismiss: jest.fn(),
+  })),
+}));
 jest.mock('@/components/providers/token-provider');
 jest.mock('@tanstack/react-query', () => ({
   ...jest.requireActual('@tanstack/react-query'),
