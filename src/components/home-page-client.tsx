@@ -23,6 +23,16 @@ import { Button } from '@/components/ui/button';
 import { useDashboardStats } from '@/lib/queries/dashboard-stats';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateTime } from '@/lib/utils/format-date';
+import { DashboardRun } from '@/types/project';
+
+function getRunEndTime(run: DashboardRun): string {
+  if (run.ended_at) return formatDateTime(new Date(run.ended_at));
+  if (run.status === 'completed' || run.status === 'failed') {
+    const startTime = new Date(run.created_at).getTime();
+    return formatDateTime(new Date(startTime + run.runtime_seconds * 1000));
+  }
+  return '-';
+}
 
 function formatRuntime(minutes: number): string {
   if (minutes < 60) return `${minutes}m`;
@@ -369,17 +379,7 @@ export function HomePageClient() {
                                   {formatDateTime(new Date(run.created_at))}
                                 </td>
                                 <td className="px-4 py-3 text-sm text-gray-600">
-                                  {run.ended_at
-                                    ? formatDateTime(new Date(run.ended_at))
-                                    : run.status === 'completed' ||
-                                        run.status === 'failed'
-                                      ? formatDateTime(
-                                          new Date(
-                                            new Date(run.created_at).getTime() +
-                                              run.runtime_seconds * 1000
-                                          )
-                                        )
-                                      : '-'}
+                                  {getRunEndTime(run)}
                                 </td>
                               </tr>
                             ))}
