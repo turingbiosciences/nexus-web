@@ -25,7 +25,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "Starting DigitalOcean App Platform deployment..."
-          DEPLOY_OUTPUT="$(doctl app update "$DO_APP_ID" --force-rebuild 2>&1)" || {
+          DEPLOY_OUTPUT="$(doctl apps create-deployment "$DO_APP_ID" --force-rebuild 2>&1)" || {
             echo "Deployment command failed. doctl output:"
             echo "$DEPLOY_OUTPUT"
             exit 1
