@@ -58,7 +58,7 @@ describe('FeatureImportanceSection', () => {
   });
 
   describe('Edge Cases', () => {
-    it('renders nothing for models without best_config', () => {
+    it('renders feature importance chart with N/A even without best_config if feature_importance is present', () => {
       const configWithoutBest = {
         ModelA: {
           best_config: undefined,
@@ -74,11 +74,12 @@ describe('FeatureImportanceSection', () => {
       );
 
       expect(
-        screen.queryByTestId('feature-importance-chart')
-      ).not.toBeInTheDocument();
+        screen.getByTestId('feature-importance-chart')
+      ).toBeInTheDocument();
+      expect(screen.getByText(/ModelA - N\/A/)).toBeInTheDocument();
     });
 
-    it('renders nothing for models without configs', () => {
+    it('renders feature importance charts even without configs if feature_importance is present', () => {
       const configWithoutConfigs = {
         ModelA: {
           best_config: 'config1',
@@ -96,8 +97,9 @@ describe('FeatureImportanceSection', () => {
       );
 
       expect(
-        screen.queryByTestId('feature-importance-chart')
-      ).not.toBeInTheDocument();
+        screen.getByTestId('feature-importance-chart')
+      ).toBeInTheDocument();
+      expect(screen.getByText(/ModelA - config1/)).toBeInTheDocument();
     });
 
     it('renders nothing for models without feature_importance', () => {
@@ -144,7 +146,7 @@ describe('FeatureImportanceSection', () => {
       ).not.toBeInTheDocument();
     });
 
-    it("renders nothing for models when config data doesn't exist", () => {
+    it('renders feature importance charts even if best_config is nonexistent if feature_importance is present', () => {
       const configWithMissingConfigData = {
         ModelA: {
           best_config: 'nonexistent',
@@ -162,8 +164,9 @@ describe('FeatureImportanceSection', () => {
       );
 
       expect(
-        screen.queryByTestId('feature-importance-chart')
-      ).not.toBeInTheDocument();
+        screen.getByTestId('feature-importance-chart')
+      ).toBeInTheDocument();
+      expect(screen.getByText(/ModelA - nonexistent/)).toBeInTheDocument();
     });
   });
 

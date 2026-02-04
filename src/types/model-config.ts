@@ -17,6 +17,7 @@ export interface ModelConfigData {
  */
 export interface ModelConfig {
   best_config?: string;
+  best_config_metrics?: ModelConfigData;
   test_metrics?: {
     roc?: number;
     [key: string]: unknown;

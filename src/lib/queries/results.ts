@@ -12,8 +12,9 @@ interface UseResultsOptions {
 
 interface ApiResult {
   id: string;
-  name: string;
-  type: string;
+  name?: string;
+  type?: string;
+  result_type?: string;
   created_at: string;
   size?: number;
   url?: string;
@@ -29,8 +30,8 @@ function transformResults(response: ApiResponse): ProjectResult[] {
 
   return items.map((r) => ({
     id: r.id,
-    name: r.name,
-    type: r.type,
+    name: r.name || 'Analysis Result',
+    type: r.type || r.result_type || 'Unknown',
     createdAt: new Date(r.created_at),
     size: r.size,
     url: r.url,
