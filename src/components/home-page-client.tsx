@@ -314,9 +314,6 @@ export function HomePageClient() {
                                 Project
                               </th>
                               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Algorithm
-                              </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Status
                               </th>
                               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -340,9 +337,6 @@ export function HomePageClient() {
                                   <span className="text-sm font-medium text-blue-600">
                                     {run.project_name}
                                   </span>
-                                </td>
-                                <td className="px-4 py-3 text-sm text-gray-900">
-                                  {run.algorithm}
                                 </td>
                                 <td className="px-4 py-3">
                                   <span
