@@ -126,6 +126,7 @@ export function FeatureComparisonChart({ data }: FeatureComparisonChartProps) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   if (chartData.length === 0 || modelNames.length === 0) {
