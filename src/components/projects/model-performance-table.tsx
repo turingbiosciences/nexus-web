@@ -19,7 +19,7 @@ export function ModelPerformanceTable({
   } | null>(null);
 
   return (
-    <div className="mb-2">
+    <div className="mb-8">
       <h3 className="text-lg font-semibold text-gray-900 mb-1">
         Model Performance (AUROC)
       </h3>
