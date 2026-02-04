@@ -12,20 +12,20 @@ import {
 
 describe('chart-config', () => {
   describe('CHART_COLORS', () => {
-    it('exports blueGradient color array with 5 colors', () => {
-      expect(CHART_COLORS.blueGradient).toHaveLength(5);
-      expect(CHART_COLORS.blueGradient[0]).toBe('#3b82f6');
+    it('exports blueGradient color array with 10 colors', () => {
+      expect(CHART_COLORS.blueGradient).toHaveLength(10);
+      expect(CHART_COLORS.blueGradient[0]).toBe('#1e3a8a');
     });
 
-    it('exports blueGradientReverse color array with 5 colors', () => {
-      expect(CHART_COLORS.blueGradientReverse).toHaveLength(5);
-      expect(CHART_COLORS.blueGradientReverse[0]).toBe('#93c5fd');
+    it('exports blueGradientReverse color array with 10 colors', () => {
+      expect(CHART_COLORS.blueGradientReverse).toHaveLength(10);
+      expect(CHART_COLORS.blueGradientReverse[0]).toBe('#eff6ff');
     });
 
     it('exports multiModel color array with 8 colors', () => {
       expect(CHART_COLORS.multiModel).toHaveLength(8);
-      expect(CHART_COLORS.multiModel[0]).toBe('#3b82f6');
-      expect(CHART_COLORS.multiModel[1]).toBe('#10b981');
+      expect(CHART_COLORS.multiModel[0]).toBe('#1e3a8a');
+      expect(CHART_COLORS.multiModel[2]).toBe('#06b6d4');
     });
 
     it('all colors are valid hex codes', () => {
@@ -44,29 +44,29 @@ describe('chart-config', () => {
   describe('getChartColor', () => {
     it('returns correct color for valid index', () => {
       const result = getChartColor(CHART_COLORS.blueGradient, 0);
-      expect(result).toBe('#3b82f6');
+      expect(result).toBe('#1e3a8a');
     });
 
     it('returns correct color for middle index', () => {
-      const result = getChartColor(CHART_COLORS.blueGradient, 2);
-      expect(result).toBe('#93c5fd');
+      const result = getChartColor(CHART_COLORS.blueGradient, 4);
+      expect(result).toBe('#3b82f6');
     });
 
     it('cycles through colors when index exceeds array length', () => {
-      // blueGradient has 5 colors, index 5 should wrap to index 0
-      const result = getChartColor(CHART_COLORS.blueGradient, 5);
+      // blueGradient has 10 colors, index 10 should wrap to index 0
+      const result = getChartColor(CHART_COLORS.blueGradient, 10);
       expect(result).toBe(CHART_COLORS.blueGradient[0]);
     });
 
     it('cycles correctly for large index', () => {
-      // Index 12 with 5 colors = index 2
-      const result = getChartColor(CHART_COLORS.blueGradient, 12);
-      expect(result).toBe(CHART_COLORS.blueGradient[2]);
+      // Index 24 with 10 colors = index 4
+      const result = getChartColor(CHART_COLORS.blueGradient, 24);
+      expect(result).toBe(CHART_COLORS.blueGradient[4]);
     });
 
     it('works with multiModel palette', () => {
-      const result = getChartColor(CHART_COLORS.multiModel, 3);
-      expect(result).toBe('#ef4444'); // red
+      const result = getChartColor(CHART_COLORS.multiModel, 2);
+      expect(result).toBe('#06b6d4'); // cyan
     });
   });
 
