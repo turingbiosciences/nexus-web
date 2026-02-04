@@ -15,6 +15,7 @@ import { Download } from 'lucide-react';
 import { useAccessToken } from '@/components/providers/token-provider';
 import { authFetch } from '@/lib/auth-fetch';
 import { getApiUrl } from '@/lib/api/utils';
+import { useToast } from '@/components/ui/toast-provider';
 
 interface ResultsSectionProps {
   projectId: string;
@@ -38,6 +39,7 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
   );
   const [isDownloading, setIsDownloading] = useState(false);
   const { accessToken, refreshToken } = useAccessToken();
+  const { push: pushToast } = useToast();
 
   // Initialize expanded state with the first result when results load
   useEffect(() => {
@@ -60,7 +62,14 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
   };
 
   const handleDownload = async () => {
-    if (!accessToken) return;
+    if (!accessToken) {
+      pushToast({
+        title: 'Sign in Required',
+        description: 'You must be signed in to download results.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setIsDownloading(true);
     try {
@@ -73,7 +82,11 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
         }
       );
 
-      if (!response.ok) throw new Error('Download failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || response.statusText;
+        throw new Error(`Server Error (${response.status}): ${errorMessage}`);
+      }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -84,9 +97,40 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+
+      pushToast({
+        title: 'Download Started',
+        description: 'Your results are being downloaded.',
+        variant: 'default',
+      });
     } catch (error) {
       console.error('Download error:', error);
-      alert('Failed to download results. Please try again.');
+
+      let errorTitle = 'Download Failed';
+      let errorDescription = 'An unexpected error occurred. Please try again.';
+
+      if (error instanceof Error) {
+        if (error.message.includes('Server Error')) {
+          errorTitle = 'Server Error';
+          errorDescription = error.message;
+        } else if (
+          error.name === 'TypeError' &&
+          error.message.includes('fetch')
+        ) {
+          errorTitle = 'Network Error';
+          errorDescription =
+            'Please check your internet connection and try again.';
+        } else {
+          errorDescription = error.message;
+        }
+      }
+
+      pushToast({
+        title: errorTitle,
+        description: errorDescription,
+        variant: 'destructive',
+        duration: 0,
+      });
     } finally {
       setIsDownloading(false);
     }

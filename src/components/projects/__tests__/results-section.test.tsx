@@ -15,6 +15,14 @@ import {
 // Mock dependencies
 jest.mock('@/components/providers/token-provider');
 jest.mock('@tanstack/react-query');
+jest.mock('@/components/ui/toast-provider', () => ({
+  useToast: jest.fn(),
+}));
+
+import { useToast } from '@/components/ui/toast-provider';
+
+const mockPushToast = jest.fn();
+const mockUseToast = useToast as jest.MockedFunction<typeof useToast>;
 
 const mockUseAccessToken = useAccessToken as jest.MockedFunction<
   typeof useAccessToken
@@ -25,6 +33,11 @@ describe('ResultsSection', () => {
   beforeEach(() => {
     setupTestEnv();
     mockUseAccessToken.mockReturnValue(createAccessTokenMock());
+    mockUseToast.mockReturnValue({
+      push: mockPushToast,
+      toasts: [],
+      dismiss: jest.fn(),
+    });
   });
 
   afterEach(() => {
@@ -242,5 +255,90 @@ describe('ResultsSection', () => {
 
     expect(screen.getByText('Download Results')).toBeInTheDocument();
     expect(screen.queryByText('Show Raw Data')).not.toBeInTheDocument();
+  });
+
+  it('shows success toast when download starts', async () => {
+    const results = [{ id: '1', name: 'R1', type: 'T', createdAt: new Date() }];
+    mockUseQuery.mockReturnValue(createSuccessQueryReturn(results) as any);
+
+    // Mock successful fetch
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      blob: () =>
+        Promise.resolve(new Blob(['{}'], { type: 'application/json' })),
+    });
+
+    // Mock URL.createObjectURL and revokeObjectURL
+    window.URL.createObjectURL = jest.fn(() => 'mock-url');
+    window.URL.revokeObjectURL = jest.fn();
+
+    render(<ResultsSection projectId="p1" />);
+
+    const downloadBtn = screen.getByText('Download Results');
+    downloadBtn.click();
+
+    await React.act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(mockPushToast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Download Started',
+        variant: 'default',
+      })
+    );
+  });
+
+  it('shows error toast when download fails', async () => {
+    const results = [{ id: '1', name: 'R1', type: 'T', createdAt: new Date() }];
+    mockUseQuery.mockReturnValue(createSuccessQueryReturn(results) as any);
+
+    // Mock failed fetch
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+      json: () => Promise.resolve({ message: 'Database failure' }),
+    });
+
+    render(<ResultsSection projectId="p1" />);
+
+    const downloadBtn = screen.getByText('Download Results');
+    downloadBtn.click();
+
+    await React.act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(mockPushToast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Server Error',
+        description: expect.stringContaining('500'),
+        variant: 'destructive',
+      })
+    );
+  });
+
+  it('shows error toast when downloading without access token', async () => {
+    const results = [{ id: '1', name: 'R1', type: 'T', createdAt: new Date() }];
+    mockUseQuery.mockReturnValue(createSuccessQueryReturn(results) as any);
+    mockUseAccessToken.mockReturnValue(
+      createAccessTokenMock({
+        accessToken: null,
+        isAuthenticated: true,
+      })
+    );
+
+    render(<ResultsSection projectId="p1" />);
+
+    const downloadBtn = screen.getByText('Download Results');
+    downloadBtn.click();
+
+    expect(mockPushToast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Sign in Required',
+        variant: 'destructive',
+      })
+    );
   });
 });
