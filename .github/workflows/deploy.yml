@@ -9,18 +9,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        # Pinned to v4.2.2 for security
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Install doctl
-        uses: digitalocean/action-doctl@v2
+        # Pinned to v2.5.1 for security
+        uses: digitalocean/action-doctl@135ac0aa0eed4437d547c6f12c364d3006b42824
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Trigger DigitalOcean App Platform Deployment
+        env:
+          DO_APP_ID: ${{ secrets.DO_APP_ID }}
         run: |
           set -euo pipefail
-          echo "Starting DigitalOcean App Platform deployment for app ID: ${{ secrets.DO_APP_ID }}..."
-          DEPLOY_OUTPUT="$(doctl app update "${{ secrets.DO_APP_ID }}" --force-rebuild 2>&1)" || {
+          echo "Starting DigitalOcean App Platform deployment..."
+          DEPLOY_OUTPUT="$(doctl app update "$DO_APP_ID" --force-rebuild 2>&1)" || {
             echo "Deployment command failed. doctl output:"
             echo "$DEPLOY_OUTPUT"
             exit 1
