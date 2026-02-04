@@ -128,7 +128,7 @@ describe('HomePageClient', () => {
     expect(screen.getByText('Projects')).toBeInTheDocument();
     // Check for the stat blocks
     expect(screen.getByText('Total Projects')).toBeInTheDocument();
-    expect(screen.getByText('Total ML Runs')).toBeInTheDocument();
+    expect(screen.getByText('Completed ML Runs')).toBeInTheDocument();
   });
 
   it('renders project list section when authenticated', () => {
@@ -156,7 +156,7 @@ describe('HomePageClient', () => {
     render(<HomePageClient />);
 
     expect(screen.getByText('Total Projects')).toBeInTheDocument();
-    expect(screen.getByText('Total ML Runs')).toBeInTheDocument();
+    expect(screen.getByText('Completed ML Runs')).toBeInTheDocument();
     expect(screen.getByText('Algorithm Wins')).toBeInTheDocument();
     expect(screen.getByText('Total Runtime')).toBeInTheDocument();
   });
