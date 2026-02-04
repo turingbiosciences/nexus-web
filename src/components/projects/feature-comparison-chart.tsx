@@ -152,6 +152,45 @@ export function FeatureComparisonChart({ data }: FeatureComparisonChartProps) {
           ))}
         </LineChart>
       </ResponsiveContainer>
+
+      {/* Data Table */}
+      <div className="mt-8 overflow-x-auto">
+        <table className="w-full text-xs text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="py-2 px-3 font-semibold text-gray-700">Feature</th>
+              {modelNames.map((modelName) => (
+                <th
+                  key={modelName}
+                  className="py-2 px-3 font-semibold text-gray-700 text-right"
+                >
+                  {modelName.replace(/_/g, ' ')}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {chartData.map((row, idx) => (
+              <tr
+                key={row.name as string}
+                className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}
+              >
+                <td className="py-1.5 px-3 font-medium text-gray-900 border-b border-gray-100">
+                  {row.name as string}
+                </td>
+                {modelNames.map((modelName) => (
+                  <td
+                    key={modelName}
+                    className="py-1.5 px-3 text-right text-gray-600 border-b border-gray-100 font-mono"
+                  >
+                    {(row[modelName] as number).toFixed(2)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
