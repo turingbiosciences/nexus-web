@@ -223,4 +223,24 @@ describe('ResultsSection', () => {
     const listItems = screen.getAllByRole('listitem');
     expect(listItems).toHaveLength(5);
   });
+
+  it('renders download button when results are present', () => {
+    const results = [
+      {
+        id: '1',
+        name: 'Result 1',
+        type: 'Analysis',
+        createdAt: new Date('2024-01-01T10:00:00Z'),
+      },
+    ];
+
+    mockUseQuery.mockReturnValue(
+      createSuccessQueryReturn(results) as ReturnType<typeof useQuery>
+    );
+
+    render(<ResultsSection projectId="test-project-id" />);
+
+    expect(screen.getByText('Download Results')).toBeInTheDocument();
+    expect(screen.queryByText('Show Raw Data')).not.toBeInTheDocument();
+  });
 });

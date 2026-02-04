@@ -2,6 +2,7 @@
 
 import { useResults } from '@/lib/queries/results';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { useState, useEffect, useMemo } from 'react';
 import { ModelPerformanceTable } from './model-performance-table';
 import { FeatureImportanceSection } from './feature-importance-section';
@@ -10,6 +11,10 @@ import { FeatureComparisonChart } from './feature-comparison-chart';
 import { AggregateFeatureImportanceTable } from './aggregate-feature-importance-table';
 import { ModelFeatureImportanceCharts } from './model-feature-importance-charts';
 import { ModelConfig } from '@/types/model-config';
+import { Download } from 'lucide-react';
+import { useAccessToken } from '@/components/providers/token-provider';
+import { authFetch } from '@/lib/auth-fetch';
+import { getApiUrl } from '@/lib/api/utils';
 
 interface ResultsSectionProps {
   projectId: string;
@@ -31,6 +36,8 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
   const [expandedResults, setExpandedResults] = useState<Set<string>>(
     new Set()
   );
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { accessToken, refreshToken } = useAccessToken();
 
   // Initialize expanded state with the first result when results load
   useEffect(() => {
@@ -52,17 +59,54 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
     });
   };
 
+  const handleDownload = async () => {
+    if (!accessToken) return;
+
+    setIsDownloading(true);
+    try {
+      const apiUrl = getApiUrl();
+      const response = await authFetch(
+        `${apiUrl}/projects/${projectId}/download`,
+        {
+          token: accessToken,
+          onTokenRefresh: refreshToken,
+        }
+      );
+
+      if (!response.ok) throw new Error('Download failed');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `project-${projectId}-results.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Failed to download results. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-4">
         <h3 className="card-title">Analysis Results</h3>
         {results.length > 0 && (
-          <button
-            onClick={() => setShowRawData(!showRawData)}
-            className="text-sm text-blue-600 hover:text-blue-700 underline"
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="flex items-center gap-2"
           >
-            {showRawData ? 'Hide' : 'Show'} Raw Data
-          </button>
+            <Download className="h-4 w-4" />
+            {isDownloading ? 'Downloading...' : 'Download Results'}
+          </Button>
         )}
       </div>
       <div className="space-y-4">
@@ -101,33 +145,6 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
         )}
         {!resultsLoading && results && results.length > 0 && (
           <>
-            {/* Raw Data View */}
-            {showRawData && (
-              <div className="mb-6 border border-gray-700 rounded-lg p-4 bg-gray-900">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-sm text-gray-200">
-                    Raw API Response ({results.length} result
-                    {results.length !== 1 ? 's' : ''})
-                  </h4>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(
-                        JSON.stringify(results, null, 2)
-                      );
-                    }}
-                    className="text-xs text-blue-400 hover:text-blue-300"
-                  >
-                    Copy JSON
-                  </button>
-                </div>
-                <pre className="text-xs overflow-auto max-h-96 bg-gray-950 p-4 rounded border border-gray-800 font-mono">
-                  <code className="text-gray-100">
-                    {JSON.stringify(results, null, 2)}
-                  </code>
-                </pre>
-              </div>
-            )}
-
             {/* Results List */}
             <ul className="space-y-3">
               {results.map((result, index) => {
