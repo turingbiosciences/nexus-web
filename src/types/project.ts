@@ -49,6 +49,7 @@ export interface DashboardRun {
     | 'cancelled';
   runtime_seconds: number;
   created_at: string;
+  ended_at?: string;
 }
 
 export interface DashboardStats {

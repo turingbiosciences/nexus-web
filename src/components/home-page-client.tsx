@@ -322,6 +322,9 @@ export function HomePageClient() {
                               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Started
                               </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Ended
+                              </th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-200">
@@ -364,6 +367,19 @@ export function HomePageClient() {
                                 </td>
                                 <td className="px-4 py-3 text-sm text-gray-600">
                                   {formatDateTime(new Date(run.created_at))}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-600">
+                                  {run.ended_at
+                                    ? formatDateTime(new Date(run.ended_at))
+                                    : run.status === 'completed' ||
+                                        run.status === 'failed'
+                                      ? formatDateTime(
+                                          new Date(
+                                            new Date(run.created_at).getTime() +
+                                              run.runtime_seconds * 1000
+                                          )
+                                        )
+                                      : '-'}
                                 </td>
                               </tr>
                             ))}
