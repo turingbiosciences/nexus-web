@@ -24,6 +24,7 @@ export const MockModal = ({
   isOpen ? (
     <div data-testid="modal" role="dialog">
       <h2>{title}</h2>
+      <button onClick={_onClose}>Close</button>
       {children}
     </div>
   ) : null;

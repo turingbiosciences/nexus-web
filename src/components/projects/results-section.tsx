@@ -33,7 +33,6 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
     });
   }, [resultsQuery.data]);
   const resultsLoading = resultsQuery.isLoading;
-  const [showRawData, setShowRawData] = useState(false);
   const [expandedResults, setExpandedResults] = useState<Set<string>>(
     new Set()
   );
