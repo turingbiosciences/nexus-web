@@ -209,7 +209,7 @@ export function HomePageClient() {
                   icon={FolderOpen}
                 />
                 <StatBlock
-                  title="Total ML Runs"
+                  title="Completed ML Runs"
                   value={
                     statsLoading ? (
                       <Skeleton className="h-8 w-16" />

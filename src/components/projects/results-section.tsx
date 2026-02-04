@@ -2,6 +2,7 @@
 
 import { useResults } from '@/lib/queries/results';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { useState, useEffect, useMemo } from 'react';
 import { ModelPerformanceTable } from './model-performance-table';
 import { FeatureImportanceSection } from './feature-importance-section';
@@ -10,6 +11,11 @@ import { FeatureComparisonChart } from './feature-comparison-chart';
 import { AggregateFeatureImportanceTable } from './aggregate-feature-importance-table';
 import { ModelFeatureImportanceCharts } from './model-feature-importance-charts';
 import { ModelConfig } from '@/types/model-config';
+import { Download } from 'lucide-react';
+import { useAccessToken } from '@/components/providers/token-provider';
+import { authFetch } from '@/lib/auth-fetch';
+import { getApiUrl } from '@/lib/api/utils';
+import { useToast } from '@/components/ui/toast-provider';
 
 interface ResultsSectionProps {
   projectId: string;
@@ -31,6 +37,9 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
   const [expandedResults, setExpandedResults] = useState<Set<string>>(
     new Set()
   );
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { accessToken, refreshToken } = useAccessToken();
+  const { push: pushToast } = useToast();
 
   // Initialize expanded state with the first result when results load
   useEffect(() => {
@@ -52,17 +61,96 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
     });
   };
 
+  const handleDownload = async () => {
+    if (!accessToken) {
+      pushToast({
+        title: 'Sign in Required',
+        description: 'You must be signed in to download results.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      const apiUrl = getApiUrl();
+      const response = await authFetch(
+        `${apiUrl}/projects/${projectId}/download`,
+        {
+          token: accessToken,
+          onTokenRefresh: refreshToken,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || response.statusText;
+        throw new Error(`Server Error (${response.status}): ${errorMessage}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `project-${projectId}-results.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      pushToast({
+        title: 'Download Started',
+        description: 'Your results are being downloaded.',
+        variant: 'default',
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+
+      let errorTitle = 'Download Failed';
+      let errorDescription = 'An unexpected error occurred. Please try again.';
+
+      if (error instanceof Error) {
+        if (error.message.includes('Server Error')) {
+          errorTitle = 'Server Error';
+          errorDescription = error.message;
+        } else if (
+          error.name === 'TypeError' &&
+          error.message.includes('fetch')
+        ) {
+          errorTitle = 'Network Error';
+          errorDescription =
+            'Please check your internet connection and try again.';
+        } else {
+          errorDescription = error.message;
+        }
+      }
+
+      pushToast({
+        title: errorTitle,
+        description: errorDescription,
+        variant: 'destructive',
+        duration: 0,
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-4">
         <h3 className="card-title">Analysis Results</h3>
         {results.length > 0 && (
-          <button
-            onClick={() => setShowRawData(!showRawData)}
-            className="text-sm text-blue-600 hover:text-blue-700 underline"
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="flex items-center gap-2"
           >
-            {showRawData ? 'Hide' : 'Show'} Raw Data
-          </button>
+            <Download className="h-4 w-4" />
+            {isDownloading ? 'Downloading...' : 'Download Results'}
+          </Button>
         )}
       </div>
       <div className="space-y-4">
@@ -101,33 +189,6 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
         )}
         {!resultsLoading && results && results.length > 0 && (
           <>
-            {/* Raw Data View */}
-            {showRawData && (
-              <div className="mb-6 border border-gray-700 rounded-lg p-4 bg-gray-900">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-sm text-gray-200">
-                    Raw API Response ({results.length} result
-                    {results.length !== 1 ? 's' : ''})
-                  </h4>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(
-                        JSON.stringify(results, null, 2)
-                      );
-                    }}
-                    className="text-xs text-blue-400 hover:text-blue-300"
-                  >
-                    Copy JSON
-                  </button>
-                </div>
-                <pre className="text-xs overflow-auto max-h-96 bg-gray-950 p-4 rounded border border-gray-800 font-mono">
-                  <code className="text-gray-100">
-                    {JSON.stringify(results, null, 2)}
-                  </code>
-                </pre>
-              </div>
-            )}
-
             {/* Results List */}
             <ul className="space-y-3">
               {results.map((result, index) => {
