@@ -122,10 +122,8 @@ export function FeatureComparisonChart({ data }: FeatureComparisonChartProps) {
     const link = document.createElement('a');
     link.setAttribute('href', url);
     link.setAttribute('download', 'feature_comparison.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     URL.revokeObjectURL(url);
   };
 
