@@ -103,13 +103,14 @@ export function FeatureComparisonChart({ data }: FeatureComparisonChartProps) {
   const handleExportCSV = () => {
     if (chartData.length === 0) return;
 
+    const escapeCsv = (str: string) => `"${str.replace(/"/g, '""')}"`;
     const headers = [
-      'Feature',
-      ...modelNames.map((m) => m.replace(/_/g, ' ')),
+      escapeCsv('Feature'),
+      ...modelNames.map((m) => escapeCsv(m.replace(/_/g, ' '))),
     ].join(',');
     const rows = chartData.map((row) => {
       const values = [
-        `"${row.name}"`,
+        escapeCsv(row.name as string),
         ...modelNames.map((m) => ((row[m] as number) ?? 0).toFixed(4)),
       ];
       return values.join(',');
