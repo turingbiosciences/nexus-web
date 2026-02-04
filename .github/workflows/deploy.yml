@@ -7,6 +7,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      DO_DEPLOY_KEY: ${{ secrets.DO_DEPLOY_KEY }}
+      DO_APP_ID: ${{ secrets.DO_APP_ID }}
     steps:
       - name: Checkout repository
         # Pinned to v4.2.2 for security
@@ -16,11 +19,9 @@ jobs:
         # Pinned to v2.5.1 for security
         uses: digitalocean/action-doctl@135ac0aa0eed4437d547c6f12c364d3006b42824
         with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          token: ${{ env.DO_DEPLOY_KEY }}
 
       - name: Trigger DigitalOcean App Platform Deployment
-        env:
-          DO_APP_ID: ${{ secrets.DO_APP_ID }}
         run: |
           set -euo pipefail
           echo "Starting DigitalOcean App Platform deployment..."
