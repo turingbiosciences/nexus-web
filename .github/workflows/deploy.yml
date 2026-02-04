@@ -17,4 +17,18 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Trigger DigitalOcean App Platform Deployment
-        run: doctl app update ${{ secrets.DO_APP_ID }} --force-rebuild
+        run: |
+          set -euo pipefail
+          echo "Starting DigitalOcean App Platform deployment for app ID: ${{ secrets.DO_APP_ID }}..."
+          DEPLOY_OUTPUT="$(doctl app update "${{ secrets.DO_APP_ID }}" --force-rebuild 2>&1)" || {
+            echo "Deployment command failed. doctl output:"
+            echo "$DEPLOY_OUTPUT"
+            exit 1
+          }
+          echo "doctl deployment command completed. Raw output:"
+          echo "$DEPLOY_OUTPUT"
+          if echo "$DEPLOY_OUTPUT" | grep -qi "error"; then
+            echo "Deployment output contains an error indication. Failing the job."
+            exit 1
+          fi
+          echo "Deployment trigger succeeded without detected errors."
