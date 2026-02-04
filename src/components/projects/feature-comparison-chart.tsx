@@ -183,7 +183,7 @@ export function FeatureComparisonChart({ data }: FeatureComparisonChartProps) {
                     key={modelName}
                     className="py-1.5 px-3 text-right text-gray-600 border-b border-gray-100 font-mono"
                   >
-                    {(row[modelName] as number).toFixed(2)}
+                    {((row[modelName] as number | undefined) ?? 0).toFixed(2)}
                   </td>
                 ))}
               </tr>
