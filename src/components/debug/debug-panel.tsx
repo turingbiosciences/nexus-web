@@ -63,6 +63,8 @@ export function DebugPanel() {
   }, [isResizing]);
 
   useEffect(() => {
+    if (!isDebugMode) return;
+
     const checkAuth = async () => {
       try {
         const response = await fetch('/api/logto/user');
@@ -91,7 +93,7 @@ export function DebugPanel() {
     };
 
     checkAuth();
-  }, []);
+  }, [isDebugMode]);
 
   // Don't render if debug mode is disabled
   if (!isDebugMode) {
