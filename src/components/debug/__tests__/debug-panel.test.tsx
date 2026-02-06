@@ -32,8 +32,8 @@ describe('DebugPanel', () => {
     expect(heading).not.toBeInTheDocument();
 
     // Verify fetch was NOT called
-    // Wait a bit to ensure useEffect had a chance to fire
-    await waitFor(() => {}, { timeout: 100 });
+    // Allow any pending effects/microtasks to run
+    await Promise.resolve();
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
