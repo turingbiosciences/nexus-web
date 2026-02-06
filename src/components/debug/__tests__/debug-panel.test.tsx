@@ -14,7 +14,6 @@ describe('DebugPanel', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.resetModules();
     process.env = { ...originalEnv };
   });
 
