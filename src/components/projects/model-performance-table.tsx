@@ -9,6 +9,28 @@ interface ModelPerformanceTableProps {
   modelConfigs: Record<string, ModelConfig>;
 }
 
+// Helper function to get ROC score
+const getRoc = (config: ModelConfig): number | undefined => {
+  return (
+    config.best_config_metrics?.roc ??
+    config.test_metrics?.roc ??
+    (config.best_config && config.configs?.[config.best_config]?.roc)
+  );
+};
+
+// Helper function to get model parameters
+const getModelParameters = (
+  config: ModelConfig
+): Record<string, unknown> | null => {
+  return (
+    (config.best_config_metrics?.params as Record<string, unknown>) ??
+    (config.best_config_metrics?.model_parameters as Record<string, unknown>) ??
+    (config.best_config &&
+      config.configs?.[config.best_config]?.model_parameters) ??
+    null
+  );
+};
+
 export function ModelPerformanceTable({
   modelConfigs,
 }: ModelPerformanceTableProps) {
@@ -20,55 +42,23 @@ export function ModelPerformanceTable({
 
   const tableRows = useMemo(() => {
     return Object.entries(modelConfigs)
-      .filter(([, config]) => {
-        const hasRoc =
-          config.best_config_metrics?.roc !== undefined ||
-          config.test_metrics?.roc !== undefined ||
-          (config.best_config &&
-            config.configs?.[config.best_config]?.roc !== undefined);
-        return hasRoc;
-      })
-      .sort(([, a], [, b]) => {
-        const rocA =
-          a.best_config_metrics?.roc ??
-          a.test_metrics?.roc ??
-          (a.best_config && a.configs?.[a.best_config]?.roc) ??
-          0;
-        const rocB =
-          b.best_config_metrics?.roc ??
-          b.test_metrics?.roc ??
-          (b.best_config && b.configs?.[b.best_config]?.roc) ??
-          0;
-        return Number(rocB) - Number(rocA);
-      })
+      .map(([modelName, config]) => ({
+        modelName,
+        config,
+        roc: getRoc(config),
+      }))
+      .filter(
+        (item): item is typeof item & { roc: number } => item.roc !== undefined
+      )
+      .sort((a, b) => b.roc - a.roc)
       .slice(0, 10)
-      .map(([modelName, config]) => {
-        const rocValue =
-          config.best_config_metrics?.roc ??
-          config.test_metrics?.roc ??
-          (config.best_config && config.configs?.[config.best_config]?.roc);
-
-        const auroc = Number(rocValue) || 0;
+      .map(({ modelName, config, roc }) => {
         const formattedModelName = modelName
           .split('_')
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(' ');
 
-        // Get model parameters from the best config or metrics
-        let modelParameters: Record<string, unknown> | null =
-          (config.best_config_metrics?.params as Record<string, unknown>) ||
-          (config.best_config_metrics?.model_parameters as Record<
-            string,
-            unknown
-          >) ||
-          null;
-
-        if (!modelParameters && config.best_config && config.configs) {
-          const bestConfigData = config.configs[config.best_config];
-          if (bestConfigData?.model_parameters) {
-            modelParameters = bestConfigData.model_parameters;
-          }
-        }
+        const modelParameters = getModelParameters(config);
 
         return (
           <tr key={modelName} className="hover:bg-gray-50 transition-colors">
@@ -78,14 +68,14 @@ export function ModelPerformanceTable({
             <td className="px-4 py-1.5 text-sm">
               <span
                 className={
-                  auroc >= 0.9
+                  roc >= 0.9
                     ? 'text-green-700 font-semibold'
-                    : auroc >= 0.8
+                    : roc >= 0.8
                       ? 'text-blue-700 font-medium'
                       : 'text-gray-700'
                 }
               >
-                {Number(auroc).toFixed(4)}
+                {roc.toFixed(4)}
               </span>
             </td>
             <td className="px-4 py-1.5 text-sm text-gray-600 font-mono">
