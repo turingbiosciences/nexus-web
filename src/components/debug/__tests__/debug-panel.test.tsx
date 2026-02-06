@@ -14,6 +14,7 @@ describe('DebugPanel', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.resetModules();
     process.env = { ...originalEnv };
   });
 
@@ -21,7 +22,7 @@ describe('DebugPanel', () => {
     process.env = originalEnv;
   });
 
-  it('should not fetch user data when debug mode is disabled', async () => {
+  it('should not fetch user data when debug mode is disabled', () => {
     process.env.NEXT_PUBLIC_TBIO_DEBUG = 'false';
 
     render(<DebugPanel />);
@@ -31,8 +32,6 @@ describe('DebugPanel', () => {
     expect(heading).not.toBeInTheDocument();
 
     // Verify fetch was NOT called
-    // Allow any pending effects/microtasks to run
-    await Promise.resolve();
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
@@ -45,8 +44,6 @@ describe('DebugPanel', () => {
     expect(await screen.findByText(/Debug Panel/i)).toBeInTheDocument();
 
     // Verify fetch WAS called
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/logto/user');
-    });
+    expect(global.fetch).toHaveBeenCalledWith('/api/logto/user');
   });
 });
