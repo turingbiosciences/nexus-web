@@ -46,6 +46,8 @@ describe('DebugPanel', () => {
     expect(await screen.findByText(/Debug Panel/i)).toBeInTheDocument();
 
     // Verify fetch WAS called
-    expect(global.fetch).toHaveBeenCalledWith('/api/logto/user');
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/logto/user');
+    });
   });
 });
