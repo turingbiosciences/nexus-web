@@ -14,7 +14,7 @@ const getRoc = (config: ModelConfig): number | undefined => {
   return (
     config.best_config_metrics?.roc ??
     config.test_metrics?.roc ??
-    (config.best_config && config.configs?.[config.best_config]?.roc)
+    (config.best_config ? config.configs?.[config.best_config]?.roc : undefined)
   );
 };
 
