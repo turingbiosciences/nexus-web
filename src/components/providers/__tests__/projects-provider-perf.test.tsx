@@ -84,8 +84,6 @@ describe('ProjectsProvider Performance', () => {
 
     // We expect 0 additional renders with memoization.
     // Currently (without optimization), we expect > 0.
-    console.log(`Initial renders: ${initialRenderCount}`);
-    console.log(`Additional renders: ${additionalRenders}`);
 
     expect(additionalRenders).toBe(0);
   });
