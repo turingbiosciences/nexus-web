@@ -6,6 +6,7 @@ import {
   useState,
   useCallback,
   useEffect,
+  useMemo,
   ReactNode,
 } from 'react';
 import { logger } from '@/lib/logger';
@@ -261,16 +262,28 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     [projects]
   );
 
-  const value: ProjectsContextValue = {
-    projects,
-    loading,
-    error,
-    createProject,
-    updateProject,
-    deleteProject,
-    getProjectById,
-    addDataset,
-  };
+  const value: ProjectsContextValue = useMemo(
+    () => ({
+      projects,
+      loading,
+      error,
+      createProject,
+      updateProject,
+      deleteProject,
+      getProjectById,
+      addDataset,
+    }),
+    [
+      projects,
+      loading,
+      error,
+      createProject,
+      updateProject,
+      deleteProject,
+      getProjectById,
+      addDataset,
+    ]
+  );
 
   return (
     <ProjectsContext.Provider value={value}>
