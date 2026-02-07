@@ -6,7 +6,7 @@ import { formatBytes } from '@/lib/utils';
 import { useProjects } from '@/components/providers/projects-provider';
 import { useDatasets } from '@/lib/queries/datasets';
 import { reconcileDatasets } from '@/lib/reconcile-datasets';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@/components/ui/toast-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Download, Trash2 } from 'lucide-react';
@@ -44,14 +44,16 @@ export function DatasetsSection({
   const { push } = useToast();
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
 
-  const optimistic = (project?.datasets || []).filter((d) =>
-    d.id.startsWith('optimistic-')
-  );
-  const combined = reconcileDatasets({
-    remote: remoteDatasets,
-    optimistic,
-    pendingDeleteIds,
-  });
+  const combined = useMemo(() => {
+    const optimistic = (project?.datasets || []).filter((d) =>
+      d.id.startsWith('optimistic-')
+    );
+    return reconcileDatasets({
+      remote: remoteDatasets,
+      optimistic,
+      pendingDeleteIds,
+    });
+  }, [project?.datasets, remoteDatasets, pendingDeleteIds]);
 
   // Sync datasetCount from API with project state
   const total = (datasetsQuery as { total?: number }).total;
