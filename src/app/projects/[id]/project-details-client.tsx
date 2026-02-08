@@ -126,6 +126,15 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     }
   }, [activeJob]);
 
+  // Clear persisted active job when it reaches a terminal state
+  useEffect(() => {
+    if (!activeJob) return;
+
+    if (['completed', 'failed', 'cancelled'].includes(activeJob.status)) {
+      localStorage.removeItem(`active_job_${projectId}`);
+      setActiveJobId(null);
+    }
+  }, [activeJob, projectId]);
   // Determine if we're in an initial loading state
   // Show loading if: auth loading, projects loading, OR (no projects data yet AND authenticated)
   const isInitialLoading =
