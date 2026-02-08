@@ -45,9 +45,17 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
 
   // Restore active job from local storage on mount
   useEffect(() => {
-    const storedJobId = localStorage.getItem(`active_job_${projectId}`);
-    if (storedJobId) {
-      setActiveJobId(storedJobId);
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return;
+      }
+      const storedJobId = window.localStorage.getItem(`active_job_${projectId}`);
+      if (storedJobId) {
+        setActiveJobId(storedJobId);
+      }
+    } catch (error) {
+      // Ignore localStorage errors so the UI still works without persistence
+      // console.error('Failed to read active job from localStorage', error);
     }
   }, [projectId]);
 
