@@ -189,7 +189,11 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
       if (response.ok && data.job_id) {
         // Start tracking the job via SSE
         setActiveJobId(data.job_id);
-        localStorage.setItem(`active_job_${projectId}`, data.job_id);
+        try {
+          localStorage.setItem(`active_job_${projectId}`, data.job_id);
+        } catch {
+          // Ignore storage errors so the UI continues to work without persistence
+        }
         pushToast({
           title: 'Training Started',
           description: 'Tracking job progress...',
