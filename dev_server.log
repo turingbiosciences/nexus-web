@@ -1,0 +1,73 @@
+
+> turingbiosciences@0.1.0 dev
+> next dev --turbopack
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+- Experiments (use with caution):
+  · clientTraceMetadata
+
+✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+✓ Ready in 4.4s
+○ Compiling / ...
+ GET / 200 in 7.9s (compile: 7.3s, render: 681ms)
+[18:22:15] [34mDEBUG[39m: [36mAuth configuration[39m
+    [35mhasResource[39m: false
+    [35mresourceValue[39m: "(not set)"
+    [35mresourcesArray[39m: []
+    [35mnodeEnv[39m: "development"
+[18:22:15] [34mDEBUG[39m: [36mTokenProvider function body executing[39m
+    [35mwindowType[39m: "undefined"
+[18:22:15] [34mDEBUG[39m: [36mTokenProvider component render[39m
+    [35mwindowType[39m: "undefined"
+    [35misAuthenticated[39m: false
+    [35mauthLoading[39m: true
+    [35mhasAccessToken[39m: false
+[18:22:15] [34mDEBUG[39m: [36mProjectsProvider component render[39m
+    [35mprojectsCount[39m: 0
+    [35mloading[39m: true
+    [35mhasFetched[39m: false
+    [35mhasToken[39m: false
+    [35mtokenLoading[39m: true
+[18:22:15] [34mDEBUG[39m: [36mHomePageClient render state[39m
+    [35misAuthenticated[39m: false
+    [35mauthLoading[39m: true
+    [35mprojectsLoading[39m: true
+    [35misLoading[39m: true
+    [35mprojectsCount[39m: 0
+○ Compiling /projects/[id] ...
+ GET /projects/1 200 in 7.3s (compile: 6.8s, render: 526ms)
+[18:23:08] [34mDEBUG[39m: [36mTokenProvider function body executing[39m
+    [35mwindowType[39m: "undefined"
+[18:23:08] [34mDEBUG[39m: [36mTokenProvider component render[39m
+    [35mwindowType[39m: "undefined"
+    [35misAuthenticated[39m: false
+    [35mauthLoading[39m: true
+    [35mhasAccessToken[39m: false
+[18:23:08] [34mDEBUG[39m: [36mProjectsProvider component render[39m
+    [35mprojectsCount[39m: 0
+    [35mloading[39m: true
+    [35mhasFetched[39m: false
+    [35mhasToken[39m: false
+    [35mtokenLoading[39m: true
+ GET /projects/1 200 in 205ms (compile: 61ms, render: 144ms)
+[18:23:11] [34mDEBUG[39m: [36mTokenProvider function body executing[39m
+    [35mwindowType[39m: "undefined"
+[18:23:11] [34mDEBUG[39m: [36mTokenProvider component render[39m
+    [35mwindowType[39m: "undefined"
+    [35misAuthenticated[39m: false
+    [35mauthLoading[39m: true
+    [35mhasAccessToken[39m: false
+[18:23:11] [34mDEBUG[39m: [36mProjectsProvider component render[39m
+    [35mprojectsCount[39m: 0
+    [35mloading[39m: true
+    [35mhasFetched[39m: false
+    [35mhasToken[39m: false
+    [35mtokenLoading[39m: true
