@@ -13,6 +13,10 @@ export function getApiBaseUrl(): string {
   if (!base) {
     throw new Error('Missing NEXT_PUBLIC_TURING_API environment variable');
   }
-  // Normalize by removing trailing slash if present
-  return base.replace(/\/$/, '');
+  // Normalize by removing trailing slashes if present
+  let url = base;
+  while (url.endsWith('/')) {
+    url = url.slice(0, -1);
+  }
+  return url;
 }

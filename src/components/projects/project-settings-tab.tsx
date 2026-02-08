@@ -6,6 +6,7 @@ import { Project } from '@/types/project';
 import { useAccessToken } from '@/components/providers/token-provider';
 import { authFetch } from '@/lib/auth-fetch';
 import { useToast } from '@/components/ui/toast-provider';
+import { getApiBaseUrl } from '@/lib/api/get-api-base';
 
 interface ProjectSettingsTabProps {
   project: Project;
@@ -37,7 +38,7 @@ export function ProjectSettingsTab({
 
     setIsSaving(true);
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
+      const baseUrl = getApiBaseUrl();
       const response = await authFetch(`${baseUrl}/projects/${project.id}`, {
         method: 'PUT',
         token: accessToken,

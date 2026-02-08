@@ -16,6 +16,7 @@ import LogtoClient from '@logto/next/edge';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { logtoConfig } from '@/lib/auth';
+import { getApiBaseUrl } from '@/lib/api/get-api-base';
 
 // Use centralized config to ensure debug endpoint tests the same authentication flow as production
 const logto = new LogtoClient(logtoConfig);
@@ -24,7 +25,7 @@ export const GET = async (req: NextRequest) => {
   console.log('\n=== Token Debug Endpoint ===');
 
   try {
-    const apiResource = process.env.NEXT_PUBLIC_TURING_API!;
+    const apiResource = getApiBaseUrl();
     console.log('Expected API resource:', apiResource);
 
     // Step 1: Check user authentication status
