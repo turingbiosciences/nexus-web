@@ -25,6 +25,7 @@ import { useJobStatus } from '@/hooks/use-job-status';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
 import { Job } from '@/types/job';
 import { IS_MOCK } from '@/config/flags';
+import { useActiveJobPersistence } from '@/hooks/use-active-job-persistence';
 
 interface ProjectDetailsClientProps {
   projectId: string;
@@ -41,23 +42,10 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [isRunModalOpen, setIsRunModalOpen] = useState(false);
-  const [activeJobId, setActiveJobId] = useState<string | null>(null);
 
-  // Restore active job from local storage on mount
-  useEffect(() => {
-    try {
-      if (typeof window === 'undefined' || !window.localStorage) {
-        return;
-      }
-      const storedJobId = window.localStorage.getItem(`active_job_${projectId}`);
-      if (storedJobId) {
-        setActiveJobId(storedJobId);
-      }
-    } catch (error) {
-      // Ignore localStorage errors so the UI still works without persistence
-      // console.error('Failed to read active job from localStorage', error);
-    }
-  }, [projectId]);
+  // Use custom hook for persistence
+  const { activeJobId, setJobId, clearJobId } =
+    useActiveJobPersistence(projectId);
 
   const {
     getProjectById,
@@ -126,15 +114,6 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     }
   }, [activeJob]);
 
-  // Clear persisted active job when it reaches a terminal state
-  useEffect(() => {
-    if (!activeJob) return;
-
-    if (['completed', 'failed', 'cancelled'].includes(activeJob.status)) {
-      localStorage.removeItem(`active_job_${projectId}`);
-      setActiveJobId(null);
-    }
-  }, [activeJob, projectId]);
   // Determine if we're in an initial loading state
   // Show loading if: auth loading, projects loading, OR (no projects data yet AND authenticated)
   const isInitialLoading =
@@ -197,12 +176,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
 
       if (response.ok && data.job_id) {
         // Start tracking the job via SSE
-        setActiveJobId(data.job_id);
-        try {
-          localStorage.setItem(`active_job_${projectId}`, data.job_id);
-        } catch {
-          // Ignore storage errors so the UI continues to work without persistence
-        }
+        setJobId(data.job_id);
         pushToast({
           title: 'Training Started',
           description: 'Tracking job progress...',
@@ -230,10 +204,9 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
 
   // Dismiss job progress card
   const handleDismissJob = useCallback(() => {
-    setActiveJobId(null);
-    localStorage.removeItem(`active_job_${projectId}`);
+    clearJobId();
     disconnectJob();
-  }, [disconnectJob, projectId]);
+  }, [disconnectJob, clearJobId]);
 
   // Show loading state while initially loading
   if (isInitialLoading) {
