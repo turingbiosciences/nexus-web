@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { datasetsKey } from '@/lib/queries/keys';
 import { ProjectDataset } from '@/types/project';
+import { getApiBaseUrl } from '@/lib/api/get-api-base';
 
 interface UploadArgs {
   projectId: string;
@@ -20,13 +21,7 @@ async function apiUploadDataset({
   file,
   projectId,
 }: UploadArgs): Promise<ProjectDataset> {
-  const apiEndpoint = process.env.NEXT_PUBLIC_TURING_API;
-
-  if (!apiEndpoint) {
-    throw new Error(
-      'NEXT_PUBLIC_TURING_API environment variable is not configured'
-    );
-  }
+  const apiEndpoint = getApiBaseUrl();
 
   // Get access token from the token endpoint
   const tokenResponse = await fetch('/api/logto/token');
@@ -71,13 +66,7 @@ async function apiDeleteDataset({
   projectId,
   datasetId,
 }: DeleteArgs): Promise<{ success: boolean }> {
-  const apiEndpoint = process.env.NEXT_PUBLIC_TURING_API;
-
-  if (!apiEndpoint) {
-    throw new Error(
-      'NEXT_PUBLIC_TURING_API environment variable is not configured'
-    );
-  }
+  const apiEndpoint = getApiBaseUrl();
 
   // Get access token from the token endpoint
   const tokenResponse = await fetch('/api/logto/token');

@@ -22,6 +22,7 @@ import { useToast } from '@/components/ui/toast-provider';
 import { authFetch } from '@/lib/auth-fetch';
 import { useResults } from '@/lib/queries/results';
 import { useJobStatus } from '@/hooks/use-job-status';
+import { getApiBaseUrl } from '@/lib/api/get-api-base';
 import { Job } from '@/types/job';
 import { IS_MOCK } from '@/config/flags';
 
@@ -137,7 +138,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
 
     setIsRunning(true);
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
+      const baseUrl = getApiBaseUrl();
       const response = await authFetch(
         `${baseUrl}/projects/${project.id}/training/start`,
         {

@@ -14,5 +14,5 @@ export function getApiBaseUrl(): string {
     throw new Error('Missing NEXT_PUBLIC_TURING_API environment variable');
   }
   // Normalize by removing trailing slash if present
-  return base.replace(/\/$/, '');
+  return base.replace(/\/+$/, '');
 }

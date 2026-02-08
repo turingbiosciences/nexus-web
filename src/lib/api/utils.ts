@@ -1,3 +1,5 @@
+import { getApiBaseUrl } from '@/lib/api/get-api-base';
+
 /**
  * Shared API utilities
  */
@@ -8,14 +10,7 @@
  * @returns Normalized API URL without trailing slash
  */
 export function getApiUrl(): string {
-  const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
-
-  if (!baseUrl) {
-    throw new Error('Missing NEXT_PUBLIC_TURING_API environment variable');
-  }
-
-  // Remove trailing slash if present
-  return baseUrl.replace(/\/$/, '');
+  return getApiBaseUrl();
 }
 
 /**
