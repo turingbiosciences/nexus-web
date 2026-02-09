@@ -18,6 +18,11 @@ export function ModelPerformanceTable({
     parameters: Record<string, unknown>;
   } | null>(null);
 
+  const getRocAuc = (config: ModelConfig) =>
+    config.best_config_metrics?.roc_auc ??
+    config.test_metrics?.roc_auc ??
+    (config.best_config && config.configs?.[config.best_config]?.roc_auc);
+
   return (
     <div className="mb-8">
       <h3 className="text-lg font-semibold text-gray-900 mb-1">
@@ -41,37 +46,16 @@ export function ModelPerformanceTable({
           </thead>
           <tbody className="divide-y divide-gray-200">
             {Object.entries(modelConfigs)
-              .filter(([, config]) => {
-                const hasRoc =
-                  config.best_config_metrics?.roc_auc !== undefined ||
-                  config.test_metrics?.roc_auc !== undefined ||
-                  (config.best_config &&
-                    config.configs?.[config.best_config]?.roc_auc !==
-                      undefined);
-                return hasRoc;
-              })
+              .filter(([, config]) => getRocAuc(config) !== undefined)
               .sort(([, a], [, b]) => {
-                const rocA =
-                  a.best_config_metrics?.roc_auc ??
-                  a.test_metrics?.roc_auc ??
-                  (a.best_config && a.configs?.[a.best_config]?.roc_auc) ??
-                  0;
-                const rocB =
-                  b.best_config_metrics?.roc_auc ??
-                  b.test_metrics?.roc_auc ??
-                  (b.best_config && b.configs?.[b.best_config]?.roc_auc) ??
-                  0;
-                return Number(rocB) - Number(rocA);
+                const rocAucA = getRocAuc(a) ?? 0;
+                const rocAucB = getRocAuc(b) ?? 0;
+                return Number(rocAucB) - Number(rocAucA);
               })
               .slice(0, 10)
               .map(([modelName, config]) => {
-                const rocValue =
-                  config.best_config_metrics?.roc_auc ??
-                  config.test_metrics?.roc_auc ??
-                  (config.best_config &&
-                    config.configs?.[config.best_config]?.roc_auc);
-
-                const auroc = Number(rocValue) || 0;
+                const rocAucValue = getRocAuc(config);
+                const rocAuc = Number(rocAucValue) || 0;
                 const formattedModelName = modelName
                   .split('_')
                   .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -107,14 +91,14 @@ export function ModelPerformanceTable({
                     <td className="px-4 py-1.5 text-sm">
                       <span
                         className={
-                          auroc >= 0.9
+                          rocAuc >= 0.9
                             ? 'text-green-700 font-semibold'
-                            : auroc >= 0.8
+                            : rocAuc >= 0.8
                               ? 'text-blue-700 font-medium'
                               : 'text-gray-700'
                         }
                       >
-                        {Number(auroc).toFixed(4)}
+                        {Number(rocAuc).toFixed(4)}
                       </span>
                     </td>
                     <td className="px-4 py-1.5 text-sm text-gray-600 font-mono">
