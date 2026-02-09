@@ -342,7 +342,7 @@ describe('ResultsSection', () => {
     );
   });
 
-  it('renders model performance from the new "After" API structure', async () => {
+  const setupTestWithResults = (all_model_configs: Record<string, unknown>) => {
     const results = [
       {
         id: 'r1',
@@ -350,18 +350,7 @@ describe('ResultsSection', () => {
         result_type: 'ml_analysis',
         created_at: new Date().toISOString(),
         data: {
-          all_model_configs: {
-            xgboost: {
-              best_config: 'config_1',
-              best_config_metrics: {
-                accuracy: 0.85,
-                roc_auc: 0.9,
-                params: { depth: 5 },
-              },
-              test_metrics: { accuracy: 0.88, roc_auc: 0.92 },
-              feature_importance: { feature_1: 0.15 },
-            },
-          },
+          all_model_configs,
         },
       },
     ];
@@ -384,6 +373,21 @@ describe('ResultsSection', () => {
     // Expand the result to show charts/tables
     const resultHeader = screen.getByText('Analysis Result');
     resultHeader.click();
+  };
+
+  it('renders model performance from the new "After" API structure', async () => {
+    setupTestWithResults({
+      xgboost: {
+        best_config: 'config_1',
+        best_config_metrics: {
+          accuracy: 0.85,
+          roc_auc: 0.9,
+          params: { depth: 5 },
+        },
+        test_metrics: { accuracy: 0.88, roc_auc: 0.92 },
+        feature_importance: { feature_1: 0.15 },
+      },
+    });
 
     // Verify model name is rendered (formatted)
     expect(screen.getByText('Xgboost')).toBeInTheDocument();
@@ -396,54 +400,25 @@ describe('ResultsSection', () => {
   });
 
   it('handles missing best_config by deriving it from metrics if possible', async () => {
-    const results = [
-      {
-        id: 'r1',
-        name: 'Analysis Result',
-        result_type: 'ml_analysis',
-        created_at: new Date().toISOString(),
-        data: {
-          all_model_configs: {
-            xgboost: {
-              // best_config is missing
-              best_config_metrics: {
-                accuracy: 0.85,
-                roc_auc: 0.9,
-                params: { depth: 5 },
-              },
-              configs: {
-                config_1: {
-                  accuracy: 0.85,
-                  roc_auc: 0.9,
-                  params: { depth: 5 },
-                },
-              },
-              test_metrics: { accuracy: 0.88, roc_auc: 0.92 },
-              feature_importance: { feature_1: 0.15 },
-            },
+    setupTestWithResults({
+      xgboost: {
+        // best_config is missing
+        best_config_metrics: {
+          accuracy: 0.85,
+          roc_auc: 0.9,
+          params: { depth: 5 },
+        },
+        configs: {
+          config_1: {
+            accuracy: 0.85,
+            roc_auc: 0.9,
+            params: { depth: 5 },
           },
         },
+        test_metrics: { accuracy: 0.88, roc_auc: 0.92 },
+        feature_importance: { feature_1: 0.15 },
       },
-    ];
-
-    // transformResults in results.ts will handle translating this to the UI expected format
-    const transformed = results.map((r) => ({
-      id: r.id,
-      name: r.name || 'Analysis Result',
-      type: r.result_type || 'Unknown',
-      createdAt: new Date(r.created_at),
-      ...(r as any),
-    }));
-
-    mockUseQuery.mockReturnValue(
-      createSuccessQueryReturn(transformed) as ReturnType<typeof useQuery>
-    );
-
-    render(<ResultsSection projectId="p1" />);
-
-    // Expand the result to show charts/tables
-    const resultHeader = screen.getByText('Analysis Result');
-    resultHeader.click();
+    });
 
     // Verify model name is rendered (formatted)
     expect(screen.getByText('Xgboost')).toBeInTheDocument();
