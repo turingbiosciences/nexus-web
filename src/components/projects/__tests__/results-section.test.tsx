@@ -394,4 +394,64 @@ describe('ResultsSection', () => {
     // Verify Details button is present (implies parameters were found)
     expect(screen.getByText('Details')).toBeInTheDocument();
   });
+
+  it('handles missing best_config by deriving it from metrics if possible', async () => {
+    const results = [
+      {
+        id: 'r1',
+        name: 'Analysis Result',
+        result_type: 'ml_analysis',
+        created_at: new Date().toISOString(),
+        data: {
+          all_model_configs: {
+            xgboost: {
+              // best_config is missing
+              best_config_metrics: {
+                accuracy: 0.85,
+                roc_auc: 0.9,
+                params: { depth: 5 },
+              },
+              configs: {
+                config_1: {
+                  accuracy: 0.85,
+                  roc_auc: 0.9,
+                  params: { depth: 5 },
+                },
+              },
+              test_metrics: { accuracy: 0.88, roc_auc: 0.92 },
+              feature_importance: { feature_1: 0.15 },
+            },
+          },
+        },
+      },
+    ];
+
+    // transformResults in results.ts will handle translating this to the UI expected format
+    const transformed = results.map((r) => ({
+      id: r.id,
+      name: r.name || 'Analysis Result',
+      type: r.result_type || 'Unknown',
+      createdAt: new Date(r.created_at),
+      ...(r as any),
+    }));
+
+    mockUseQuery.mockReturnValue(
+      createSuccessQueryReturn(transformed) as ReturnType<typeof useQuery>
+    );
+
+    render(<ResultsSection projectId="p1" />);
+
+    // Expand the result to show charts/tables
+    const resultHeader = screen.getByText('Analysis Result');
+    resultHeader.click();
+
+    // Verify model name is rendered (formatted)
+    expect(screen.getByText('Xgboost')).toBeInTheDocument();
+
+    // Verify AUROC is rendered (from best_config_metrics)
+    expect(screen.getByText('0.9000')).toBeInTheDocument();
+
+    // Verify that we can find the config name "config_1" even if best_config is missing
+    expect(screen.getByText('config_1')).toBeInTheDocument();
+  });
 });

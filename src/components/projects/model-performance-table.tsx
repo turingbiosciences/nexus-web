@@ -33,6 +33,37 @@ const getModelParameters = (
   );
 };
 
+// Helper function to find the best configuration name
+const findBestConfigName = (config: ModelConfig): string | undefined => {
+  if (config.best_config) {
+    return config.best_config;
+  }
+
+  // Fallback: Try to find a config in configs that matches best_config_metrics
+  if (config.best_config_metrics && config.configs) {
+    const bestMetrics = config.best_config_metrics;
+
+    // Try finding by ROC AUC first as it's the primary metric
+    if (bestMetrics.roc_auc !== undefined) {
+      const matchingConfigs = Object.entries(config.configs).filter(
+        ([, cfg]) => cfg.roc_auc === bestMetrics.roc_auc
+      );
+
+      // If we found exactly one match, use it
+      if (matchingConfigs.length === 1) {
+        return matchingConfigs[0][0];
+      }
+
+      // If multiple matches, return the first one as a reasonable fallback
+      if (matchingConfigs.length > 0) {
+        return matchingConfigs[0][0];
+      }
+    }
+  }
+
+  return undefined;
+};
+
 export function ModelPerformanceTable({
   modelConfigs,
 }: ModelPerformanceTableProps) {
@@ -68,7 +99,7 @@ export function ModelPerformanceTable({
           modelName,
           formattedModelName,
           rocAuc,
-          bestConfig: config.best_config || 'N/A',
+          bestConfig: findBestConfigName(config) || 'N/A',
           modelParameters,
         };
       });
