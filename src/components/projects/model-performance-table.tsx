@@ -40,6 +40,7 @@ export function ModelPerformanceTable({
     parameters: Record<string, unknown>;
   } | null>(null);
 
+  // Memoize the expensive data transformation separately from rendering
   const tableData = useMemo(() => {
     return Object.entries(modelConfigs)
       .map(([modelName, config]) => ({
