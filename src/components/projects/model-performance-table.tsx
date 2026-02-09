@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ModelParametersModal } from './model-parameters-modal';
 import { ModelConfig } from '@/types/model-config';
@@ -8,6 +8,30 @@ import { ModelConfig } from '@/types/model-config';
 interface ModelPerformanceTableProps {
   modelConfigs: Record<string, ModelConfig>;
 }
+
+// Helper function to get ROC AUC score
+const getRocAuc = (config: ModelConfig): number | undefined => {
+  return (
+    config.best_config_metrics?.roc_auc ??
+    config.test_metrics?.roc_auc ??
+    (config.best_config
+      ? config.configs?.[config.best_config]?.roc_auc
+      : undefined)
+  );
+};
+
+// Helper function to get model parameters
+const getModelParameters = (
+  config: ModelConfig
+): Record<string, unknown> | null => {
+  return (
+    (config.best_config_metrics?.params as Record<string, unknown>) ??
+    (config.best_config_metrics?.model_parameters as Record<string, unknown>) ??
+    (config.best_config &&
+      config.configs?.[config.best_config]?.model_parameters) ??
+    null
+  );
+};
 
 export function ModelPerformanceTable({
   modelConfigs,
@@ -18,10 +42,37 @@ export function ModelPerformanceTable({
     parameters: Record<string, unknown>;
   } | null>(null);
 
-  const getRocAuc = (config: ModelConfig) =>
-    config.best_config_metrics?.roc_auc ??
-    config.test_metrics?.roc_auc ??
-    (config.best_config && config.configs?.[config.best_config]?.roc_auc);
+  // Memoize the expensive data transformation separately from rendering
+  const tableData = useMemo(() => {
+    return Object.entries(modelConfigs)
+      .map(([modelName, config]) => ({
+        modelName,
+        config,
+        rocAuc: getRocAuc(config),
+      }))
+      .filter(
+        (item): item is typeof item & { rocAuc: number } =>
+          item.rocAuc !== undefined
+      )
+      .sort((a, b) => b.rocAuc - a.rocAuc)
+      .slice(0, 10)
+      .map(({ modelName, config, rocAuc }) => {
+        const formattedModelName = modelName
+          .split('_')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+
+        const modelParameters = getModelParameters(config);
+
+        return {
+          modelName,
+          formattedModelName,
+          rocAuc,
+          bestConfig: config.best_config || 'N/A',
+          modelParameters,
+        };
+      });
+  }, [modelConfigs]);
 
   return (
     <div className="mb-8">
@@ -45,85 +96,49 @@ export function ModelPerformanceTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {Object.entries(modelConfigs)
-              .filter(([, config]) => getRocAuc(config) !== undefined)
-              .sort(([, a], [, b]) => {
-                const rocAucA = getRocAuc(a) ?? 0;
-                const rocAucB = getRocAuc(b) ?? 0;
-                return Number(rocAucB) - Number(rocAucA);
-              })
-              .slice(0, 10)
-              .map(([modelName, config]) => {
-                const rocAucValue = getRocAuc(config);
-                const rocAuc = Number(rocAucValue) || 0;
-                const formattedModelName = modelName
-                  .split('_')
-                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                  .join(' ');
-
-                // Get model parameters from the best config or metrics
-                let modelParameters: Record<string, unknown> | null =
-                  (config.best_config_metrics?.params as Record<
-                    string,
-                    unknown
-                  >) ||
-                  (config.best_config_metrics?.model_parameters as Record<
-                    string,
-                    unknown
-                  >) ||
-                  null;
-
-                if (!modelParameters && config.best_config && config.configs) {
-                  const bestConfigData = config.configs[config.best_config];
-                  if (bestConfigData?.model_parameters) {
-                    modelParameters = bestConfigData.model_parameters;
-                  }
-                }
-
-                return (
-                  <tr
-                    key={modelName}
-                    className="hover:bg-gray-50 transition-colors"
+            {tableData.map((row) => (
+              <tr
+                key={row.modelName}
+                className="hover:bg-gray-50 transition-colors"
+              >
+                <td className="px-4 py-1.5 text-sm text-gray-900">
+                  {row.formattedModelName}
+                </td>
+                <td className="px-4 py-1.5 text-sm">
+                  <span
+                    className={
+                      row.rocAuc >= 0.9
+                        ? 'text-green-700 font-semibold'
+                        : row.rocAuc >= 0.8
+                          ? 'text-blue-700 font-medium'
+                          : 'text-gray-700'
+                    }
                   >
-                    <td className="px-4 py-1.5 text-sm text-gray-900">
-                      {formattedModelName}
-                    </td>
-                    <td className="px-4 py-1.5 text-sm">
-                      <span
-                        className={
-                          rocAuc >= 0.9
-                            ? 'text-green-700 font-semibold'
-                            : rocAuc >= 0.8
-                              ? 'text-blue-700 font-medium'
-                              : 'text-gray-700'
-                        }
-                      >
-                        {Number(rocAuc).toFixed(4)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-1.5 text-sm text-gray-600 font-mono">
-                      {config.best_config || 'N/A'}
-                    </td>
-                    <td className="px-4 py-1.5 text-center">
-                      {modelParameters && (
-                        <Button
-                          size="xs"
-                          variant="outline"
-                          onClick={() =>
-                            setSelectedModel({
-                              name: formattedModelName,
-                              config: config.best_config || 'N/A',
-                              parameters: modelParameters,
-                            })
-                          }
-                        >
-                          Details
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+                    {Number(row.rocAuc).toFixed(4)}
+                  </span>
+                </td>
+                <td className="px-4 py-1.5 text-sm text-gray-600 font-mono">
+                  {row.bestConfig}
+                </td>
+                <td className="px-4 py-1.5 text-center">
+                  {row.modelParameters && (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={() =>
+                        setSelectedModel({
+                          name: row.formattedModelName,
+                          config: row.bestConfig,
+                          parameters: row.modelParameters!,
+                        })
+                      }
+                    >
+                      Details
+                    </Button>
+                  )}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
