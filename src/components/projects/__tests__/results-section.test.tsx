@@ -355,10 +355,10 @@ describe('ResultsSection', () => {
               best_config: 'config_1',
               best_config_metrics: {
                 accuracy: 0.85,
-                roc: 0.9,
+                roc_auc: 0.9,
                 params: { depth: 5 },
               },
-              test_metrics: { accuracy: 0.88, roc: 0.92 },
+              test_metrics: { accuracy: 0.88, roc_auc: 0.92 },
               feature_importance: { feature_1: 0.15 },
             },
           },
