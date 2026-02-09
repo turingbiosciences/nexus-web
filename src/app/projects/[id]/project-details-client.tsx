@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -22,8 +22,10 @@ import { useToast } from '@/components/ui/toast-provider';
 import { authFetch } from '@/lib/auth-fetch';
 import { useResults } from '@/lib/queries/results';
 import { useJobStatus } from '@/hooks/use-job-status';
+import { getApiBaseUrl } from '@/lib/api/get-api-base';
 import { Job } from '@/types/job';
 import { IS_MOCK } from '@/config/flags';
+import { useActiveJobPersistence } from '@/hooks/use-active-job-persistence';
 
 interface ProjectDetailsClientProps {
   projectId: string;
@@ -40,7 +42,10 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [isRunModalOpen, setIsRunModalOpen] = useState(false);
-  const [activeJobId, setActiveJobId] = useState<string | null>(null);
+
+  // Use custom hook for persistence
+  const { activeJobId, setJobId, clearJobId } =
+    useActiveJobPersistence(projectId);
 
   const {
     getProjectById,
@@ -98,6 +103,17 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     useMock: IS_MOCK,
   });
 
+  // Sync running state with active job status
+  useEffect(() => {
+    if (!activeJob) return;
+
+    if (['pending', 'queued', 'running'].includes(activeJob.status)) {
+      setIsRunning(true);
+    } else {
+      setIsRunning(false);
+    }
+  }, [activeJob]);
+
   // Determine if we're in an initial loading state
   // Show loading if: auth loading, projects loading, OR (no projects data yet AND authenticated)
   const isInitialLoading =
@@ -137,7 +153,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
 
     setIsRunning(true);
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_TURING_API;
+      const baseUrl = getApiBaseUrl();
       const response = await authFetch(
         `${baseUrl}/projects/${project.id}/training/start`,
         {
@@ -160,7 +176,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
 
       if (response.ok && data.job_id) {
         // Start tracking the job via SSE
-        setActiveJobId(data.job_id);
+        setJobId(data.job_id);
         pushToast({
           title: 'Training Started',
           description: 'Tracking job progress...',
@@ -188,9 +204,9 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
 
   // Dismiss job progress card
   const handleDismissJob = useCallback(() => {
-    setActiveJobId(null);
+    clearJobId();
     disconnectJob();
-  }, [disconnectJob]);
+  }, [disconnectJob, clearJobId]);
 
   // Show loading state while initially loading
   if (isInitialLoading) {

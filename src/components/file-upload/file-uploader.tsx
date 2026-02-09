@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { cn, formatBytes, formatUploadProgress } from '@/lib/utils';
 import { useAccessToken } from '@/components/providers/token-provider';
 import { logger } from '@/lib/logger';
+import { getApiBaseUrl } from '@/lib/api/get-api-base';
 
 // Feature flag: Set to false to use traditional XHR uploads instead of TUS
 // TODO: Re-enable when API supports TUS protocol
@@ -40,7 +41,6 @@ export function FileUploader({
   const [uploads, setUploads] = useState<FileUploadItem[]>([]);
   const { isAuthenticated, authLoading, accessToken } = useAccessToken();
   const [authError, setAuthError] = useState<string | null>(null);
-  const resource = process.env.NEXT_PUBLIC_TURING_API;
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (!acceptedFiles.length) return;
@@ -71,7 +71,7 @@ export function FileUploader({
     currentAccessToken: string,
     currentProjectId: string
   ) => {
-    const apiEndpoint = resource!;
+    const apiEndpoint = getApiBaseUrl();
 
     // Use standard FormData upload (fallback method)
     const formData = new FormData();
@@ -205,23 +205,13 @@ export function FileUploader({
     }
 
     try {
-      // Validate resource identifier
-      if (!resource) {
-        throw new Error('Missing NEXT_PUBLIC_TURING_API environment variable.');
-      }
+      const apiEndpoint = getApiBaseUrl();
 
       // Use M2M access token from TokenProvider
       if (!accessToken) {
         throw new Error(
           'Failed to obtain access token. Try signing out and back in.'
         );
-      }
-
-      // API endpoint (same as resource for now)
-      const apiEndpoint = resource;
-
-      if (!apiEndpoint) {
-        throw new Error('Upload endpoint not configured');
       }
 
       // Validate projectId is provided
