@@ -39,8 +39,15 @@ describe('ProjectSettingsTab', () => {
   const mockRefreshToken = jest.fn();
   const mockPushToast = jest.fn();
 
+  const originalEnv = process.env;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.resetModules();
+    process.env = {
+      ...originalEnv,
+      NEXT_PUBLIC_TURING_API: 'https://api.example.com',
+    };
 
     mockedUseAccessToken.mockReturnValue({
       accessToken: 'mock-token',
@@ -62,6 +69,10 @@ describe('ProjectSettingsTab', () => {
         description: 'Updated Description',
       }),
     });
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
   });
 
   it('renders project settings with name and description', () => {

@@ -37,9 +37,7 @@ describe('getApiBaseUrl', () => {
 
     const result = getApiBaseUrl();
 
-    // Note: current implementation only removes one trailing slash
-    // This test documents actual behavior
-    expect(result).toBe('https://api.example.com//');
+    expect(result).toBe('https://api.example.com');
   });
 
   it('throws error when NEXT_PUBLIC_TURING_API is not set', () => {
