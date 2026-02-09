@@ -9,12 +9,14 @@ interface ModelPerformanceTableProps {
   modelConfigs: Record<string, ModelConfig>;
 }
 
-// Helper function to get ROC score
-const getRoc = (config: ModelConfig): number | undefined => {
+// Helper function to get ROC AUC score
+const getRocAuc = (config: ModelConfig): number | undefined => {
   return (
-    config.best_config_metrics?.roc ??
-    config.test_metrics?.roc ??
-    (config.best_config ? config.configs?.[config.best_config]?.roc : undefined)
+    config.best_config_metrics?.roc_auc ??
+    config.test_metrics?.roc_auc ??
+    (config.best_config
+      ? config.configs?.[config.best_config]?.roc_auc
+      : undefined)
   );
 };
 
@@ -46,14 +48,15 @@ export function ModelPerformanceTable({
       .map(([modelName, config]) => ({
         modelName,
         config,
-        roc: getRoc(config),
+        rocAuc: getRocAuc(config),
       }))
       .filter(
-        (item): item is typeof item & { roc: number } => item.roc !== undefined
+        (item): item is typeof item & { rocAuc: number } =>
+          item.rocAuc !== undefined
       )
-      .sort((a, b) => b.roc - a.roc)
+      .sort((a, b) => b.rocAuc - a.rocAuc)
       .slice(0, 10)
-      .map(({ modelName, config, roc }) => {
+      .map(({ modelName, config, rocAuc }) => {
         const formattedModelName = modelName
           .split('_')
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -64,7 +67,7 @@ export function ModelPerformanceTable({
         return {
           modelName,
           formattedModelName,
-          auroc: roc,
+          rocAuc,
           bestConfig: config.best_config || 'N/A',
           modelParameters,
         };
@@ -104,14 +107,14 @@ export function ModelPerformanceTable({
                 <td className="px-4 py-1.5 text-sm">
                   <span
                     className={
-                      row.auroc >= 0.9
+                      row.rocAuc >= 0.9
                         ? 'text-green-700 font-semibold'
-                        : row.auroc >= 0.8
+                        : row.rocAuc >= 0.8
                           ? 'text-blue-700 font-medium'
                           : 'text-gray-700'
                     }
                   >
-                    {Number(row.auroc).toFixed(4)}
+                    {Number(row.rocAuc).toFixed(4)}
                   </span>
                 </td>
                 <td className="px-4 py-1.5 text-sm text-gray-600 font-mono">

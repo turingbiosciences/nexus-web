@@ -8,6 +8,7 @@
  */
 export interface ModelConfigData {
   roc?: number;
+  roc_auc?: number;
   model_parameters?: Record<string, unknown>;
   [key: string]: unknown;
 }
@@ -20,6 +21,7 @@ export interface ModelConfig {
   best_config_metrics?: ModelConfigData;
   test_metrics?: {
     roc?: number;
+    roc_auc?: number;
     [key: string]: unknown;
   };
   feature_importance?: unknown;
