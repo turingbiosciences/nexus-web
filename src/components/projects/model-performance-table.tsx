@@ -40,7 +40,7 @@ export function ModelPerformanceTable({
     parameters: Record<string, unknown>;
   } | null>(null);
 
-  const tableRows = useMemo(() => {
+  const tableData = useMemo(() => {
     return Object.entries(modelConfigs)
       .map(([modelName, config]) => ({
         modelName,
@@ -60,46 +60,13 @@ export function ModelPerformanceTable({
 
         const modelParameters = getModelParameters(config);
 
-        return (
-          <tr key={modelName} className="hover:bg-gray-50 transition-colors">
-            <td className="px-4 py-1.5 text-sm text-gray-900">
-              {formattedModelName}
-            </td>
-            <td className="px-4 py-1.5 text-sm">
-              <span
-                className={
-                  roc >= 0.9
-                    ? 'text-green-700 font-semibold'
-                    : roc >= 0.8
-                      ? 'text-blue-700 font-medium'
-                      : 'text-gray-700'
-                }
-              >
-                {roc.toFixed(4)}
-              </span>
-            </td>
-            <td className="px-4 py-1.5 text-sm text-gray-600 font-mono">
-              {config.best_config || 'N/A'}
-            </td>
-            <td className="px-4 py-1.5 text-center">
-              {modelParameters && (
-                <Button
-                  size="xs"
-                  variant="outline"
-                  onClick={() =>
-                    setSelectedModel({
-                      name: formattedModelName,
-                      config: config.best_config || 'N/A',
-                      parameters: modelParameters,
-                    })
-                  }
-                >
-                  Details
-                </Button>
-              )}
-            </td>
-          </tr>
-        );
+        return {
+          modelName,
+          formattedModelName,
+          auroc: roc,
+          bestConfig: config.best_config || 'N/A',
+          modelParameters,
+        };
       });
   }, [modelConfigs]);
 
@@ -124,7 +91,51 @@ export function ModelPerformanceTable({
               <th className="px-4 py-2 text-center text-sm font-semibold text-gray-900 border-b"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">{tableRows}</tbody>
+          <tbody className="divide-y divide-gray-200">
+            {tableData.map((row) => (
+              <tr
+                key={row.modelName}
+                className="hover:bg-gray-50 transition-colors"
+              >
+                <td className="px-4 py-1.5 text-sm text-gray-900">
+                  {row.formattedModelName}
+                </td>
+                <td className="px-4 py-1.5 text-sm">
+                  <span
+                    className={
+                      row.auroc >= 0.9
+                        ? 'text-green-700 font-semibold'
+                        : row.auroc >= 0.8
+                          ? 'text-blue-700 font-medium'
+                          : 'text-gray-700'
+                    }
+                  >
+                    {Number(row.auroc).toFixed(4)}
+                  </span>
+                </td>
+                <td className="px-4 py-1.5 text-sm text-gray-600 font-mono">
+                  {row.bestConfig}
+                </td>
+                <td className="px-4 py-1.5 text-center">
+                  {row.modelParameters && (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={() =>
+                        setSelectedModel({
+                          name: row.formattedModelName,
+                          config: row.bestConfig,
+                          parameters: row.modelParameters!,
+                        })
+                      }
+                    >
+                      Details
+                    </Button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
 
