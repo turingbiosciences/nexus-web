@@ -290,6 +290,9 @@ export function useJobStatus(
       return;
     }
 
+    // Reset job state when starting a new subscription
+    setJob(null);
+
     if (useMock) {
       startMockSSE(projectId, jobId);
       return () => {
