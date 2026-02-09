@@ -43,32 +43,33 @@ export function ModelPerformanceTable({
             {Object.entries(modelConfigs)
               .filter(([, config]) => {
                 const hasRoc =
-                  config.best_config_metrics?.roc !== undefined ||
-                  config.test_metrics?.roc !== undefined ||
+                  config.best_config_metrics?.roc_auc !== undefined ||
+                  config.test_metrics?.roc_auc !== undefined ||
                   (config.best_config &&
-                    config.configs?.[config.best_config]?.roc !== undefined);
+                    config.configs?.[config.best_config]?.roc_auc !==
+                      undefined);
                 return hasRoc;
               })
               .sort(([, a], [, b]) => {
                 const rocA =
-                  a.best_config_metrics?.roc ??
-                  a.test_metrics?.roc ??
-                  (a.best_config && a.configs?.[a.best_config]?.roc) ??
+                  a.best_config_metrics?.roc_auc ??
+                  a.test_metrics?.roc_auc ??
+                  (a.best_config && a.configs?.[a.best_config]?.roc_auc) ??
                   0;
                 const rocB =
-                  b.best_config_metrics?.roc ??
-                  b.test_metrics?.roc ??
-                  (b.best_config && b.configs?.[b.best_config]?.roc) ??
+                  b.best_config_metrics?.roc_auc ??
+                  b.test_metrics?.roc_auc ??
+                  (b.best_config && b.configs?.[b.best_config]?.roc_auc) ??
                   0;
                 return Number(rocB) - Number(rocA);
               })
               .slice(0, 10)
               .map(([modelName, config]) => {
                 const rocValue =
-                  config.best_config_metrics?.roc ??
-                  config.test_metrics?.roc ??
+                  config.best_config_metrics?.roc_auc ??
+                  config.test_metrics?.roc_auc ??
                   (config.best_config &&
-                    config.configs?.[config.best_config]?.roc);
+                    config.configs?.[config.best_config]?.roc_auc);
 
                 const auroc = Number(rocValue) || 0;
                 const formattedModelName = modelName
