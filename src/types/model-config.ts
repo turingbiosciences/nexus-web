@@ -24,6 +24,14 @@ export interface ModelConfig {
     roc_auc?: number;
     [key: string]: unknown;
   };
+  // Support for flattened structure
+  params?: Record<string, unknown>;
+  metrics?: {
+    roc?: number;
+    roc_auc?: number;
+    accuracy?: number;
+    [key: string]: unknown;
+  };
   feature_importance?: unknown;
   configs?: Record<string, ModelConfigData>;
 }

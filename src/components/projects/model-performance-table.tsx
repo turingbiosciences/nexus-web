@@ -29,6 +29,7 @@ const getModelParameters = (
     (config.best_config_metrics?.model_parameters as Record<string, unknown>) ??
     (config.best_config &&
       config.configs?.[config.best_config]?.model_parameters) ??
+    config.params ??
     null
   );
 };
