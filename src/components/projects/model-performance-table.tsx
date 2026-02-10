@@ -14,6 +14,7 @@ const getRocAuc = (config: ModelConfig): number | undefined => {
   return (
     config.best_config_metrics?.roc_auc ??
     config.test_metrics?.roc_auc ??
+    config.metrics?.roc_auc ??
     (config.best_config
       ? config.configs?.[config.best_config]?.roc_auc
       : undefined)
