@@ -96,7 +96,7 @@ export function ModelFeatureImportanceCharts({
                 <span className="ml-2 text-xs font-normal text-gray-500">
                   (Best config:{' '}
                   <span className="font-mono">
-                    {modelConfigs[chart.modelName]?.best_config || 'N/A'}
+                    {modelConfigs[chart.modelName]?.best_config ?? 'N/A'}
                   </span>
                   )
                 </span>
