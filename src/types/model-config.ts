@@ -4,36 +4,44 @@
  */
 
 /**
- * Configuration data for a single model configuration variant
+ * Metrics related to model performance
  */
-export interface ModelConfigData {
+export interface ModelMetrics {
   roc?: number;
   roc_auc?: number;
-  model_parameters?: Record<string, unknown>;
+  accuracy?: number;
   [key: string]: unknown;
 }
 
 /**
+ * Configuration data for a single model configuration variant
+ */
+export interface ModelConfigData extends ModelMetrics {
+  model_parameters?: Record<string, unknown>;
+}
+
+/**
  * Complete model configuration including test metrics and feature importance
+ *
+ * This supports two structures:
+ * 1. Nested: best_config + best_config_metrics + configs (Legacy/Detailed)
+ * 2. Flattened: params + metrics (Simplified/API Response)
+ *
+ * Precedence for metrics: best_config_metrics -> test_metrics -> metrics
+ * Precedence for params: best_config_metrics.model_parameters -> params
  */
 export interface ModelConfig {
+  // Nested structure (Legacy)
   best_config?: string;
   best_config_metrics?: ModelConfigData;
-  test_metrics?: {
-    roc?: number;
-    roc_auc?: number;
-    [key: string]: unknown;
-  };
-  // Support for flattened structure
-  params?: Record<string, unknown>;
-  metrics?: {
-    roc?: number;
-    roc_auc?: number;
-    accuracy?: number;
-    [key: string]: unknown;
-  };
-  feature_importance?: unknown;
+  test_metrics?: ModelMetrics;
   configs?: Record<string, ModelConfigData>;
+
+  // Flattened structure (API Response)
+  params?: Record<string, unknown>;
+  metrics?: ModelMetrics;
+
+  feature_importance?: unknown;
 }
 
 /**
