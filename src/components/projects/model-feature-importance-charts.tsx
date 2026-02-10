@@ -93,6 +93,13 @@ export function ModelFeatureImportanceCharts({
             <div key={chart.modelName} className="space-y-3">
               <h5 className="text-sm font-medium text-gray-700">
                 {chart.modelName.replace(/_/g, ' ')}
+                <span className="ml-2 text-xs font-normal text-gray-500">
+                  (Best config:{' '}
+                  <span className="font-mono">
+                    {modelConfigs[chart.modelName]?.best_config ?? 'N/A'}
+                  </span>
+                  )
+                </span>
               </h5>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart

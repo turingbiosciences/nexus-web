@@ -394,4 +394,50 @@ describe('ResultsSection', () => {
     // Verify Details button is present (implies parameters were found)
     expect(screen.getByText('Details')).toBeInTheDocument();
   });
+
+  it('renders model performance from flattened metrics structure', async () => {
+    const transformed = [
+      {
+        id: 'r2',
+        name: 'Flattened Result',
+        type: 'ml_analysis',
+        createdAt: new Date(),
+        data: {
+          all_model_configs: {
+            xgboost: {
+              // No best_config ID
+              metrics: {
+                roc_auc: 0.75,
+                accuracy: 0.8,
+              },
+              params: {
+                depth: 3,
+              },
+              feature_importance: { feature_A: 0.2 },
+            },
+          },
+        },
+      },
+    ];
+
+    mockUseQuery.mockReturnValue(
+      createSuccessQueryReturn(transformed) as ReturnType<typeof useQuery>
+    );
+
+    render(<ResultsSection projectId="p1" />);
+
+    // Expand the result
+    const resultHeader = screen.getByText('Flattened Result');
+    resultHeader.click();
+
+    // Verify AUROC is rendered (from root metrics)
+    expect(screen.getByText('0.7500')).toBeInTheDocument();
+
+    // Verify Details button is present (from root params)
+    expect(screen.getByText('Details')).toBeInTheDocument();
+
+    // Verify N/A for Best Configuration (since best_config is missing and we reverted Optimized)
+    // There might be multiple N/As (table and chart), so check if at least one exists
+    expect(screen.getAllByText('N/A').length).toBeGreaterThan(0);
+  });
 });
