@@ -8,7 +8,7 @@ import { useAccessToken } from '@/components/providers/token-provider';
 import { LoadingCard } from '@/components/ui/loading-card';
 import { SignInPrompt } from '@/components/auth/sign-in-prompt';
 import { useProjects } from '@/components/providers/projects-provider';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { NewProjectDialog } from '@/components/projects/new-project-dialog';
 import { logger } from '@/lib/logger';
 import {
@@ -86,9 +86,12 @@ export function HomePageClient() {
   } = useProjects();
 
   // Sort projects by most recently updated first
-  const sortedProjects = [...projects].sort(
-    (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
-  );
+  // Memoized to prevent re-sorting on every render (e.g. when dialog opens/closes)
+  const sortedProjects = useMemo(() => {
+    return [...projects].sort(
+      (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+    );
+  }, [projects]);
 
   const {
     data: stats,
