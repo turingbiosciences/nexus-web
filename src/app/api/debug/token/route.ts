@@ -22,6 +22,10 @@ import { getApiBaseUrl } from '@/lib/api/get-api-base';
 const logto = new LogtoClient(logtoConfig);
 
 export const GET = async (req: NextRequest) => {
+  if (process.env.NODE_ENV !== 'development') {
+    return new NextResponse(null, { status: 404 });
+  }
+
   console.log('\n=== Token Debug Endpoint ===');
 
   try {
