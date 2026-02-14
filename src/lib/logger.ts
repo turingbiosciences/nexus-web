@@ -22,6 +22,36 @@ const isBrowser = !isServer;
 const pinoConfig: pino.LoggerOptions = {
   level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
 
+  // Redact sensitive information from logs
+  redact: {
+    paths: [
+      'password',
+      'token',
+      'accessToken',
+      'access_token',
+      'refresh_token',
+      'secret',
+      'client_secret',
+      'apiKey',
+      'api_key',
+      'cookieSecret',
+      'appSecret',
+      'app_secret',
+      'm2m_app_secret',
+      'm2m_client_secret',
+      'authorization',
+      'cookie',
+      'set-cookie',
+      'headers.authorization',
+      'headers.cookie',
+      'headers.set-cookie',
+      'req.headers.authorization',
+      'req.headers.cookie',
+      'res.headers["set-cookie"]',
+    ],
+    censor: '[REDACTED]',
+  },
+
   // Browser configuration - required for client-side usage
   browser: {
     asObject: true,
