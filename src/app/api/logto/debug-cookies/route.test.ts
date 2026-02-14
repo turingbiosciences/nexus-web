@@ -24,7 +24,7 @@ describe('Debug Cookies Route', () => {
   });
 
   it('should return 404 in production', async () => {
-    process.env.NODE_ENV = 'production';
+    (process.env as any).NODE_ENV = 'production';
     const { GET } = await import('./route');
 
     // GET function signature for this route takes no args
@@ -34,7 +34,7 @@ describe('Debug Cookies Route', () => {
   });
 
   it('should return 200 in development', async () => {
-    process.env.NODE_ENV = 'development';
+    (process.env as any).NODE_ENV = 'development';
     const { GET } = await import('./route');
 
     const res = await GET();

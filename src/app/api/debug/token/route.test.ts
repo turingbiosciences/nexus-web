@@ -43,7 +43,7 @@ describe('Debug Token Route', () => {
   });
 
   it('should return 404 in production', async () => {
-    process.env.NODE_ENV = 'production';
+    (process.env as any).NODE_ENV = 'production';
     // Dynamic import to pick up the new NODE_ENV
     const { GET } = await import('./route');
 
@@ -54,7 +54,7 @@ describe('Debug Token Route', () => {
   });
 
   it('should return 200 in development', async () => {
-    process.env.NODE_ENV = 'development';
+    (process.env as any).NODE_ENV = 'development';
     // Dynamic import to pick up the new NODE_ENV
     const { GET } = await import('./route');
 
