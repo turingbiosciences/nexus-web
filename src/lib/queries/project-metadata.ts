@@ -36,21 +36,35 @@ async function fetchProjectMetadata(
 
   const apiUrl = getApiBaseUrl();
 
+  // Shared request configuration
+  const requestConfig = {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+  };
+
   // Fetch datasets count and most recent activity in parallel
+  // We wrap the activities fetch in a catch block so a failure there doesn't block the dataset count
   const [datasetsResponse, activitiesResponse] = await Promise.all([
-    fetch(`${apiUrl}/projects/${projectId}/files?page=1&limit=1`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    }),
-    fetch(`${apiUrl}/projects/${projectId}/activities?page=1&limit=1`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
+    fetch(
+      `${apiUrl}/projects/${projectId}/files?page=1&limit=1`,
+      requestConfig
+    ),
+    fetch(
+      `${apiUrl}/projects/${projectId}/activities?page=1&limit=1`,
+      requestConfig
+    ).catch((err) => {
+      logger.warn({ err, projectId }, 'Failed to fetch project activities');
+      // Return a plain object mimicking a 500 response so the promise resolves but .ok is false
+      // Using a plain object avoids issues if Response global is not available in all environments
+      return {
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        json: async () => ({ data: [] }),
+      } as Response;
     }),
   ]);
 
