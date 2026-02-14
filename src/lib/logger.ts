@@ -22,6 +22,74 @@ const isBrowser = !isServer;
 const pinoConfig: pino.LoggerOptions = {
   level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
 
+  // Redact sensitive information from logs
+  redact: {
+    paths: [
+      // Passwords
+      'password',
+      '*.password',
+
+      // Tokens
+      'token',
+      '*.token',
+      'accessToken',
+      '*.accessToken',
+      'access_token',
+      '*.access_token',
+      'refresh_token',
+      '*.refresh_token',
+      'id_token',
+      '*.id_token',
+      'idToken',
+      '*.idToken',
+      'jwt',
+      '*.jwt',
+
+      // Secrets & Keys
+      'secret',
+      '*.secret',
+      'client_secret',
+      '*.client_secret',
+      'apiKey',
+      '*.apiKey',
+      'api_key',
+      '*.api_key',
+      'cookieSecret',
+      '*.cookieSecret',
+      'appSecret',
+      '*.appSecret',
+      'app_secret',
+      '*.app_secret',
+      'm2m_app_secret',
+      '*.m2m_app_secret',
+      'm2m_client_secret',
+      '*.m2m_client_secret',
+
+      // Headers
+      'authorization',
+      '*.authorization',
+      '*.*.authorization',
+      'req.headers.authorization',
+      'cookie',
+      '*.cookie',
+      '*.*.cookie',
+      'req.headers.cookie',
+      'set-cookie',
+      '*["set-cookie"]',
+      '*.*["set-cookie"]',
+      'res.headers.set-cookie',
+      'x-api-key',
+      '*["x-api-key"]',
+      '*.*["x-api-key"]',
+
+      // Error text
+      'errorText',
+      '*.errorText',
+      '*.*.errorText',
+    ],
+    censor: '[REDACTED]',
+  },
+
   // Browser configuration - required for client-side usage
   browser: {
     asObject: true,
