@@ -36,17 +36,23 @@ async function fetchProjectMetadata(
 
   const apiUrl = getApiBaseUrl();
 
-  // Fetch datasets to get count
-  const datasetsResponse = await fetch(
-    `${apiUrl}/projects/${projectId}/files?page=1&limit=1`,
-    {
+  // Fetch datasets count and most recent activity in parallel
+  const [datasetsResponse, activitiesResponse] = await Promise.all([
+    fetch(`${apiUrl}/projects/${projectId}/files?page=1&limit=1`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-    }
-  );
+    }),
+    fetch(`${apiUrl}/projects/${projectId}/activities?page=1&limit=1`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    }),
+  ]);
 
   if (!datasetsResponse.ok) {
     throw new Error(
@@ -56,18 +62,6 @@ async function fetchProjectMetadata(
 
   const datasetsData = await datasetsResponse.json();
   const datasetCount = datasetsData.total || 0;
-
-  // Fetch most recent activity
-  const activitiesResponse = await fetch(
-    `${apiUrl}/projects/${projectId}/activities?page=1&limit=1`,
-    {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    }
-  );
 
   let lastActivity = 'No recent activity';
 
