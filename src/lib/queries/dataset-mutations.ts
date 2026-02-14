@@ -2,15 +2,18 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { datasetsKey } from '@/lib/queries/keys';
 import { ProjectDataset } from '@/types/project';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
+import { useAccessToken } from '@/components/providers/token-provider';
 
 interface UploadArgs {
   projectId: string;
   file: File;
+  token?: string | null;
 }
 
 interface DeleteArgs {
   projectId: string;
   datasetId: string;
+  token?: string | null;
 }
 
 /**
@@ -20,15 +23,20 @@ interface DeleteArgs {
 async function apiUploadDataset({
   file,
   projectId,
+  token,
 }: UploadArgs): Promise<ProjectDataset> {
   const apiEndpoint = getApiBaseUrl();
+  let accessToken = token;
 
-  // Get access token from the token endpoint
-  const tokenResponse = await fetch('/api/logto/token');
-  if (!tokenResponse.ok) {
-    throw new Error('Failed to obtain access token');
+  // If no token provided, fetch it (fallback behavior)
+  if (!accessToken) {
+    const tokenResponse = await fetch('/api/logto/token');
+    if (!tokenResponse.ok) {
+      throw new Error('Failed to obtain access token');
+    }
+    const data = await tokenResponse.json();
+    accessToken = data.accessToken;
   }
-  const { accessToken } = await tokenResponse.json();
 
   // Upload the file using FormData
   const formData = new FormData();
@@ -65,15 +73,20 @@ async function apiUploadDataset({
 async function apiDeleteDataset({
   projectId,
   datasetId,
+  token,
 }: DeleteArgs): Promise<{ success: boolean }> {
   const apiEndpoint = getApiBaseUrl();
+  let accessToken = token;
 
-  // Get access token from the token endpoint
-  const tokenResponse = await fetch('/api/logto/token');
-  if (!tokenResponse.ok) {
-    throw new Error('Failed to obtain access token');
+  // If no token provided, fetch it (fallback behavior)
+  if (!accessToken) {
+    const tokenResponse = await fetch('/api/logto/token');
+    if (!tokenResponse.ok) {
+      throw new Error('Failed to obtain access token');
+    }
+    const data = await tokenResponse.json();
+    accessToken = data.accessToken;
   }
-  const { accessToken } = await tokenResponse.json();
 
   const response = await fetch(
     `${apiEndpoint}/projects/${projectId}/files/${datasetId}`,
@@ -97,9 +110,12 @@ async function apiDeleteDataset({
 
 export function useUploadDatasetMutation(projectId: string) {
   const qc = useQueryClient();
+  const { accessToken } = useAccessToken();
+
   return useMutation({
     mutationKey: ['upload', projectId],
-    mutationFn: (file: File) => apiUploadDataset({ projectId, file }),
+    mutationFn: (file: File) =>
+      apiUploadDataset({ projectId, file, token: accessToken }),
     onMutate: async () => {
       // Cancel in-flight queries to prevent race conditions
       await qc.cancelQueries({ queryKey: datasetsKey(projectId) });
@@ -119,10 +135,12 @@ export function useUploadDatasetMutation(projectId: string) {
 
 export function useDeleteDatasetMutation(projectId: string) {
   const qc = useQueryClient();
+  const { accessToken } = useAccessToken();
+
   return useMutation({
     mutationKey: ['delete', projectId],
     mutationFn: (datasetId: string) =>
-      apiDeleteDataset({ projectId, datasetId }),
+      apiDeleteDataset({ projectId, datasetId, token: accessToken }),
     onMutate: async () => {
       // Cancel in-flight queries to prevent race conditions
       await qc.cancelQueries({ queryKey: datasetsKey(projectId) });

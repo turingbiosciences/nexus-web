@@ -6,6 +6,11 @@ import {
 } from '../dataset-mutations';
 import React from 'react';
 
+// Mock useAccessToken
+jest.mock('@/components/providers/token-provider', () => ({
+  useAccessToken: () => ({ accessToken: null, isLoading: false }),
+}));
+
 // Mock environment variable
 const originalEnv = process.env;
 
