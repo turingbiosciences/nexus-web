@@ -77,7 +77,7 @@ const pinoConfig: pino.LoggerOptions = {
       'set-cookie',
       '*["set-cookie"]',
       '*.*["set-cookie"]',
-      'res.headers["set-cookie"]',
+      'res.headers.set-cookie',
       'x-api-key',
       '*["x-api-key"]',
       '*.*["x-api-key"]',
