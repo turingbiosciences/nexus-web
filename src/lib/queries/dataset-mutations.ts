@@ -17,6 +17,20 @@ interface DeleteArgs {
 }
 
 /**
+ * Helper to get access token from args or fetch it
+ */
+async function ensureAccessToken(token?: string | null): Promise<string> {
+  if (token) return token;
+
+  const tokenResponse = await fetch('/api/logto/token');
+  if (!tokenResponse.ok) {
+    throw new Error('Failed to obtain access token');
+  }
+  const data = await tokenResponse.json();
+  return data.accessToken;
+}
+
+/**
  * Upload file to the backend
  * NOTE: This uploads the actual file using multipart/form-data
  */
@@ -26,17 +40,7 @@ async function apiUploadDataset({
   token,
 }: UploadArgs): Promise<ProjectDataset> {
   const apiEndpoint = getApiBaseUrl();
-  let accessToken = token;
-
-  // If no token provided, fetch it (fallback behavior)
-  if (!accessToken) {
-    const tokenResponse = await fetch('/api/logto/token');
-    if (!tokenResponse.ok) {
-      throw new Error('Failed to obtain access token');
-    }
-    const data = await tokenResponse.json();
-    accessToken = data.accessToken;
-  }
+  const accessToken = await ensureAccessToken(token);
 
   // Upload the file using FormData
   const formData = new FormData();
@@ -76,17 +80,7 @@ async function apiDeleteDataset({
   token,
 }: DeleteArgs): Promise<{ success: boolean }> {
   const apiEndpoint = getApiBaseUrl();
-  let accessToken = token;
-
-  // If no token provided, fetch it (fallback behavior)
-  if (!accessToken) {
-    const tokenResponse = await fetch('/api/logto/token');
-    if (!tokenResponse.ok) {
-      throw new Error('Failed to obtain access token');
-    }
-    const data = await tokenResponse.json();
-    accessToken = data.accessToken;
-  }
+  const accessToken = await ensureAccessToken(token);
 
   const response = await fetch(
     `${apiEndpoint}/projects/${projectId}/files/${datasetId}`,

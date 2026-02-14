@@ -6,9 +6,14 @@ import {
 } from '../dataset-mutations';
 import React from 'react';
 
-// Mock useAccessToken
+// Mock useAccessToken with mutable implementation
+const mockUseAccessToken = jest.fn(() => ({
+  accessToken: null as string | null,
+  isLoading: false,
+}));
+
 jest.mock('@/components/providers/token-provider', () => ({
-  useAccessToken: () => ({ accessToken: null, isLoading: false }),
+  useAccessToken: () => mockUseAccessToken(),
 }));
 
 // Mock environment variable
@@ -89,6 +94,11 @@ function createWrapper() {
 }
 
 describe('useUploadDatasetMutation', () => {
+  beforeEach(() => {
+    // Ensure default mock state (no token from hook)
+    mockUseAccessToken.mockReturnValue({ accessToken: null, isLoading: false });
+  });
+
   it('successfully uploads a dataset', async () => {
     const { result } = renderHook(() => useUploadDatasetMutation('project-1'), {
       wrapper: createWrapper(),
@@ -220,6 +230,11 @@ describe('useUploadDatasetMutation', () => {
 });
 
 describe('useDeleteDatasetMutation', () => {
+  beforeEach(() => {
+    // Ensure default mock state (no token from hook)
+    mockUseAccessToken.mockReturnValue({ accessToken: null, isLoading: false });
+  });
+
   it('successfully deletes a dataset', async () => {
     const { result } = renderHook(() => useDeleteDatasetMutation('project-1'), {
       wrapper: createWrapper(),
@@ -323,6 +338,11 @@ describe('useDeleteDatasetMutation', () => {
 });
 
 describe('Mutation Interactions', () => {
+  beforeEach(() => {
+    // Ensure default mock state (no token from hook)
+    mockUseAccessToken.mockReturnValue({ accessToken: null, isLoading: false });
+  });
+
   it('can use both upload and delete mutations together', async () => {
     const wrapper = createWrapper();
 
@@ -377,5 +397,36 @@ describe('Mutation Interactions', () => {
 
     // Delete should still be idle
     expect(deleteResult.current.isIdle).toBe(true);
+  });
+});
+
+describe('Dataset Mutation Performance', () => {
+  it('skips token fetch when token is available from hook (optimized behavior)', async () => {
+    // Configure mock to return a token
+    mockUseAccessToken.mockReturnValue({
+      accessToken: 'test-token-from-hook',
+      isLoading: false,
+    });
+
+    const { result } = renderHook(() => useUploadDatasetMutation('project-1'), {
+      wrapper: createWrapper(),
+    });
+
+    const file = new File(['test content'], 'test.csv', { type: 'text/csv' });
+
+    result.current.mutate(file);
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    // Check calls to /api/logto/token
+    const tokenCalls = mockFetch.mock.calls.filter(
+      (call) => call[0] === '/api/logto/token'
+    );
+
+    // Should NOT fetch token as it is provided by the hook
+    expect(tokenCalls.length).toBe(0);
+
+    // Reset mock
+    mockUseAccessToken.mockReturnValue({ accessToken: null, isLoading: false });
   });
 });
