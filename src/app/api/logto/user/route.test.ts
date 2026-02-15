@@ -32,7 +32,12 @@ describe('User API Route', () => {
   });
 
   afterAll(() => {
-    process.env.NODE_ENV = originalNodeEnv;
+    if (originalNodeEnv) {
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: originalNodeEnv,
+        writable: true,
+      });
+    }
   });
 
   beforeEach(() => {
@@ -40,7 +45,10 @@ describe('User API Route', () => {
   });
 
   it('should include _debug field in development', async () => {
-    process.env.NODE_ENV = 'development';
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'development',
+      writable: true,
+    });
 
     const mockUser = {
       isAuthenticated: true,
@@ -62,7 +70,10 @@ describe('User API Route', () => {
   });
 
   it('should NOT include _debug field in production', async () => {
-    process.env.NODE_ENV = 'production';
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'production',
+      writable: true,
+    });
 
     const mockUser = {
       isAuthenticated: true,
