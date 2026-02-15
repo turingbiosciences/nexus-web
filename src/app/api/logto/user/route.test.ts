@@ -44,9 +44,12 @@ describe('User API Route', () => {
     jest.clearAllMocks();
   });
 
-  it('should include _debug field in development', async () => {
+  const runTest = async (
+    environment: 'development' | 'production',
+    shouldHaveDebug: boolean
+  ) => {
     Object.defineProperty(process.env, 'NODE_ENV', {
-      value: 'development',
+      value: environment,
       writable: true,
     });
 
@@ -64,33 +67,20 @@ describe('User API Route', () => {
     const res = await GET(req);
     const data = await res.json();
 
-    expect(data._debug).toBeDefined();
+    if (shouldHaveDebug) {
+      expect(data._debug).toBeDefined();
+    } else {
+      expect(data._debug).toBeUndefined();
+    }
     expect(data.isAuthenticated).toBe(true);
     expect(logger.info).toHaveBeenCalled();
+  };
+
+  it('should include _debug field in development', async () => {
+    await runTest('development', true);
   });
 
   it('should NOT include _debug field in production', async () => {
-    Object.defineProperty(process.env, 'NODE_ENV', {
-      value: 'production',
-      writable: true,
-    });
-
-    const mockUser = {
-      isAuthenticated: true,
-      claims: { sub: 'user-123' },
-    };
-
-    mockHandleUser.mockResolvedValue({
-      json: async () => mockUser,
-      status: 200,
-    });
-
-    const req = new NextRequest('http://localhost/api/logto/user');
-    const res = await GET(req);
-    const data = await res.json();
-
-    expect(data._debug).toBeUndefined();
-    expect(data.isAuthenticated).toBe(true);
-    expect(logger.info).toHaveBeenCalled();
+    await runTest('production', false);
   });
 });
