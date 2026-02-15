@@ -20,7 +20,10 @@ describe('API Logger', () => {
   it('logRequest should call logger.info with correct parameters', () => {
     logRequest('test-label', req);
     expect(logger.info).toHaveBeenCalledWith(
-      expect.objectContaining({ label: 'test-label', url: 'http://localhost/api/test' }),
+      expect.objectContaining({
+        label: 'test-label',
+        url: 'http://localhost/api/test',
+      }),
       expect.stringContaining('[logto:test-label] Request')
     );
   });
@@ -38,15 +41,18 @@ describe('API Logger', () => {
     expect(logger.info).toHaveBeenCalledTimes(2);
     expect(logger.info).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({ label: 'test-label', url: 'http://localhost/api/test' }),
+      expect.objectContaining({
+        label: 'test-label',
+        url: 'http://localhost/api/test',
+      }),
       expect.stringContaining('[logto:test-label] Request')
     );
     // The second call might be directly logger.info or via logResponse, depending on implementation.
     // My plan is to make logRequestWithResponse use logResponse internally or just log directly.
     // I'll assume direct logging for now based on current implementation structure but updated to logger.
     expect(logger.info).toHaveBeenCalledWith(
-        expect.objectContaining({ label: 'test-label', status: 200 }),
-        expect.stringContaining('[logto:test-label]')
+      expect.objectContaining({ label: 'test-label', status: 200 }),
+      expect.stringContaining('[logto:test-label]')
     );
   });
 });

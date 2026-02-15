@@ -7,11 +7,15 @@ import { logger } from '@/lib/logger';
 const mockHandleUser = jest.fn();
 
 // Use virtual: true to avoid module resolution issues if the environment doesn't support the export map perfectly
-jest.mock('@logto/next/edge', () => {
-  return jest.fn().mockImplementation(() => ({
-    handleUser: () => mockHandleUser,
-  }));
-}, { virtual: true });
+jest.mock(
+  '@logto/next/edge',
+  () => {
+    return jest.fn().mockImplementation(() => ({
+      handleUser: () => mockHandleUser,
+    }));
+  },
+  { virtual: true }
+);
 
 // Mock logger
 jest.mock('@/lib/logger', () => ({

@@ -18,5 +18,8 @@ export function logRequestWithResponse(
   res: Response
 ): void {
   logRequest(label, req);
-  logger.info({ label, status: res.status }, `[logto:${label}] Response status`);
+  logger.info(
+    { label, status: res.status },
+    `[logto:${label}] Response status`
+  );
 }
