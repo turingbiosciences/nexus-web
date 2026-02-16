@@ -1,3 +1,4 @@
+/** @jest-environment node */
 import { logRequest, logResponse, logRequestWithResponse } from '../api-logger';
 import { logger } from '../logger';
 
@@ -8,46 +9,48 @@ jest.mock('../logger', () => ({
   },
 }));
 
-describe('api-logger', () => {
+describe('API Logger', () => {
+  const req = new Request('http://localhost/api/test');
+  const res = new Response('ok', { status: 200 });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('logRequest calls logger.info with url', () => {
-    const req = { url: 'http://example.com/api/test' } as unknown as Request;
-
-    logRequest('test', req);
-
+  it('logRequest should call logger.info with correct parameters', () => {
+    logRequest('test-label', req);
     expect(logger.info).toHaveBeenCalledWith(
-      expect.objectContaining({ url: 'http://example.com/api/test' }),
-      expect.stringContaining('[logto:test]')
+      expect.objectContaining({
+        label: 'test-label',
+        url: 'http://localhost/api/test',
+      }),
+      expect.stringContaining('[logto:test-label] Request')
     );
   });
 
-  it('logResponse calls logger.info with status', () => {
-    logResponse('test', 200);
+  it('logResponse should call logger.info with correct parameters', () => {
+    logResponse('test-label', 200);
     expect(logger.info).toHaveBeenCalledWith(
-      { status: 200 },
-      expect.stringContaining('[logto:test]')
+      expect.objectContaining({ label: 'test-label', status: 200 }),
+      expect.stringContaining('[logto:test-label] Response status')
     );
   });
 
-  it('logRequestWithResponse calls logger.info for both request and response', () => {
-    const req = { url: 'http://example.com/api/test' } as unknown as Request;
-    const res = { status: 201 } as unknown as Response;
-
-    logRequestWithResponse('test', req, res);
-
+  it('logRequestWithResponse should call logger.info twice', () => {
+    logRequestWithResponse('test-label', req, res);
     expect(logger.info).toHaveBeenCalledTimes(2);
     expect(logger.info).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({ url: 'http://example.com/api/test' }),
-      expect.stringContaining('[logto:test]')
+      expect.objectContaining({
+        label: 'test-label',
+        url: 'http://localhost/api/test',
+      }),
+      expect.stringContaining('[logto:test-label] Request')
     );
-    expect(logger.info).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ status: 201 }),
-      expect.stringContaining('[logto:test]')
+    // Verify logRequestWithResponse calls logger.info twice: once for request, once for response
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({ label: 'test-label', status: 200 }),
+      expect.stringContaining('[logto:test-label]')
     );
   });
 });

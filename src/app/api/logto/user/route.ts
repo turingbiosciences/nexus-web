@@ -2,8 +2,8 @@ import LogtoClient from '@logto/next/edge';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { logtoConfig } from '@/lib/auth';
-import { logRequest } from '@/lib/api-logger';
 import { logger } from '@/lib/logger';
+import { logRequest } from '@/lib/api-logger';
 
 const logto = new LogtoClient(logtoConfig);
 
@@ -36,16 +36,19 @@ export const GET = async (req: NextRequest) => {
       : null;
 
   logger.info(
-    { status: res.status, authenticated, sub },
-    '[logto:user] User check completed'
+    {
+      label: 'user',
+      status: res.status,
+      authenticated,
+      sub,
+    },
+    '[logto:user] Request completed'
   );
 
-  const responseBody: Record<string, unknown> = {
-    ...(data || {}),
-  };
+  const responseData: Record<string, unknown> = { ...(data || {}) };
 
   if (process.env.NODE_ENV === 'development') {
-    responseBody._debug = {
+    responseData._debug = {
       status: res.status,
       authenticated,
       hasClaims: Boolean(claims),
@@ -53,5 +56,5 @@ export const GET = async (req: NextRequest) => {
     };
   }
 
-  return NextResponse.json(responseBody, { status: res.status });
+  return NextResponse.json(responseData, { status: res.status });
 };

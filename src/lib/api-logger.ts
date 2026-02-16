@@ -5,11 +5,11 @@ import { logger } from '@/lib/logger';
  */
 
 export function logRequest(label: string, req: Request): void {
-  logger.info({ url: req.url }, `[logto:${label}] Request received`);
+  logger.info({ label, url: req.url }, `[logto:${label}] Request`);
 }
 
 export function logResponse(label: string, status: number): void {
-  logger.info({ status }, `[logto:${label}] Response sent`);
+  logger.info({ label, status }, `[logto:${label}] Response status`);
 }
 
 export function logRequestWithResponse(
@@ -18,5 +18,8 @@ export function logRequestWithResponse(
   res: Response
 ): void {
   logRequest(label, req);
-  logResponse(label, res.status);
+  logger.info(
+    { label, status: res.status },
+    `[logto:${label}] Response status`
+  );
 }
