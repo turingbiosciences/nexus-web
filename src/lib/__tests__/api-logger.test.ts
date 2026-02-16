@@ -47,9 +47,7 @@ describe('API Logger', () => {
       }),
       expect.stringContaining('[logto:test-label] Request')
     );
-    // The second call might be directly logger.info or via logResponse, depending on implementation.
-    // My plan is to make logRequestWithResponse use logResponse internally or just log directly.
-    // I'll assume direct logging for now based on current implementation structure but updated to logger.
+    // Verify logRequestWithResponse calls logger.info twice: once for request, once for response
     expect(logger.info).toHaveBeenCalledWith(
       expect.objectContaining({ label: 'test-label', status: 200 }),
       expect.stringContaining('[logto:test-label]')

@@ -24,6 +24,10 @@ jest.mock('@/lib/logger', () => ({
   },
 }));
 
+// Mock api-logger explicitly for clearer and more robust tests
+jest.mock('@/lib/api-logger', () => ({
+  logRequest: jest.fn(),
+}));
 describe('User API Route', () => {
   let originalNodeEnv: string | undefined;
 
