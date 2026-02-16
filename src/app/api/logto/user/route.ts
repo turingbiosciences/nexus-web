@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { logtoConfig } from '@/lib/auth';
 import { logRequest } from '@/lib/api-logger';
+import { logger } from '@/lib/logger';
 
 const logto = new LogtoClient(logtoConfig);
 
@@ -34,20 +35,23 @@ export const GET = async (req: NextRequest) => {
       ? claims.sub
       : null;
 
-  console.log(
-    `[logto:user] Status=${res.status} authenticated=${authenticated} sub=${sub}`
+  logger.info(
+    { status: res.status, authenticated, sub },
+    '[logto:user] User check completed'
   );
 
-  return NextResponse.json(
-    {
-      ...(data || {}),
-      _debug: {
-        status: res.status,
-        authenticated,
-        hasClaims: Boolean(claims),
-        sub,
-      },
-    },
-    { status: res.status }
-  );
+  const responseBody: Record<string, unknown> = {
+    ...(data || {}),
+  };
+
+  if (process.env.NODE_ENV === 'development') {
+    responseBody._debug = {
+      status: res.status,
+      authenticated,
+      hasClaims: Boolean(claims),
+      sub,
+    };
+  }
+
+  return NextResponse.json(responseBody, { status: res.status });
 };

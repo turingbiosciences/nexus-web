@@ -1,13 +1,15 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Shared logging utilities for API routes
  */
 
 export function logRequest(label: string, req: Request): void {
-  console.log(`[logto:${label}] URL=${req.url}`);
+  logger.info({ url: req.url }, `[logto:${label}] Request received`);
 }
 
 export function logResponse(label: string, status: number): void {
-  console.log(`[logto:${label}] Status=${status}`);
+  logger.info({ status }, `[logto:${label}] Response sent`);
 }
 
 export function logRequestWithResponse(
@@ -16,5 +18,5 @@ export function logRequestWithResponse(
   res: Response
 ): void {
   logRequest(label, req);
-  console.log(`[logto:${label}] Status=${res.status}`);
+  logger.info({ status: res.status }, `[logto:${label}] Response sent`);
 }
