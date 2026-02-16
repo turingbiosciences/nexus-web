@@ -18,5 +18,5 @@ export function logRequestWithResponse(
   res: Response
 ): void {
   logRequest(label, req);
-  logger.info({ status: res.status }, `[logto:${label}] Response sent`);
+  logResponse(label, res.status);
 }
