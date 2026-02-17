@@ -5,11 +5,15 @@ import { NextRequest } from 'next/server';
 // Mock LogtoClient
 const mockHandleSignIn = jest.fn();
 
-jest.mock('@logto/next/edge', () => {
-  return jest.fn().mockImplementation(() => ({
-    handleSignIn: () => mockHandleSignIn,
-  }));
-}, { virtual: true });
+jest.mock(
+  '@logto/next/edge',
+  () => {
+    return jest.fn().mockImplementation(() => ({
+      handleSignIn: () => mockHandleSignIn,
+    }));
+  },
+  { virtual: true }
+);
 
 // Mock api-logger
 jest.mock('@/lib/api-logger', () => ({
@@ -38,16 +42,21 @@ describe('Sign-in API Route', () => {
       reset: Date.now() + 60000,
     });
 
-    mockHandleSignIn.mockResolvedValue(new Response('redirect', { status: 302 }));
+    mockHandleSignIn.mockResolvedValue(
+      new Response('redirect', { status: 302 })
+    );
 
     const req = new NextRequest('http://localhost/api/logto/sign-in');
     const res = await GET(req);
 
-    expect(checkRateLimit).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
-      maxRequests: 20,
-      windowMs: 60000,
-      prefix: 'sign-in',
-    }));
+    expect(checkRateLimit).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        maxRequests: 20,
+        windowMs: 60000,
+        prefix: 'sign-in',
+      })
+    );
     expect(mockHandleSignIn).toHaveBeenCalled();
     expect(res.status).toBe(302);
   });
