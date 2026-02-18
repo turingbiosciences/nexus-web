@@ -9,8 +9,10 @@ const logto = new LogtoClient(logtoConfig);
 
 export const GET = async (req: NextRequest) => {
   // Use req.ip if available (Next.js populates this), otherwise fallback to headers
+  // specific Next.js versions might not have ip in the type definition
+  const ip = (req as unknown as { ip?: string }).ip;
   const identifier =
-    req.ip ??
+    ip ??
     req.headers.get('x-forwarded-for')?.split(',')[0] ??
     req.headers.get('x-real-ip') ??
     'unknown';
