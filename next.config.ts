@@ -5,6 +5,34 @@ const nextConfig: NextConfig = {
   /* config options here */
 
   async headers() {
+    // Parse the Turing API origin to include in CSP
+    const turingApi = process.env.NEXT_PUBLIC_TURING_API;
+    let turingApiOrigin = '';
+    if (turingApi) {
+      try {
+        turingApiOrigin = new URL(turingApi).origin;
+      } catch {
+        // Invalid URL, ignore but log warning
+        console.warn(
+          '⚠️ Invalid NEXT_PUBLIC_TURING_API URL in next.config.ts, CSP might block API calls'
+        );
+      }
+    }
+
+    const cspHeader = [
+      "default-src 'self'",
+      // unsafe-eval and unsafe-inline needed for Next.js dev and runtime
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https:",
+      "font-src 'self'",
+      // Allow connections to Logto, API, and Sentry
+      `connect-src 'self' https://*.logto.io https://*.logto.app https://*.ondigitalocean.app https://*.sentry.io${turingApiOrigin ? ` ${turingApiOrigin}` : ''}`,
+      // Allow workers for Sentry
+      "worker-src 'self' blob:",
+      "frame-ancestors 'none'",
+    ].join('; ');
+
     return [
       {
         // Apply security headers to all routes
@@ -12,19 +40,15 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              // unsafe-eval and unsafe-inline needed for Next.js dev and runtime
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https:",
-              "font-src 'self'",
-              // Allow connections to Logto, API, and Sentry
-              "connect-src 'self' https://*.logto.io https://*.logto.app https://*.ondigitalocean.app https://*.sentry.io",
-              // Allow workers for Sentry
-              "worker-src 'self' blob:",
-              "frame-ancestors 'none'",
-            ].join('; '),
+            value: cspHeader,
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
           },
           {
             key: 'X-Frame-Options',
