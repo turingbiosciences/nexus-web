@@ -11,3 +11,9 @@
 **Vulnerability:** The public sign-in endpoint (`/api/logto/sign-in`) lacked rate limiting, allowing potential DoS or abuse. Additionally, reliance on `x-forwarded-for` without parsing can be spoofed.
 **Learning:** Next.js `NextRequest.ip` is the most reliable way to get client IP in Vercel/Edge environments. If falling back to headers, always take the _first_ IP from `x-forwarded-for` (client IP) rather than the whole string, as proxies append to it.
 **Prevention:** Use `req.ip ?? req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'` for robust IP identification in rate limiters.
+
+## 2025-05-25 - Information Leakage in API Errors
+
+**Vulnerability:** Upstream error details (potentially containing secrets or stack traces) were being exposed in the `Error` message thrown in `src/app/api/logto/token/route.ts`. Even though the response was sanitized for clients in production, the thrown error object was logged with its full message. If the message itself contained secrets (from `tokenResponse.text()`), they would be written to logs unredacted because Pino redacts specific object paths but not strings within `error.message`.
+**Learning:** `logger.error({ error })` logs the error object. While Pino redacts properties like `password` or `token` in the log object, it does _not_ parse and redact the `message` string of an Error object. Including raw API responses in Error messages is dangerous.
+**Prevention:** Always sanitize Error messages before throwing. Log the raw/detailed error separately with `logger.error({ rawError }, 'Message')` so redaction rules apply to the `rawError` object properties, but keep the thrown `Error.message` generic (e.g., "Upstream service failed").
