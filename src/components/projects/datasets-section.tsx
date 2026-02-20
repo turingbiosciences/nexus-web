@@ -48,11 +48,14 @@ export function DatasetsSection({
     const optimistic = (project?.datasets || []).filter((d) =>
       d.id.startsWith('optimistic-')
     );
+    // Optimized: Sort and filter within useMemo to prevent re-sorting on every render
     return reconcileDatasets({
       remote: remoteDatasets,
       optimistic,
       pendingDeleteIds,
-    });
+    })
+      .filter((d) => d?.id)
+      .sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime());
   }, [project?.datasets, remoteDatasets, pendingDeleteIds]);
 
   // Sync datasetCount from API with project state
@@ -90,12 +93,9 @@ export function DatasetsSection({
         )}
         {combined.length > 0 && !remoteLoading && (
           <ul className="divide-y divide-gray-200 border rounded-lg overflow-hidden">
-            {combined
-              .filter((d) => d?.id)
-              .sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime())
-              .map((d) => (
-                <li
-                  key={d.id}
+            {combined.map((d) => (
+              <li
+                key={d.id}
                   className={`flex items-center justify-between px-4 py-3 text-sm bg-white hover:bg-gray-50 ${
                     d.id?.startsWith('optimistic-') ? 'opacity-70 italic' : ''
                   }`}
