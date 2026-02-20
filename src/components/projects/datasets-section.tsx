@@ -96,74 +96,74 @@ export function DatasetsSection({
             {combined.map((d) => (
               <li
                 key={d.id}
-                  className={`flex items-center justify-between px-4 py-3 text-sm bg-white hover:bg-gray-50 ${
-                    d.id?.startsWith('optimistic-') ? 'opacity-70 italic' : ''
-                  }`}
-                >
-                  <div className="flex-1 min-w-0 pr-4">
-                    <p className="font-medium text-gray-900 truncate">
-                      {d.filename}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {formatBytes(d.size)} • {d.uploadedAt.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                      onClick={() => {
-                        // Temporary stub for download action; logs for test instrumentation
-                        console.log('Download dataset', d.id);
-                      }}
-                      aria-label={`Download ${d.filename}`}
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="hover:bg-red-50 hover:text-red-600 transition-colors"
-                      disabled={deleteMutation.isPending}
-                      aria-label={`Delete ${d.filename}`}
-                      onClick={() => {
-                        const newDatasets =
-                          project.datasets?.filter((x) => x.id !== d.id) || [];
-                        updateProject(project.id, {
-                          datasets: newDatasets,
-                          datasetCount: newDatasets.length,
-                          lastActivity: 'dataset deleted',
-                        });
-                        setPendingDeleteIds((prev) => [...prev, d.id]);
-                        deleteMutation.mutate(d.id, {
-                          onSuccess: () => {
-                            push({
-                              title: 'Dataset deleted',
-                              description: `${d.filename} was removed successfully.`,
-                              variant: 'default',
-                            });
-                          },
-                          onError: () => {
-                            push({
-                              title: 'Deletion failed',
-                              description: `Could not delete ${d.filename}. Please retry.`,
-                              variant: 'destructive',
-                            });
-                          },
-                          onSettled: () => {
-                            setPendingDeleteIds((prev) =>
-                              prev.filter((id) => id !== d.id)
-                            );
-                          },
-                        });
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </li>
-              ))}
+                className={`flex items-center justify-between px-4 py-3 text-sm bg-white hover:bg-gray-50 ${
+                  d.id?.startsWith('optimistic-') ? 'opacity-70 italic' : ''
+                }`}
+              >
+                <div className="flex-1 min-w-0 pr-4">
+                  <p className="font-medium text-gray-900 truncate">
+                    {d.filename}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {formatBytes(d.size)} • {d.uploadedAt.toLocaleString()}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    onClick={() => {
+                      // Temporary stub for download action; logs for test instrumentation
+                      console.log('Download dataset', d.id);
+                    }}
+                    aria-label={`Download ${d.filename}`}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="hover:bg-red-50 hover:text-red-600 transition-colors"
+                    disabled={deleteMutation.isPending}
+                    aria-label={`Delete ${d.filename}`}
+                    onClick={() => {
+                      const newDatasets =
+                        project.datasets?.filter((x) => x.id !== d.id) || [];
+                      updateProject(project.id, {
+                        datasets: newDatasets,
+                        datasetCount: newDatasets.length,
+                        lastActivity: 'dataset deleted',
+                      });
+                      setPendingDeleteIds((prev) => [...prev, d.id]);
+                      deleteMutation.mutate(d.id, {
+                        onSuccess: () => {
+                          push({
+                            title: 'Dataset deleted',
+                            description: `${d.filename} was removed successfully.`,
+                            variant: 'default',
+                          });
+                        },
+                        onError: () => {
+                          push({
+                            title: 'Deletion failed',
+                            description: `Could not delete ${d.filename}. Please retry.`,
+                            variant: 'destructive',
+                          });
+                        },
+                        onSettled: () => {
+                          setPendingDeleteIds((prev) =>
+                            prev.filter((id) => id !== d.id)
+                          );
+                        },
+                      });
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </li>
+            ))}
           </ul>
         )}
         {nextCursor && !remoteLoading && (
