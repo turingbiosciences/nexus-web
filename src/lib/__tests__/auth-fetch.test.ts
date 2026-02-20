@@ -211,6 +211,44 @@ describe('auth-fetch', () => {
         },
       });
     });
+
+    it('should preserve headers when passed as Headers object', async () => {
+      const mockResponse = {
+        ok: true,
+        status: 200,
+      } as Response;
+
+      mockFetch.mockResolvedValueOnce(mockResponse);
+
+      const headers = new Headers();
+      headers.append('X-Custom-Header', 'value');
+
+      await authFetch('https://api.example.com/test', {
+        token: 'test-token',
+        method: 'GET',
+        headers,
+      });
+
+      // When passing Headers object, fetch receives Headers object merged with Authorization
+      // However, our current implementation spreads ...headers which results in {} for Headers object
+      // So this expectation will fail if the bug exists
+      const callArgs = mockFetch.mock.calls[0];
+      const callHeaders = callArgs[1].headers;
+
+      // We need to check if it's a Headers object or plain object
+      if (callHeaders instanceof Headers) {
+        expect(callHeaders.get('Authorization')).toBe('Bearer test-token');
+        expect(callHeaders.get('X-Custom-Header')).toBe('value');
+      } else {
+        // Current implementation returns plain object
+        expect(callHeaders).toEqual(
+          expect.objectContaining({
+            Authorization: 'Bearer test-token',
+            'X-Custom-Header': 'value',
+          })
+        );
+      }
+    });
   });
 
   describe('simpleFetch', () => {
