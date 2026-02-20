@@ -55,7 +55,7 @@ export function DatasetsSection({
       pendingDeleteIds,
     })
       .filter((d) => d?.id)
-      .sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime());
+      .sort((a, b) => (b.uploadedAt.getTime() || 0) - (a.uploadedAt.getTime() || 0));
   }, [project?.datasets, remoteDatasets, pendingDeleteIds]);
 
   // Sync datasetCount from API with project state
