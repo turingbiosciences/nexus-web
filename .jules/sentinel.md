@@ -13,6 +13,7 @@
 **Prevention:** Use `req.ip ?? req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'` for robust IP identification in rate limiters.
 
 ## 2026-02-21 - [Sensitive API Route Caching]
+
 **Vulnerability:** Sensitive API endpoints (token, user info) using GET method lacked `Cache-Control: no-store` headers, potentially allowing browser/proxy caching of credentials.
 **Learning:** Next.js Route Handlers using GET requests (even JSON API responses) may be cached by browsers unless explicitly disabled, leading to credential leakage on shared devices.
 **Prevention:** Always explicitly set `Cache-Control: no-store` for any API route returning sensitive data (PII, tokens), regardless of the framework's default behavior.

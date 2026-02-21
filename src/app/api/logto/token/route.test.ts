@@ -3,13 +3,17 @@ import { GET } from './route';
 import { NextRequest } from 'next/server';
 
 // Mock dependencies
-jest.mock('@logto/next/edge', () => {
-  return jest.fn().mockImplementation(() => ({
-    getLogtoContext: jest.fn().mockResolvedValue({
-      isAuthenticated: true,
-    }),
-  }));
-}, { virtual: true });
+jest.mock(
+  '@logto/next/edge',
+  () => {
+    return jest.fn().mockImplementation(() => ({
+      getLogtoContext: jest.fn().mockResolvedValue({
+        isAuthenticated: true,
+      }),
+    }));
+  },
+  { virtual: true }
+);
 
 jest.mock('@/lib/rate-limit', () => ({
   checkRateLimit: jest.fn().mockReturnValue({ success: true }),
