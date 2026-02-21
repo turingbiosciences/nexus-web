@@ -17,3 +17,9 @@
 **Vulnerability:** Sensitive API endpoints (token, user info) using GET method lacked `Cache-Control: no-store` headers, potentially allowing browser/proxy caching of credentials.
 **Learning:** Next.js Route Handlers using GET requests (even JSON API responses) may be cached by browsers unless explicitly disabled, leading to credential leakage on shared devices.
 **Prevention:** Always explicitly set `Cache-Control: no-store` for any API route returning sensitive data (PII, tokens), regardless of the framework's default behavior.
+
+## 2026-02-21 - [Dependency Incompatibility Blocking Security Patches]
+
+**Issue:** `npm audit` fails due to `minimatch < 10.2.1` vulnerability, but upgrading to `minimatch >= 10.2.1` breaks `eslint` v9 (ESM vs CJS issues).
+**Learning:** Security patches in fundamental dependencies like `minimatch` can create catch-22 situations where the fix breaks the build toolchain (ESLint/Next.js) due to module system incompatibilities (ESM/CJS).
+**Constraint:** We cannot apply the security fix for `minimatch` until `eslint-config-next` and related tooling supports `eslint` configurations compatible with `minimatch` v10+ (ESM).
