@@ -87,4 +87,26 @@ describe('User API Route', () => {
   it('should NOT include _debug field in production', async () => {
     await runTest('production', false);
   });
+
+  it('should include Cache-Control: no-store header', async () => {
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'production',
+      writable: true,
+    });
+
+    const mockUser = {
+      isAuthenticated: true,
+      claims: { sub: 'user-123' },
+    };
+
+    mockHandleUser.mockResolvedValue({
+      json: async () => mockUser,
+      status: 200,
+    });
+
+    const req = new NextRequest('http://localhost/api/logto/user');
+    const res = await GET(req);
+
+    expect(res.headers.get('Cache-Control')).toBe('no-store');
+  });
 });

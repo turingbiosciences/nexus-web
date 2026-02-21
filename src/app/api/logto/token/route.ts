@@ -152,11 +152,18 @@ export const GET = async (req: NextRequest) => {
       }
     }
 
-    return NextResponse.json({
-      accessToken: tokenData.access_token,
-      expiresIn: tokenData.expires_in,
-      tokenType: tokenData.token_type,
-    });
+    return NextResponse.json(
+      {
+        accessToken: tokenData.access_token,
+        expiresIn: tokenData.expires_in,
+        tokenType: tokenData.token_type,
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
+    );
   } catch (error) {
     logger.error({ error }, 'M2M token request failed');
     return NextResponse.json(
