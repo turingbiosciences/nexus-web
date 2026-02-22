@@ -7,8 +7,8 @@
  *
  * This function:
  * 1. Replaces any character that is NOT alphanumeric, dot, dash, or underscore with an underscore.
- * 2. Removes any sequence of dots that could be interpreted as directory traversal (e.g. "..").
- * 3. Trims leading/trailing whitespace and dots.
+ * 2. Collapses multiple consecutive dots into a single dot to prevent directory traversal (e.g. "..").
+ * 3. Trims leading/trailing dots and whitespace.
  * 4. Limits the length to 255 characters.
  * 5. Ensures the filename is not empty (defaults to "unnamed_file").
  *
@@ -22,11 +22,9 @@ export function sanitizeFilename(filename: string): string {
   // Allow: a-z, A-Z, 0-9, ., -, _
   let sanitized = filename.replace(/[^a-zA-Z0-9.\-_]/g, '_');
 
-  // 2. Prevent directory traversal by removing ".." sequences
-  // We do this repeatedly until no ".." remains
-  while (sanitized.includes('..')) {
-    sanitized = sanitized.replace(/\.\./g, '.');
-  }
+  // 2. Prevent directory traversal by collapsing multiple dots
+  // This replaces ".." and "..." etc. with "."
+  sanitized = sanitized.replace(/\.{2,}/g, '.');
 
   // 3. Trim leading/trailing dots and whitespace (though whitespace was replaced by _)
   // Leading/trailing dots can be problematic
