@@ -241,7 +241,11 @@ export function FileUploader({
       // Try TUS protocol first
       const sanitizedFilename = sanitizeFilename(upload.file.name);
       logger.debug(
-        { uploadId: upload.id, filename: sanitizedFilename, originalName: upload.file.name },
+        {
+          uploadId: upload.id,
+          filename: sanitizedFilename,
+          originalName: upload.file.name,
+        },
         'Attempting TUS upload'
       );
       const tusUpload = new tus.Upload(upload.file, {
