@@ -20,15 +20,21 @@ export function sanitizeFilename(filename: string): string {
 
   // 1. Replace unsafe characters with underscore
   // Allow: a-z, A-Z, 0-9, ., -, _
+  // We use a simple character class which is safe from backtracking issues
   let sanitized = filename.replace(/[^a-zA-Z0-9.\-_]/g, '_');
 
   // 2. Prevent directory traversal by collapsing multiple dots
-  // This replaces ".." and "..." etc. with "."
-  sanitized = sanitized.replace(/\.{2,}/g, '.');
+  // Splitting by dot and filtering empty strings removes consecutive dots effectively
+  // e.g. "a..b" -> ["a", "", "b"] -> ["a", "b"] -> "a.b"
+  sanitized = sanitized
+    .split('.')
+    .filter((part) => part.length > 0)
+    .join('.');
 
-  // 3. Trim leading/trailing dots and whitespace (though whitespace was replaced by _)
-  // Leading/trailing dots can be problematic
-  sanitized = sanitized.replace(/^\.+|\.+$/g, '');
+  // 3. Trimming leading/trailing dots is handled implicitly by the split/filter/join above
+  // because leading/trailing dots result in empty strings at the ends of the array,
+  // which are filtered out.
+  // e.g. ".a." -> ["", "a", ""] -> ["a"] -> "a"
 
   // 4. Limit length
   if (sanitized.length > 255) {
