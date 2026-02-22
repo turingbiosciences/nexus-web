@@ -9,6 +9,7 @@ import { cn, formatBytes, formatUploadProgress } from '@/lib/utils';
 import { useAccessToken } from '@/components/providers/token-provider';
 import { logger } from '@/lib/logger';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
+import { sanitizeFilename } from '@/lib/security';
 
 // Feature flag: Set to false to use traditional XHR uploads instead of TUS
 // TODO: Re-enable when API supports TUS protocol
@@ -75,7 +76,8 @@ export function FileUploader({
 
     // Use standard FormData upload (fallback method)
     const formData = new FormData();
-    formData.append('file', upload.file);
+    const sanitizedFilename = sanitizeFilename(upload.file.name);
+    formData.append('file', upload.file, sanitizedFilename);
 
     const xhr = new XMLHttpRequest();
 
@@ -237,15 +239,16 @@ export function FileUploader({
       }
 
       // Try TUS protocol first
+      const sanitizedFilename = sanitizeFilename(upload.file.name);
       logger.debug(
-        { uploadId: upload.id, filename: upload.file.name },
+        { uploadId: upload.id, filename: sanitizedFilename, originalName: upload.file.name },
         'Attempting TUS upload'
       );
       const tusUpload = new tus.Upload(upload.file, {
         endpoint: `${apiEndpoint}/projects/${projectId}/files`,
         retryDelays: [0, 1000, 3000], // Shorter delays for fallback
         metadata: {
-          filename: upload.file.name,
+          filename: sanitizedFilename,
           filetype: upload.file.type,
         },
         headers: {
