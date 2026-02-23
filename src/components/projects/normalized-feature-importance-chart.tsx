@@ -82,9 +82,9 @@ export function NormalizedFeatureImportanceChart({
                   width={110}
                 />
                 <Tooltip
-                  formatter={(value: number | string | Array<number | string>) =>
-                    formatTooltipValue(Number(value), 2)
-                  }
+                  formatter={(
+                    value: number | string | Array<number | string>
+                  ) => formatTooltipValue(Number(value), 2)}
                   labelStyle={{ fontSize: 12 }}
                 />
                 <Bar
