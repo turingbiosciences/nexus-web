@@ -3,7 +3,9 @@ import { sanitizeFilename } from '../security';
 describe('sanitizeFilename', () => {
   it('should remove path components', () => {
     expect(sanitizeFilename('../../../../etc/passwd')).toBe('passwd');
-    expect(sanitizeFilename('C:\\Windows\\System32\\calc.exe')).toBe('calc.exe');
+    expect(sanitizeFilename('C:\\Windows\\System32\\calc.exe')).toBe(
+      'calc.exe'
+    );
     expect(sanitizeFilename('/var/log/syslog')).toBe('syslog');
     expect(sanitizeFilename('./file.txt')).toBe('file.txt');
   });
@@ -15,7 +17,9 @@ describe('sanitizeFilename', () => {
   });
 
   it('should replace invalid characters with underscores', () => {
-    expect(sanitizeFilename('file with spaces.txt')).toBe('file_with_spaces.txt');
+    expect(sanitizeFilename('file with spaces.txt')).toBe(
+      'file_with_spaces.txt'
+    );
     expect(sanitizeFilename('image(1).png')).toBe('image_1_.png');
     expect(sanitizeFilename('my$file.csv')).toBe('my_file.csv');
     expect(sanitizeFilename('über.txt')).toBe('_ber.txt');

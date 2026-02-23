@@ -43,27 +43,29 @@ export function sanitizeFilename(filename: string): string {
   const sanitizedExt = ext.replace(/[^a-zA-Z0-9]/g, '');
 
   // 4. Reassemble
-  let sanitized = sanitizedExt ? `${sanitizedBase}.${sanitizedExt}` : sanitizedBase;
+  let sanitized = sanitizedExt
+    ? `${sanitizedBase}.${sanitizedExt}`
+    : sanitizedBase;
 
   // 5. Truncate to 255
   if (sanitized.length > 255) {
-      if (sanitizedExt) {
-          // Truncate base name to fit extension
-          const maxBaseLength = 255 - sanitizedExt.length - 1; // -1 for dot
-          if (maxBaseLength > 0) {
-              sanitized = `${sanitizedBase.substring(0, maxBaseLength)}.${sanitizedExt}`;
-          } else {
-              // Extension is too long or something weird, just truncate whole string
-              sanitized = sanitized.substring(0, 255);
-          }
+    if (sanitizedExt) {
+      // Truncate base name to fit extension
+      const maxBaseLength = 255 - sanitizedExt.length - 1; // -1 for dot
+      if (maxBaseLength > 0) {
+        sanitized = `${sanitizedBase.substring(0, maxBaseLength)}.${sanitizedExt}`;
       } else {
-          sanitized = sanitized.substring(0, 255);
+        // Extension is too long or something weird, just truncate whole string
+        sanitized = sanitized.substring(0, 255);
       }
+    } else {
+      sanitized = sanitized.substring(0, 255);
+    }
   }
 
   // 6. Ensure not empty or dots after sanitization
   if (!sanitized || /^\.+$/.test(sanitized)) {
-      return 'unnamed_file';
+    return 'unnamed_file';
   }
 
   return sanitized;
