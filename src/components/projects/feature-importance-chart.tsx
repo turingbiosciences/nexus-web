@@ -127,7 +127,9 @@ export function FeatureImportanceChart({
             tick={{ fontSize: 12 }}
           />
           <Tooltip
-            formatter={(value: number) => formatTooltipValue(value)}
+            formatter={(value: number | string | Array<number | string>) =>
+              formatTooltipValue(Number(value))
+            }
             labelStyle={{ color: '#374151' }}
             contentStyle={TOOLTIP_STYLE}
           />

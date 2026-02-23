@@ -174,7 +174,9 @@ export function FeatureComparisonChart({ data }: FeatureComparisonChartProps) {
             label={{ value: 'Value', angle: -90, position: 'insideLeft' }}
           />
           <Tooltip
-            formatter={(value: number) => formatTooltipValue(value)}
+            formatter={(value: number | string | Array<number | string>) =>
+              formatTooltipValue(Number(value))
+            }
             contentStyle={TOOLTIP_STYLE}
           />
           <Legend wrapperStyle={{ paddingTop: '5px' }} />

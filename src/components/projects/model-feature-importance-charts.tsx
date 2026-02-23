@@ -123,8 +123,12 @@ export function ModelFeatureImportanceCharts({
                     }}
                   />
                   <Tooltip
-                    formatter={(value: number) => formatTooltipValue(value)}
-                    labelFormatter={(label: number) => `Rank ${label}`}
+                    formatter={(
+                      value: number | string | Array<number | string>
+                    ) => formatTooltipValue(Number(value))}
+                    labelFormatter={(
+                      label: number | string | Array<number | string>
+                    ) => `Rank ${label}`}
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload as ChartFeature;

@@ -3,7 +3,6 @@ import { datasetsKey } from '@/lib/queries/keys';
 import { ProjectDataset } from '@/types/project';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
 import { useAccessToken } from '@/components/providers/token-provider';
-import { sanitizeFilename } from '@/lib/security';
 
 interface UploadArgs {
   projectId: string;
@@ -45,7 +44,7 @@ async function apiUploadDataset({
 
   // Upload the file using FormData
   const formData = new FormData();
-  formData.append('file', file, sanitizeFilename(file.name));
+  formData.append('file', file);
 
   const response = await fetch(`${apiEndpoint}/projects/${projectId}/files`, {
     method: 'POST',
