@@ -13,9 +13,13 @@ describe('sanitizeFilename', () => {
   });
 
   it('should replace special characters with underscores', () => {
-    expect(sanitizeFilename('file with spaces.txt')).toBe('file_with_spaces.txt');
+    expect(sanitizeFilename('file with spaces.txt')).toBe(
+      'file_with_spaces.txt'
+    );
     expect(sanitizeFilename('file(1).txt')).toBe('file_1_.txt');
-    expect(sanitizeFilename('crazy$file#name!.pdf')).toBe('crazy_file_name_.pdf');
+    expect(sanitizeFilename('crazy$file#name!.pdf')).toBe(
+      'crazy_file_name_.pdf'
+    );
   });
 
   it('should collapse multiple underscores', () => {
