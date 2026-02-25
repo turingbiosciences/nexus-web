@@ -13,11 +13,51 @@
 
 import pino from 'pino';
 import * as Sentry from '@sentry/nextjs';
-import { sanitizeUrl } from './security';
+import { sanitizeUrl, SENSITIVE_PARAMS } from './security';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isServer = typeof window === 'undefined';
 const isBrowser = !isServer;
+
+// Generate redact list from shared security constants to avoid duplication
+const sharedRedactPaths = SENSITIVE_PARAMS.flatMap((param) => [
+  param,
+  `*.${param}`,
+]);
+
+// Additional paths specific to logger structure or not in SENSITIVE_PARAMS
+const additionalRedactPaths = [
+  'jwt',
+  '*.jwt',
+  'cookieSecret',
+  '*.cookieSecret',
+  'appSecret',
+  '*.appSecret',
+  'app_secret',
+  '*.app_secret',
+  'm2m_app_secret',
+  '*.m2m_app_secret',
+  'm2m_client_secret',
+  '*.m2m_client_secret',
+  'authorization',
+  '*.authorization',
+  '*.*.authorization',
+  'req.headers.authorization',
+  'cookie',
+  '*.cookie',
+  '*.*.cookie',
+  'req.headers.cookie',
+  'set-cookie',
+  '*["set-cookie"]',
+  '*.*["set-cookie"]',
+  'res.headers.set-cookie',
+  'x-api-key',
+  '*["x-api-key"]',
+  '*.*["x-api-key"]',
+  'errorText',
+  '*.errorText',
+  '*.*.errorText',
+];
 
 // Pino configuration
 const pinoConfig: pino.LoggerOptions = {
@@ -25,69 +65,7 @@ const pinoConfig: pino.LoggerOptions = {
 
   // Redact sensitive information from logs
   redact: {
-    paths: [
-      // Passwords
-      'password',
-      '*.password',
-
-      // Tokens
-      'token',
-      '*.token',
-      'accessToken',
-      '*.accessToken',
-      'access_token',
-      '*.access_token',
-      'refresh_token',
-      '*.refresh_token',
-      'id_token',
-      '*.id_token',
-      'idToken',
-      '*.idToken',
-      'jwt',
-      '*.jwt',
-
-      // Secrets & Keys
-      'secret',
-      '*.secret',
-      'client_secret',
-      '*.client_secret',
-      'apiKey',
-      '*.apiKey',
-      'api_key',
-      '*.api_key',
-      'cookieSecret',
-      '*.cookieSecret',
-      'appSecret',
-      '*.appSecret',
-      'app_secret',
-      '*.app_secret',
-      'm2m_app_secret',
-      '*.m2m_app_secret',
-      'm2m_client_secret',
-      '*.m2m_client_secret',
-
-      // Headers
-      'authorization',
-      '*.authorization',
-      '*.*.authorization',
-      'req.headers.authorization',
-      'cookie',
-      '*.cookie',
-      '*.*.cookie',
-      'req.headers.cookie',
-      'set-cookie',
-      '*["set-cookie"]',
-      '*.*["set-cookie"]',
-      'res.headers.set-cookie',
-      'x-api-key',
-      '*["x-api-key"]',
-      '*.*["x-api-key"]',
-
-      // Error text
-      'errorText',
-      '*.errorText',
-      '*.*.errorText',
-    ],
+    paths: [...sharedRedactPaths, ...additionalRedactPaths],
     censor: '[REDACTED]',
   },
 

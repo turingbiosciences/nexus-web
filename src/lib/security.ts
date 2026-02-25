@@ -3,7 +3,7 @@
  */
 
 // List of query parameters to redact from URLs
-const SENSITIVE_PARAMS = [
+export const SENSITIVE_PARAMS = [
   'token',
   'access_token',
   'refresh_token',
@@ -20,10 +20,7 @@ const SENSITIVE_PARAMS = [
 
 // Pre-compiled regex for sensitive parameters to avoid dynamic construction and improve performance
 // Matches: ?param=value or &param=value
-const SENSITIVE_REGEX = new RegExp(
-  `([?&])(${SENSITIVE_PARAMS.join('|')})=([^&]*)`,
-  'gi'
-);
+const SENSITIVE_REGEX = new RegExp(`([?&])(${SENSITIVE_PARAMS.join('|')})=([^&]*)`, 'gi');
 
 /**
  * Redacts sensitive query parameters from a URL string.
@@ -38,7 +35,8 @@ export function sanitizeUrl(url: string): string {
   try {
     // Handle relative URLs by adding a dummy base
     const isRelative = !url.startsWith('http');
-    const urlObj = new URL(url, isRelative ? 'http://dummy.com' : undefined);
+    // Use https://example.com as dummy base to avoid "insecure protocol" warnings
+    const urlObj = new URL(url, isRelative ? 'https://example.com' : undefined);
 
     let redacted = false;
 
@@ -77,8 +75,13 @@ export function sanitizeUrl(url: string): string {
  * @returns The sanitized filename
  */
 export function sanitizeFilename(filename: string): string {
-  // Remove directory traversal sequences
-  const name = filename.replace(/^.*[\\\/]/, '');
+  // Remove directory traversal sequences by taking only the basename
+  // We handle both forward and backward slashes
+  const lastForwardSlash = filename.lastIndexOf('/');
+  const lastBackSlash = filename.lastIndexOf('\\');
+  const lastSlashIndex = Math.max(lastForwardSlash, lastBackSlash);
+
+  const name = lastSlashIndex >= 0 ? filename.substring(lastSlashIndex + 1) : filename;
 
   // Remove non-alphanumeric characters except dots, dashes, and underscores
   const sanitized = name.replace(/[^a-zA-Z0-9._-]/g, '_');
