@@ -18,6 +18,10 @@ const SENSITIVE_PARAMS = [
   'client_id', // Often public, but sometimes treated as semi-private in logs
 ];
 
+// Pre-compiled regex for sensitive parameters to avoid dynamic construction and improve performance
+// Matches: ?param=value or &param=value
+const SENSITIVE_REGEX = new RegExp(`([?&])(${SENSITIVE_PARAMS.join('|')})=([^&]*)`, 'gi');
+
 /**
  * Redacts sensitive query parameters from a URL string.
  * Used for logging to prevent leaking secrets.
@@ -55,12 +59,7 @@ export function sanitizeUrl(url: string): string {
     // If URL parsing fails, return the original URL but try to mask known patterns
     // using regex as a fallback (less reliable but better than crashing or returning nothing)
     try {
-      let sanitized = url;
-      SENSITIVE_PARAMS.forEach((param) => {
-        const regex = new RegExp(`([?&])${param}=[^&]*`, 'gi');
-        sanitized = sanitized.replace(regex, `$1${param}=[REDACTED]`);
-      });
-      return sanitized;
+      return url.replace(SENSITIVE_REGEX, '$1$2=[REDACTED]');
     } catch {
       // If all else fails, return a safe fallback to avoid logging the raw URL
       return '[INVALID_URL]';
