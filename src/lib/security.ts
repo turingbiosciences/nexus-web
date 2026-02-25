@@ -20,7 +20,10 @@ const SENSITIVE_PARAMS = [
 
 // Pre-compiled regex for sensitive parameters to avoid dynamic construction and improve performance
 // Matches: ?param=value or &param=value
-const SENSITIVE_REGEX = new RegExp(`([?&])(${SENSITIVE_PARAMS.join('|')})=([^&]*)`, 'gi');
+const SENSITIVE_REGEX = new RegExp(
+  `([?&])(${SENSITIVE_PARAMS.join('|')})=([^&]*)`,
+  'gi'
+);
 
 /**
  * Redacts sensitive query parameters from a URL string.
