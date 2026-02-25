@@ -13,6 +13,7 @@ import { authFetch } from '@/lib/auth-fetch';
 import { logger } from '@/lib/logger';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
 import { IS_MOCK } from '@/config/flags';
+import { sanitizeUrl } from '@/lib/security';
 
 /**
  * Configuration for creating an authenticated query hook
@@ -59,7 +60,7 @@ async function fetchFromApi<TApiResponse>(
   const base = getApiBaseUrl();
   const url = `${base}${endpoint}${params?.size ? `?${params.toString()}` : ''}`;
 
-  logger.debug({ url }, 'Fetching from API');
+  logger.debug({ url: sanitizeUrl(url) }, 'Fetching from API');
 
   const res = await authFetch(url, {
     method: 'GET',
@@ -72,7 +73,10 @@ async function fetchFromApi<TApiResponse>(
 
   if (!res.ok) {
     const errorText = await res.text();
-    logger.error({ url, status: res.status, errorText }, 'API request failed');
+    logger.error(
+      { url: sanitizeUrl(url), status: res.status, errorText },
+      'API request failed'
+    );
     throw new Error(`API request failed (${res.status})`);
   }
 

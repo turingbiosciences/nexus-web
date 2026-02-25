@@ -13,6 +13,7 @@
 
 import pino from 'pino';
 import * as Sentry from '@sentry/nextjs';
+import { sanitizeUrl } from './security';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isServer = typeof window === 'undefined';
@@ -230,7 +231,7 @@ export const logApiRequest = (
 ) => {
   const logData = {
     method,
-    url,
+    url: sanitizeUrl(url),
     status: options?.status,
     duration: options?.duration ? `${options.duration}ms` : undefined,
   };

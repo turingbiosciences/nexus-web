@@ -7,6 +7,7 @@ import { useAccessToken } from '@/components/providers/token-provider';
 import { authFetch } from '@/lib/auth-fetch';
 import { logger } from '@/lib/logger';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
+import { sanitizeUrl } from '@/lib/security';
 
 interface UseDatasetsOptions {
   enabled?: boolean;
@@ -38,7 +39,7 @@ async function fetchDatasetsViaApi(
     params.size ? `?${params.toString()}` : ''
   }`;
 
-  logger.info({ projectId, url }, 'Fetching datasets');
+  logger.info({ projectId, url: sanitizeUrl(url) }, 'Fetching datasets');
 
   const res = await authFetch(url, {
     method: 'GET',
