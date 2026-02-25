@@ -20,7 +20,10 @@ export const SENSITIVE_PARAMS = [
 
 // Pre-compiled regex for sensitive parameters to avoid dynamic construction and improve performance
 // Matches: ?param=value or &param=value
-const SENSITIVE_REGEX = new RegExp(`([?&])(${SENSITIVE_PARAMS.join('|')})=([^&]*)`, 'gi');
+const SENSITIVE_REGEX = new RegExp(
+  `([?&])(${SENSITIVE_PARAMS.join('|')})=([^&]*)`,
+  'gi'
+);
 
 /**
  * Redacts sensitive query parameters from a URL string.
@@ -81,7 +84,8 @@ export function sanitizeFilename(filename: string): string {
   const lastBackSlash = filename.lastIndexOf('\\');
   const lastSlashIndex = Math.max(lastForwardSlash, lastBackSlash);
 
-  const name = lastSlashIndex >= 0 ? filename.substring(lastSlashIndex + 1) : filename;
+  const name =
+    lastSlashIndex >= 0 ? filename.substring(lastSlashIndex + 1) : filename;
 
   // Remove non-alphanumeric characters except dots, dashes, and underscores
   const sanitized = name.replace(/[^a-zA-Z0-9._-]/g, '_');
