@@ -3,6 +3,7 @@ import { datasetsKey } from '@/lib/queries/keys';
 import { ProjectDataset } from '@/types/project';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
 import { useAccessToken } from '@/components/providers/token-provider';
+import { sanitizeFilename } from '@/lib/security';
 
 interface UploadArgs {
   projectId: string;
@@ -65,7 +66,7 @@ async function apiUploadDataset({
   // Convert to ProjectDataset format
   return {
     id: dataset.id || crypto.randomUUID(),
-    filename: dataset.filename || file.name,
+    filename: dataset.filename || sanitizeFilename(file.name),
     size: dataset.size || file.size,
     uploadedAt: dataset.uploadedAt ? new Date(dataset.uploadedAt) : new Date(),
   };

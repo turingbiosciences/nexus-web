@@ -1,11 +1,12 @@
 import { logger } from '@/lib/logger';
+import { sanitizeUrl } from '@/lib/security';
 
 /**
  * Shared logging utilities for API routes
  */
 
 export function logRequest(label: string, req: Request): void {
-  logger.info({ label, url: req.url }, `[logto:${label}] Request`);
+  logger.info({ label, url: sanitizeUrl(req.url) }, `[logto:${label}] Request`);
 }
 
 export function logResponse(label: string, status: number): void {
