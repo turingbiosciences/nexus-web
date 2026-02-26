@@ -52,11 +52,18 @@ export function sanitizeFilename(filename: string): string {
  */
 export function sanitizeUrl(urlStr: string): string {
   try {
-    // Handle relative URLs by adding a dummy base
-    const isRelative = !urlStr.startsWith('http');
-    // Use https to avoid mixed content warnings/sonar hotspots
-    const url = new URL(urlStr, isRelative ? 'https://example.com' : undefined);
+    let url: URL;
+    let isRelative = false;
 
+    // First, try to parse as an absolute URL. If that fails, treat as relative
+    // and use a dummy base to construct a full URL object.
+    try {
+      url = new URL(urlStr);
+    } catch {
+      isRelative = true;
+      // Use https to avoid mixed content warnings/sonar hotspots
+      url = new URL(urlStr, 'https://example.com');
+    }
     const sensitiveKeys = [
       'token',
       'access_token',
@@ -73,12 +80,29 @@ export function sanitizeUrl(urlStr: string): string {
       'client_id',
     ];
 
-    sensitiveKeys.forEach((key) => {
-      if (url.searchParams.has(key)) {
+    const sensitiveKeySet = new Set(sensitiveKeys.map((k) => k.toLowerCase()));
+
+    // Redact sensitive query parameters (case-insensitive by key)
+    for (const [key] of url.searchParams.entries()) {
+      if (sensitiveKeySet.has(key.toLowerCase())) {
         url.searchParams.set(key, '[REDACTED]');
       }
-    });
+    }
 
+    // Redact sensitive data that may appear in the URL fragment (e.g., OAuth tokens)
+    if (url.hash && url.hash.length > 1) {
+      const fragment = url.hash.substring(1);
+      const fragmentParams = new URLSearchParams(fragment);
+
+      for (const [key] of fragmentParams.entries()) {
+        if (sensitiveKeySet.has(key.toLowerCase())) {
+          fragmentParams.set(key, '[REDACTED]');
+        }
+      }
+
+      const redactedFragment = fragmentParams.toString();
+      url.hash = redactedFragment ? `#${redactedFragment}` : '';
+    }
     if (isRelative) {
       return url.pathname + url.search + url.hash;
     }
