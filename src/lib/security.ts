@@ -39,7 +39,9 @@ export function sanitizeFilename(filename: string): string {
 
   // Fallback if empty or invalid
   if (!safeName || safeName === '.' || safeName === '..') {
-    return `upload_${Date.now()}`;
+    // Use crypto.randomUUID if available, otherwise fallback to a basic random string
+    // This addresses potential "Weak Cryptography" hotspots for filename generation
+    return `upload_${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)}`;
   }
 
   return safeName;
@@ -82,11 +84,8 @@ export function sanitizeUrl(urlStr: string): string {
     }
     return url.toString();
   } catch {
-    // If invalid URL, return original to avoid breaking functionality,
-    // but try a simple regex replacement for common patterns as a backup
-    return urlStr.replace(
-      /((?:access_)?token|secret|key)=[^&]+/gi,
-      '$1=[REDACTED]'
-    );
+    // If URL parsing fails, we cannot guarantee safe sanitization.
+    // Return a static string to avoid leaking secrets or ReDoS risks.
+    return '[Invalid URL]';
   }
 }

@@ -35,9 +35,10 @@ describe('Security Utilities', () => {
     });
 
     it('provides fallback for empty or invalid names', () => {
-      expect(sanitizeFilename('')).toMatch(/^upload_\d+$/);
-      expect(sanitizeFilename('.')).toMatch(/^upload_\d+$/);
-      expect(sanitizeFilename('..')).toMatch(/^upload_\d+$/);
+      // Matches upload_ followed by UUID or random string
+      expect(sanitizeFilename('')).toMatch(/^upload_[a-z0-9-]+$/);
+      expect(sanitizeFilename('.')).toMatch(/^upload_[a-z0-9-]+$/);
+      expect(sanitizeFilename('..')).toMatch(/^upload_[a-z0-9-]+$/);
     });
   });
 
@@ -71,11 +72,10 @@ describe('Security Utilities', () => {
     });
 
     it('handles invalid URLs gracefully', () => {
-      // If the URL is truly invalid (throws Error), it returns the original or sanitized via regex
-      // Note: new URL() is very permissive with a base.
-      // This test ensures that if it falls back or processes as path, it doesn't crash.
+      // If the URL is truly invalid (throws Error), it should return [Invalid URL]
+      // We force an invalid URL that fails parsing even with a base
       const invalidUrl = 'http://[invalid-url';
-      expect(sanitizeUrl(invalidUrl)).toBe(invalidUrl);
+      expect(sanitizeUrl(invalidUrl)).toBe('[Invalid URL]');
     });
   });
 });

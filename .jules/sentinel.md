@@ -27,5 +27,17 @@
 ## 2025-05-24 - Resolving SonarCloud Hotspots (Iterative)
 
 **Vulnerability:** Initial attempts to fix SonarCloud hotspots in `sanitizeFilename` (greedy regex) and `sanitizeUrl` (http protocol) introduced new issues or didn't fully resolve them. Specifically, avoiding regex complexity while handling multiple dots safely required careful implementation using `split().filter(Boolean)`.
-**Learning:** Security tools are very specific about regex safety. Simple, functional approaches (like split/filter/join) are often safer and clearer than complex regexes for string manipulation. Always verify changes locally with tests *and* formatters.
+**Learning:** Security tools are very specific about regex safety. Simple, functional approaches (like split/filter/join) are often safer and clearer than complex regexes for string manipulation. Always verify changes locally with tests _and_ formatters.
 **Prevention:** Adopt a pattern of "split, filter, join" for sanitizing delimited strings instead of regex replacements where possible. Use HTTPS by default in all URL handling.
+
+## 2025-05-24 - Final Polish: Formatting & Tests
+
+**Vulnerability:** A formatting error in  caused the "quality" check to fail.
+**Learning:** Prettier checks EVERYTHING, including markdown files. Security documentation is part of the codebase.
+**Prevention:** Include all file types in pre-commit formatting checks.
+
+## 2025-05-24 - Final Polish: Formatting & Tests
+
+**Vulnerability:** A formatting error in `.jules/sentinel.md` caused the "quality" check to fail.
+**Learning:** Prettier checks EVERYTHING, including markdown files. Security documentation is part of the codebase.
+**Prevention:** Include all file types in pre-commit formatting checks.
