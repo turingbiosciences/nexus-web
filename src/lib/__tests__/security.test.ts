@@ -13,7 +13,9 @@ describe('Security Utilities', () => {
     });
 
     it('preserves alphanumeric, dots, dashes, underscores', () => {
-      expect(sanitizeFilename('my-file_name.123.txt')).toBe('my-file_name.123.txt');
+      expect(sanitizeFilename('my-file_name.123.txt')).toBe(
+        'my-file_name.123.txt'
+      );
     });
 
     it('collapses multiple dots', () => {
@@ -41,13 +43,19 @@ describe('Security Utilities', () => {
 
   describe('sanitizeUrl', () => {
     it('redacts sensitive query parameters', () => {
-      const url = 'https://api.example.com/data?access_token=secret123&other=value';
-      expect(sanitizeUrl(url)).toBe('https://api.example.com/data?access_token=%5BREDACTED%5D&other=value');
+      const url =
+        'https://api.example.com/data?access_token=secret123&other=value';
+      expect(sanitizeUrl(url)).toBe(
+        'https://api.example.com/data?access_token=%5BREDACTED%5D&other=value'
+      );
     });
 
     it('redacts multiple sensitive parameters', () => {
-      const url = 'https://example.com?client_id=123&client_secret=abc&code=xyz';
-      expect(sanitizeUrl(url)).toBe('https://example.com/?client_id=%5BREDACTED%5D&client_secret=%5BREDACTED%5D&code=%5BREDACTED%5D');
+      const url =
+        'https://example.com?client_id=123&client_secret=abc&code=xyz';
+      expect(sanitizeUrl(url)).toBe(
+        'https://example.com/?client_id=%5BREDACTED%5D&client_secret=%5BREDACTED%5D&code=%5BREDACTED%5D'
+      );
     });
 
     it('handles relative URLs', () => {
@@ -57,7 +65,9 @@ describe('Security Utilities', () => {
 
     it('preserves insensitive parameters', () => {
       const url = 'https://example.com/search?q=hello&page=1';
-      expect(sanitizeUrl(url)).toBe('https://example.com/search?q=hello&page=1');
+      expect(sanitizeUrl(url)).toBe(
+        'https://example.com/search?q=hello&page=1'
+      );
     });
 
     it('handles invalid URLs gracefully', () => {

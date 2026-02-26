@@ -12,10 +12,10 @@
  */
 export function sanitizeFilename(filename: string): string {
   // Remove path and control characters
-  let safeName = filename
-    .replace(/^.*[\\\/]/, '')
-    .replace(/[\x00-\x1f\x80-\x9f]/g, '')
-    .replace(/^\.+/, ''); // Remove leading dots
+  // Using split().pop() instead of greedy regex to avoid ReDoS
+  let safeName = filename.split(/[\\\/]/).pop() || filename;
+
+  safeName = safeName.replace(/[\x00-\x1f\x80-\x9f]/g, '').replace(/^\.+/, ''); // Remove leading dots
 
   // Replace invalid characters with underscore
   safeName = safeName.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -23,7 +23,10 @@ export function sanitizeFilename(filename: string): string {
   // Collapse multiple dots to prevent extension spoofing or messiness
   // Using split/filter/join to avoid "while" loop security hotspot
   if (safeName.includes('..')) {
-    safeName = safeName.split('.').filter((p) => p).join('.');
+    safeName = safeName
+      .split('.')
+      .filter((p) => p)
+      .join('.');
   }
 
   // Truncate to 255 chars, preserving extension if possible
@@ -52,7 +55,8 @@ export function sanitizeUrl(urlStr: string): string {
   try {
     // Handle relative URLs by adding a dummy base
     const isRelative = !urlStr.startsWith('http');
-    const url = new URL(urlStr, isRelative ? 'http://dummy.com' : undefined);
+    // Use https to avoid mixed content warnings/sonar hotspots
+    const url = new URL(urlStr, isRelative ? 'https://example.com' : undefined);
 
     const sensitiveKeys = [
       'token',

@@ -17,3 +17,9 @@
 **Vulnerability:** The central security utility file `src/lib/security.ts` was missing, leading to `sanitizeFilename` and `sanitizeUrl` not being available. Consequently, API logs were recording raw URLs (potentially exposing tokens in query params), and file uploads were using raw filenames (risk of path traversal/weird characters).
 **Learning:** Referencing a security utility in documentation/memory doesn't guarantee its existence in the codebase. Always verify the existence of security controls before assuming they are active.
 **Prevention:** Implement a "security health check" test that asserts the existence and export of critical security functions (`sanitizeUrl`, `sanitizeFilename`, etc.) and their usage in sensitive sinks (logging, file handling).
+
+## 2025-05-24 - SonarCloud & Prettier Compliance
+
+**Vulnerability:** Initial implementation of `sanitizeFilename` used a greedy regex (`replace(/^.*[\\/]/, '')`) which SonarCloud flagged as a ReDoS risk (Security Hotspot). Additionally, code formatting was not run, causing CI failure.
+**Learning:** Security tools are sensitive to regex complexity. Always prefer simple string manipulation (like `split().pop()`) over complex regexes for parsing paths. Always run formatters before pushing.
+**Prevention:** Use `split(/[\\/]/).pop()` for filename extraction. Add a pre-commit hook or manual step to run `pnpm format` and checks for regex safety.
