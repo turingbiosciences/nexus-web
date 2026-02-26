@@ -23,3 +23,9 @@
 **Vulnerability:** Initial implementation of `sanitizeFilename` used a greedy regex (`replace(/^.*[\\/]/, '')`) which SonarCloud flagged as a ReDoS risk (Security Hotspot). Additionally, code formatting was not run, causing CI failure.
 **Learning:** Security tools are sensitive to regex complexity. Always prefer simple string manipulation (like `split().pop()`) over complex regexes for parsing paths. Always run formatters before pushing.
 **Prevention:** Use `split(/[\\/]/).pop()` for filename extraction. Add a pre-commit hook or manual step to run `pnpm format` and checks for regex safety.
+
+## 2025-05-24 - Resolving SonarCloud Hotspots (Iterative)
+
+**Vulnerability:** Initial attempts to fix SonarCloud hotspots in `sanitizeFilename` (greedy regex) and `sanitizeUrl` (http protocol) introduced new issues or didn't fully resolve them. Specifically, avoiding regex complexity while handling multiple dots safely required careful implementation using `split().filter(Boolean)`.
+**Learning:** Security tools are very specific about regex safety. Simple, functional approaches (like split/filter/join) are often safer and clearer than complex regexes for string manipulation. Always verify changes locally with tests *and* formatters.
+**Prevention:** Adopt a pattern of "split, filter, join" for sanitizing delimited strings instead of regex replacements where possible. Use HTTPS by default in all URL handling.

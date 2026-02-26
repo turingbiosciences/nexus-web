@@ -23,10 +23,7 @@ export function sanitizeFilename(filename: string): string {
   // Collapse multiple dots to prevent extension spoofing or messiness
   // Using split/filter/join to avoid "while" loop security hotspot
   if (safeName.includes('..')) {
-    safeName = safeName
-      .split('.')
-      .filter((p) => p)
-      .join('.');
+    safeName = safeName.split('.').filter(Boolean).join('.');
   }
 
   // Truncate to 255 chars, preserving extension if possible
