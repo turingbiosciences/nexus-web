@@ -9,7 +9,7 @@
  */
 export function sanitizeUrl(url: string): string {
   try {
-    const urlObj = new URL(url, 'http://dummy.com'); // Base URL for relative paths
+    const urlObj = new URL(url, 'https://example.com'); // Base URL for relative paths
     const params = urlObj.searchParams;
     const sensitiveKeys = [
       'token',
@@ -49,8 +49,9 @@ export function sanitizeUrl(url: string): string {
 
     return urlObj.toString();
   } catch {
-    // If URL parsing fails, return the original string (or a safe fallback if needed)
-    return url;
+    // If URL parsing fails, return a placeholder to prevent leaking raw malformed data
+    // which might contain sensitive info that failed to parse
+    return '[Invalid URL]';
   }
 }
 

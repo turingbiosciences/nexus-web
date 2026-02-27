@@ -28,18 +28,21 @@ describe('Security Utilities', () => {
     it('should handle relative URLs', () => {
       const url = '/api/users?token=secret';
       const sanitized = sanitizeUrl(url);
-      // The sanitization implementation returns decoded URI components for relative paths,
-      // but URL.searchParams encodes values.
-      // So [REDACTED] becomes %5BREDACTED%5D in search params, but we decode it.
-      // Wait, let's check the implementation again.
-      // If we use decodeURIComponent, %5BREDACTED%5D becomes [REDACTED].
       expect(sanitized).toBe('/api/users?token=[REDACTED]');
     });
 
-    it('should return original string if parsing fails', () => {
-      const url = 'not a valid url';
+    it('should return placeholder if parsing fails', () => {
+      const originalURL = global.URL;
+      const mockURL = jest.fn(() => {
+        throw new Error('Invalid URL');
+      });
+      global.URL = mockURL as unknown as typeof URL;
+
+      const url = 'some-url';
       const sanitized = sanitizeUrl(url);
-      expect(sanitized).toBe('not a valid url');
+      expect(sanitized).toBe('[Invalid URL]');
+
+      global.URL = originalURL;
     });
   });
 
