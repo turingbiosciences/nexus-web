@@ -28,7 +28,7 @@ describe('Security Utilities', () => {
     it('should handle relative URLs', () => {
       const url = '/api/users?token=secret';
       const sanitized = sanitizeUrl(url);
-      expect(sanitized).toBe('/api/users?token=[REDACTED]');
+      expect(sanitized).toBe('/api/users?token=%5BREDACTED%5D');
     });
 
     it('should return placeholder if parsing fails', () => {
