@@ -3,13 +3,17 @@ import { sanitizeUrl, sanitizeFilename } from '../security';
 describe('Security Utilities', () => {
   describe('sanitizeUrl', () => {
     it('should redact sensitive query parameters', () => {
-      const url = 'https://api.example.com/v1/users?token=secret123&access_token=secret456';
+      const url =
+        'https://api.example.com/v1/users?token=secret123&access_token=secret456';
       const sanitized = sanitizeUrl(url);
-      expect(sanitized).toBe('https://api.example.com/v1/users?token=%5BREDACTED%5D&access_token=%5BREDACTED%5D');
+      expect(sanitized).toBe(
+        'https://api.example.com/v1/users?token=%5BREDACTED%5D&access_token=%5BREDACTED%5D'
+      );
     });
 
     it('should redact other sensitive keys like password and secret', () => {
-      const url = 'https://example.com/login?password=mypassword&client_secret=xyz';
+      const url =
+        'https://example.com/login?password=mypassword&client_secret=xyz';
       const sanitized = sanitizeUrl(url);
       expect(sanitized).toContain('password=%5BREDACTED%5D');
       expect(sanitized).toContain('client_secret=%5BREDACTED%5D');
@@ -43,7 +47,8 @@ describe('Security Utilities', () => {
     it('should replace directory traversal sequences', () => {
       const filename = '../../etc/passwd';
       const sanitized = sanitizeFilename(filename);
-      expect(sanitized).toBe('etc_passwd');
+      // Basename behavior: extracts 'passwd' and then sanitizes it.
+      expect(sanitized).toBe('passwd');
     });
 
     it('should replace unsafe characters with underscores', () => {

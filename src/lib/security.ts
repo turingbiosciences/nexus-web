@@ -60,11 +60,14 @@ export function sanitizeUrl(url: string): string {
  * @returns The sanitized filename.
  */
 export function sanitizeFilename(filename: string): string {
-  // Remove directory traversal sequences
-  let safeName = filename.replace(/(\.\.[\/\\])+/g, '');
+  // Extract basename to avoid directory traversal
+  // We use regex to split by both forward and backward slashes
+  // This is safer than replacing `../` recursively which can be bypassed
+  const parts = filename.split(/[/\\]/);
+  const basename = parts.pop() || filename;
 
   // Remove any character that is not alphanumeric, dot, dash, or underscore
-  safeName = safeName.replace(/[^a-zA-Z0-9._-]/g, '_');
+  let safeName = basename.replace(/[^a-zA-Z0-9._-]/g, '_');
 
   // Limit length to 255 characters
   if (safeName.length > 255) {
@@ -79,6 +82,7 @@ export function sanitizeFilename(filename: string): string {
   }
 
   // Ensure filename is not empty and not just dots
+  // Also check if name became empty or just dots/underscores after sanitization
   if (
     !safeName ||
     safeName === '.' ||
