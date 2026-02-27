@@ -89,7 +89,8 @@ export function sanitizeFilename(filename: string): string {
     safeName === '..' ||
     /^[._]+$/.test(safeName)
   ) {
-    safeName = `upload_${Date.now()}`;
+    // Use randomUUID for secure uniqueness instead of Date.now()
+    safeName = `upload_${crypto.randomUUID()}`;
   }
 
   return safeName;

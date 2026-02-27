@@ -73,12 +73,13 @@ describe('Security Utilities', () => {
     it('should provide a fallback if filename becomes empty', () => {
       const filename = '...';
       const sanitized = sanitizeFilename(filename);
-      expect(sanitized).toMatch(/^upload_\d+$/);
+      // Expect upload_ followed by a UUID (alphanumeric and dashes)
+      expect(sanitized).toMatch(/^upload_[0-9a-f-]+$/i);
     });
 
     it('should provide a fallback for dot and dotdot', () => {
-      expect(sanitizeFilename('.')).toMatch(/^upload_\d+$/);
-      expect(sanitizeFilename('..')).toMatch(/^upload_\d+$/);
+      expect(sanitizeFilename('.')).toMatch(/^upload_[0-9a-f-]+$/i);
+      expect(sanitizeFilename('..')).toMatch(/^upload_[0-9a-f-]+$/i);
     });
   });
 });
