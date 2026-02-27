@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -34,32 +35,51 @@ interface ChartFeature {
 export function ModelFeatureImportanceCharts({
   modelConfigs,
 }: ModelFeatureImportanceChartsProps) {
-  // Parse feature importance data for each model
-  const modelCharts: Array<{
-    modelName: string;
-    data: ChartFeature[];
-  }> = [];
+  // Memoize the expensive data parsing and transformation logic
+  // This prevents re-parsing features and recalculating elbow points on every render
+  const modelCharts = useMemo(() => {
+    const charts: Array<{
+      modelName: string;
+      data: ChartFeature[];
+      topN: number;
+      topFeatures: ChartFeature[];
+    }> = [];
 
-  Object.entries(modelConfigs).forEach(([modelName, config]) => {
-    if (!config.feature_importance) return;
+    Object.entries(modelConfigs).forEach(([modelName, config]) => {
+      if (!config.feature_importance) return;
 
-    // Use shared parsing utility
-    const parsedFeatures = parseFeatureImportance(config.feature_importance);
+      // Use shared parsing utility
+      const parsedFeatures = parseFeatureImportance(config.feature_importance);
 
-    // Convert to chart format with ranks
-    const features: ChartFeature[] = parsedFeatures.map((f, index) => ({
-      rank: index + 1,
-      importance: f.importance,
-      feature: f.name,
-    }));
+      // Convert to chart format with ranks
+      const features: ChartFeature[] = parsedFeatures.map((f, index) => ({
+        rank: index + 1,
+        importance: f.importance,
+        feature: f.name,
+      }));
 
-    if (features.length > 0) {
-      modelCharts.push({
-        modelName,
-        data: features,
-      });
-    }
-  });
+      if (features.length > 0) {
+        // Calculate elbow point data during memoization
+        const featuresForElbow: FeatureImportanceData[] = features.map(
+          (d) => ({
+            name: d.feature,
+            importance: d.importance,
+          })
+        );
+        const topN = findElbowPoint(featuresForElbow);
+        const topFeatures = features.slice(0, topN);
+
+        charts.push({
+          modelName,
+          data: features,
+          topN,
+          topFeatures,
+        });
+      }
+    });
+
+    return charts;
+  }, [modelConfigs]);
 
   if (modelCharts.length === 0) {
     return null;
@@ -79,16 +99,6 @@ export function ModelFeatureImportanceCharts({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {modelCharts.map((chart, index) => {
-          // Convert to format expected by findElbowPoint
-          const featuresForElbow: FeatureImportanceData[] = chart.data.map(
-            (d) => ({
-              name: d.feature,
-              importance: d.importance,
-            })
-          );
-          const topN = findElbowPoint(featuresForElbow);
-          const topFeatures = chart.data.slice(0, topN);
-
           return (
             <div key={chart.modelName} className="space-y-3">
               <h5 className="text-sm font-medium text-gray-700">
@@ -159,9 +169,9 @@ export function ModelFeatureImportanceCharts({
               {/* Top Features List */}
               <div className="bg-gray-50 rounded p-3 space-y-1">
                 <p className="text-xs font-semibold text-gray-700 mb-2">
-                  Top {topN} Features (by elbow method):
+                  Top {chart.topN} Features (by elbow method):
                 </p>
-                {topFeatures.map((feature, featureIndex) => (
+                {chart.topFeatures.map((feature, featureIndex) => (
                   <div
                     key={featureIndex}
                     className="flex justify-between items-center text-xs"
