@@ -37,7 +37,9 @@ const mockModelConfigs: Record<string, ModelConfig> = {
 
 describe('ModelFeatureImportanceCharts', () => {
   it('renders nothing when no model configs are provided', () => {
-    const { container } = render(<ModelFeatureImportanceCharts modelConfigs={{}} />);
+    const { container } = render(
+      <ModelFeatureImportanceCharts modelConfigs={{}} />
+    );
     expect(container).toBeEmptyDOMElement();
   });
 

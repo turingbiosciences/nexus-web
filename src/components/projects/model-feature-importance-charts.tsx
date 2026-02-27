@@ -60,12 +60,10 @@ export function ModelFeatureImportanceCharts({
 
       if (features.length > 0) {
         // Calculate elbow point data during memoization
-        const featuresForElbow: FeatureImportanceData[] = features.map(
-          (d) => ({
-            name: d.feature,
-            importance: d.importance,
-          })
-        );
+        const featuresForElbow: FeatureImportanceData[] = features.map((d) => ({
+          name: d.feature,
+          importance: d.importance,
+        }));
         const topN = findElbowPoint(featuresForElbow);
         const topFeatures = features.slice(0, topN);
 
