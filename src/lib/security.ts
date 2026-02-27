@@ -32,19 +32,24 @@ export function sanitizeUrl(url: string): string {
 
     // If the original input was a relative URL, return only the path and query
     if (!url.startsWith('http')) {
-      // Decode the pathname to return the original string format if it was just text
-      const pathAndQuery = urlObj.pathname + urlObj.search;
+      // Decode only the pathname to return a human-readable string, but keep the query
+      // percent-encoded to avoid introducing control characters (e.g. newlines) into logs.
+      let decodedPathname: string;
+      try {
+        decodedPathname = decodeURIComponent(urlObj.pathname);
+      } catch {
+        // If decoding fails for any reason, fall back to the original pathname
+        decodedPathname = urlObj.pathname;
+      }
 
-      // If the URL constructor encoded spaces or other characters, decode them
-      // This happens when we pass "not a valid url" -> http://dummy.com/not%20a%20valid%20url
-      const decodedPathAndQuery = decodeURIComponent(pathAndQuery);
+      const pathAndQuery = decodedPathname + urlObj.search;
 
       // If the input didn't start with / and wasn't http, URL constructor adds /
       // We should check if the original input started with /
-      if (!url.startsWith('/') && decodedPathAndQuery.startsWith('/')) {
-        return decodedPathAndQuery.substring(1);
+      if (!url.startsWith('/') && pathAndQuery.startsWith('/')) {
+        return pathAndQuery.substring(1);
       }
-      return decodedPathAndQuery;
+      return pathAndQuery;
     }
 
     return urlObj.toString();
