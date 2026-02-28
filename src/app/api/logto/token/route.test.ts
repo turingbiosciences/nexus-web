@@ -5,13 +5,17 @@ import { NextRequest } from 'next/server';
 // Mock LogtoClient
 const mockGetLogtoContext = jest.fn();
 
-jest.mock('@logto/next/edge', () => {
-  return jest.fn().mockImplementation(() => {
-    return {
-      getLogtoContext: (...args: any[]) => mockGetLogtoContext(...args),
-    };
-  });
-}, { virtual: true });
+jest.mock(
+  '@logto/next/edge',
+  () => {
+    return jest.fn().mockImplementation(() => {
+      return {
+        getLogtoContext: (...args: any[]) => mockGetLogtoContext(...args),
+      };
+    });
+  },
+  { virtual: true }
+);
 
 // Mock logger
 jest.mock('@/lib/logger', () => ({
