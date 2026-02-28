@@ -37,6 +37,9 @@
     "tus-js-client": "^4.3.1",
     "zod": "^4.1.12"
   },
+  "overrides": {
+    "serialize-javascript": "^7.0.3"
+  },
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.24.7",
