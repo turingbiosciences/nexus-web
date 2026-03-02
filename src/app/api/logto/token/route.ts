@@ -10,9 +10,12 @@ export const GET = async (req: NextRequest) => {
   logger.debug('M2M token request received');
 
   // Rate limiting: 10 requests per minute per IP
+  // Use req.ip if available (Next.js populates this), otherwise fallback to headers safely
+  const ip = (req as unknown as { ip?: string }).ip;
   const identifier =
-    req.headers.get('x-forwarded-for') ??
+    ip ??
     req.headers.get('x-real-ip') ??
+    req.headers.get('x-forwarded-for')?.split(',')[0] ??
     'unknown';
   const rateLimitResult = checkRateLimit(identifier, {
     maxRequests: 10,
