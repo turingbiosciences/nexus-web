@@ -45,7 +45,7 @@ async function apiUploadDataset({
 
   // Upload the file using FormData
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', file, sanitizeFilename(file.name));
 
   const response = await fetch(`${apiEndpoint}/projects/${projectId}/files`, {
     method: 'POST',
@@ -66,7 +66,7 @@ async function apiUploadDataset({
   // Convert to ProjectDataset format
   return {
     id: dataset.id || crypto.randomUUID(),
-    filename: dataset.filename || sanitizeFilename(file.name),
+    filename: dataset.filename || file.name,
     size: dataset.size || file.size,
     uploadedAt: dataset.uploadedAt ? new Date(dataset.uploadedAt) : new Date(),
   };

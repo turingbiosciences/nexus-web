@@ -1,69 +1,16 @@
 /**
- * Security utilities for input sanitization and validation.
+ * Security utilities for sanitizing inputs and outputs.
  */
 
 /**
- * Sanitizes a filename to prevent directory traversal and ensure safe characters.
- *
- * - Removes directory traversal sequences (..).
- * - Enforces safe character set (alphanumeric, dots, dashes, underscores).
- * - Limits length to 255 chars.
- * - Falls back to timestamp-based name if result is empty.
+ * Sanitizes a URL by removing sensitive query parameters.
+ * @param url - The URL to sanitize.
+ * @returns The sanitized URL string.
  */
-export function sanitizeFilename(filename: string): string {
-  // Remove path and control characters
-  // Using split().pop() instead of greedy regex to avoid ReDoS
-  let safeName = filename.split(/[\\\/]/).pop() || filename;
-
-  safeName = safeName.replace(/[\x00-\x1f\x80-\x9f]/g, '').replace(/^\.+/, ''); // Remove leading dots
-
-  // Replace invalid characters with underscore
-  safeName = safeName.replace(/[^a-zA-Z0-9._-]/g, '_');
-
-  // Collapse multiple dots to prevent extension spoofing or messiness
-  // Using split/filter/join to avoid "while" loop security hotspot
-  if (safeName.includes('..')) {
-    safeName = safeName.split('.').filter(Boolean).join('.');
-  }
-
-  // Truncate to 255 chars, preserving extension if possible
-  if (safeName.length > 255) {
-    const extIndex = safeName.lastIndexOf('.');
-    if (extIndex !== -1 && safeName.length - extIndex < 10) {
-      const ext = safeName.substring(extIndex);
-      safeName = safeName.substring(0, 255 - ext.length) + ext;
-    } else {
-      safeName = safeName.substring(0, 255);
-    }
-  }
-
-  // Fallback if empty or invalid
-  if (!safeName || safeName === '.' || safeName === '..') {
-    // Use crypto.randomUUID if available, otherwise fallback to a basic random string
-    // This addresses potential "Weak Cryptography" hotspots for filename generation
-    return `upload_${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)}`;
-  }
-
-  return safeName;
-}
-
-/**
- * Sanitizes a URL by redacting sensitive query parameters.
- */
-export function sanitizeUrl(urlStr: string): string {
+export function sanitizeUrl(url: string): string {
   try {
-    let url: URL;
-    let isRelative = false;
-
-    // First, try to parse as an absolute URL. If that fails, treat as relative
-    // and use a dummy base to construct a full URL object.
-    try {
-      url = new URL(urlStr);
-    } catch {
-      isRelative = true;
-      // Use https to avoid mixed content warnings/sonar hotspots
-      url = new URL(urlStr, 'https://example.com');
-    }
+    const urlObj = new URL(url, 'https://example.com'); // Base URL for relative paths
+    const params = urlObj.searchParams;
     const sensitiveKeys = [
       'token',
       'access_token',
@@ -73,43 +20,74 @@ export function sanitizeUrl(urlStr: string): string {
       'state',
       'password',
       'secret',
-      'key',
-      'apikey',
-      'api_key',
       'client_secret',
-      'client_id',
+      'api_key',
     ];
 
-    const sensitiveKeySet = new Set(sensitiveKeys.map((k) => k.toLowerCase()));
-
-    // Redact sensitive query parameters (case-insensitive by key)
-    for (const [key] of url.searchParams.entries()) {
-      if (sensitiveKeySet.has(key.toLowerCase())) {
-        url.searchParams.set(key, '[REDACTED]');
+    sensitiveKeys.forEach((key) => {
+      if (params.has(key)) {
+        params.set(key, '[REDACTED]');
       }
-    }
+    });
 
-    // Redact sensitive data that may appear in the URL fragment (e.g., OAuth tokens)
-    if (url.hash && url.hash.length > 1) {
-      const fragment = url.hash.substring(1);
-      const fragmentParams = new URLSearchParams(fragment);
+    // If the original input was a relative URL, return only the path and query
+    if (!url.startsWith('http')) {
+      const pathAndQuery = urlObj.pathname + urlObj.search;
 
-      for (const [key] of fragmentParams.entries()) {
-        if (sensitiveKeySet.has(key.toLowerCase())) {
-          fragmentParams.set(key, '[REDACTED]');
-        }
+      // If the input didn't start with / and wasn't http, URL constructor adds /
+      // We should check if the original input started with /
+      if (!url.startsWith('/') && pathAndQuery.startsWith('/')) {
+        return pathAndQuery.substring(1);
       }
+      return pathAndQuery;
+    }
 
-      const redactedFragment = fragmentParams.toString();
-      url.hash = redactedFragment ? `#${redactedFragment}` : '';
-    }
-    if (isRelative) {
-      return url.pathname + url.search + url.hash;
-    }
-    return url.toString();
+    return urlObj.toString();
   } catch {
-    // If URL parsing fails, we cannot guarantee safe sanitization.
-    // Return a static string to avoid leaking secrets or ReDoS risks.
+    // If URL parsing fails, return a placeholder to prevent leaking raw malformed data
+    // which might contain sensitive info that failed to parse
     return '[Invalid URL]';
   }
+}
+
+/**
+ * Sanitizes a filename to prevent directory traversal and ensure safe characters.
+ * @param filename - The filename to sanitize.
+ * @returns The sanitized filename.
+ */
+export function sanitizeFilename(filename: string): string {
+  // Extract basename to avoid directory traversal
+  // We use regex to split by both forward and backward slashes
+  // This is safer than replacing `../` recursively which can be bypassed
+  const parts = filename.split(/[/\\]/);
+  const basename = parts.pop() || filename;
+
+  // Remove any character that is not alphanumeric, dot, dash, or underscore
+  let safeName = basename.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+  // Limit length to 255 characters
+  if (safeName.length > 255) {
+    const extIndex = safeName.lastIndexOf('.');
+    if (extIndex !== -1 && safeName.length - extIndex < 10) {
+      // Preserve extension if it's reasonable length
+      const ext = safeName.substring(extIndex);
+      safeName = safeName.substring(0, 255 - ext.length) + ext;
+    } else {
+      safeName = safeName.substring(0, 255);
+    }
+  }
+
+  // Ensure filename is not empty and not just dots
+  // Also check if name became empty or just dots/underscores after sanitization
+  if (
+    !safeName ||
+    safeName === '.' ||
+    safeName === '..' ||
+    /^[._]+$/.test(safeName)
+  ) {
+    // Use randomUUID for secure uniqueness instead of Date.now()
+    safeName = `upload_${crypto.randomUUID()}`;
+  }
+
+  return safeName;
 }

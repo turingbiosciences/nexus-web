@@ -56,5 +56,10 @@ export const GET = async (req: NextRequest) => {
     };
   }
 
-  return NextResponse.json(responseData, { status: res.status });
+  return NextResponse.json(responseData, {
+    status: res.status,
+    headers: {
+      'Cache-Control': 'no-store, max-age=0',
+    },
+  });
 };

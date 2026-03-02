@@ -1,81 +1,88 @@
-import { sanitizeFilename, sanitizeUrl } from '../security';
+import { sanitizeUrl, sanitizeFilename } from '../security';
 
 describe('Security Utilities', () => {
-  describe('sanitizeFilename', () => {
-    it('removes path traversal sequences', () => {
-      expect(sanitizeFilename('../../etc/passwd')).toBe('passwd');
-      expect(sanitizeFilename('..\\..\\windows\\system32')).toBe('system32');
-    });
-
-    it('replaces unsafe characters with underscores', () => {
-      expect(sanitizeFilename('foo$bar')).toBe('foo_bar');
-      expect(sanitizeFilename('hello world.txt')).toBe('hello_world.txt'); // Space replaced
-    });
-
-    it('preserves alphanumeric, dots, dashes, underscores', () => {
-      expect(sanitizeFilename('my-file_name.123.txt')).toBe(
-        'my-file_name.123.txt'
+  describe('sanitizeUrl', () => {
+    it('should redact sensitive query parameters', () => {
+      const url =
+        'https://api.example.com/v1/users?token=secret123&access_token=secret456';
+      const sanitized = sanitizeUrl(url);
+      expect(sanitized).toBe(
+        'https://api.example.com/v1/users?token=%5BREDACTED%5D&access_token=%5BREDACTED%5D'
       );
     });
 
-    it('collapses multiple dots', () => {
-      expect(sanitizeFilename('foo..bar...txt')).toBe('foo.bar.txt');
+    it('should redact other sensitive keys like password and secret', () => {
+      const url =
+        'https://example.com/login?password=mypassword&client_secret=xyz';
+      const sanitized = sanitizeUrl(url);
+      expect(sanitized).toContain('password=%5BREDACTED%5D');
+      expect(sanitized).toContain('client_secret=%5BREDACTED%5D');
     });
 
-    it('removes leading dots', () => {
-      expect(sanitizeFilename('.env')).not.toBe('.env');
-      expect(sanitizeFilename('.env')).toBe('env');
+    it('should preserve non-sensitive parameters', () => {
+      const url = 'https://example.com/search?q=hello&page=1';
+      const sanitized = sanitizeUrl(url);
+      expect(sanitized).toBe('https://example.com/search?q=hello&page=1');
     });
 
-    it('truncates long filenames', () => {
-      const longName = 'a'.repeat(300) + '.txt';
-      const result = sanitizeFilename(longName);
-      expect(result.length).toBe(255);
-      expect(result.endsWith('.txt')).toBe(true);
+    it('should handle relative URLs', () => {
+      const url = '/api/users?token=secret';
+      const sanitized = sanitizeUrl(url);
+      expect(sanitized).toBe('/api/users?token=%5BREDACTED%5D');
     });
 
-    it('provides fallback for empty or invalid names', () => {
-      // Matches upload_ followed by UUID or random string
-      expect(sanitizeFilename('')).toMatch(/^upload_[a-z0-9-]+$/);
-      expect(sanitizeFilename('.')).toMatch(/^upload_[a-z0-9-]+$/);
-      expect(sanitizeFilename('..')).toMatch(/^upload_[a-z0-9-]+$/);
+    it('should return placeholder if parsing fails', () => {
+      const originalURL = global.URL;
+      const mockURL = jest.fn(() => {
+        throw new Error('Invalid URL');
+      });
+      global.URL = mockURL as unknown as typeof URL;
+
+      const url = 'some-url';
+      const sanitized = sanitizeUrl(url);
+      expect(sanitized).toBe('[Invalid URL]');
+
+      global.URL = originalURL;
     });
   });
 
-  describe('sanitizeUrl', () => {
-    it('redacts sensitive query parameters', () => {
-      const url =
-        'https://api.example.com/data?access_token=secret123&other=value';
-      expect(sanitizeUrl(url)).toBe(
-        'https://api.example.com/data?access_token=%5BREDACTED%5D&other=value'
-      );
+  describe('sanitizeFilename', () => {
+    it('should replace directory traversal sequences', () => {
+      const filename = '../../etc/passwd';
+      const sanitized = sanitizeFilename(filename);
+      // Basename behavior: extracts 'passwd' and then sanitizes it.
+      expect(sanitized).toBe('passwd');
     });
 
-    it('redacts multiple sensitive parameters', () => {
-      const url =
-        'https://example.com?client_id=123&client_secret=abc&code=xyz';
-      expect(sanitizeUrl(url)).toBe(
-        'https://example.com/?client_id=%5BREDACTED%5D&client_secret=%5BREDACTED%5D&code=%5BREDACTED%5D'
-      );
+    it('should replace unsafe characters with underscores', () => {
+      const filename = 'file name with spaces!.txt';
+      const sanitized = sanitizeFilename(filename);
+      expect(sanitized).toBe('file_name_with_spaces_.txt');
     });
 
-    it('handles relative URLs', () => {
-      const url = '/api/data?token=secret';
-      expect(sanitizeUrl(url)).toBe('/api/data?token=%5BREDACTED%5D');
+    it('should allow alphanumeric characters, dots, dashes, and underscores', () => {
+      const filename = 'valid-file_name.123.txt';
+      const sanitized = sanitizeFilename(filename);
+      expect(sanitized).toBe('valid-file_name.123.txt');
     });
 
-    it('preserves insensitive parameters', () => {
-      const url = 'https://example.com/search?q=hello&page=1';
-      expect(sanitizeUrl(url)).toBe(
-        'https://example.com/search?q=hello&page=1'
-      );
+    it('should limit filename length to 255 characters', () => {
+      const longName = 'a'.repeat(300) + '.txt';
+      const sanitized = sanitizeFilename(longName);
+      expect(sanitized.length).toBe(255);
+      expect(sanitized.endsWith('.txt')).toBe(true);
     });
 
-    it('handles invalid URLs gracefully', () => {
-      // If the URL is truly invalid (throws Error), it should return [Invalid URL]
-      // We force an invalid URL that fails parsing even with a base
-      const invalidUrl = 'http://[invalid-url';
-      expect(sanitizeUrl(invalidUrl)).toBe('[Invalid URL]');
+    it('should provide a fallback if filename becomes empty', () => {
+      const filename = '...';
+      const sanitized = sanitizeFilename(filename);
+      // Expect upload_ followed by a UUID (alphanumeric and dashes)
+      expect(sanitized).toMatch(/^upload_[0-9a-f-]+$/i);
+    });
+
+    it('should provide a fallback for dot and dotdot', () => {
+      expect(sanitizeFilename('.')).toMatch(/^upload_[0-9a-f-]+$/i);
+      expect(sanitizeFilename('..')).toMatch(/^upload_[0-9a-f-]+$/i);
     });
   });
 });

@@ -17,6 +17,7 @@ const USE_TUS_UPLOADS = false;
 
 interface FileUploadItem {
   file: File;
+  sanitizedName: string;
   id: string;
   progress: number;
   status: 'pending' | 'uploading' | 'paused' | 'completed' | 'error';
@@ -47,6 +48,7 @@ export function FileUploader({
     if (!acceptedFiles.length) return;
     const newUploads: FileUploadItem[] = acceptedFiles.map((file) => ({
       file,
+      sanitizedName: sanitizeFilename(file.name),
       id: crypto.randomUUID(),
       progress: 0,
       status: 'pending',
@@ -76,7 +78,7 @@ export function FileUploader({
 
     // Use standard FormData upload (fallback method)
     const formData = new FormData();
-    formData.append('file', upload.file);
+    formData.append('file', upload.file, upload.sanitizedName);
 
     const xhr = new XMLHttpRequest();
 
@@ -246,7 +248,7 @@ export function FileUploader({
         endpoint: `${apiEndpoint}/projects/${projectId}/files`,
         retryDelays: [0, 1000, 3000], // Shorter delays for fallback
         metadata: {
-          filename: sanitizeFilename(upload.file.name),
+          filename: upload.sanitizedName,
           filetype: upload.file.type,
         },
         headers: {
