@@ -12,3 +12,8 @@
 
 **Learning:** `minimatch` versions < 10.2.1 have a high-severity ReDoS vulnerability. However, upgrading to `minimatch` v10+ (which is ESM-only) breaks `eslint` v9 and `eslint-config-next` in this project because they or their dependencies rely on CommonJS `require('minimatch')` or default exports which v10 removed.
 **Action:** Cannot safely upgrade `minimatch` via `overrides` without breaking linting. Future updates to `eslint-config-next` or `eslint` ecosystem are required to support ESM `minimatch` properly.
+
+## 2026-02-06 - Memoized Expensive Data Transformation in FeatureComparisonChart
+
+**Learning:** The `FeatureComparisonChart` component was iterating, sorting, and transforming a potentially large nested `data` object on every single render. This O(N log N) recalculation of nested map structures could cause frame drops and unnecessary main thread blocking during unrelated component or parent re-renders.
+**Action:** Always wrap expensive synchronous data parsing, nested iteration, and object/array transformations inside components with a `useMemo` hook, especially when processing data for large or complex Recharts visualizations, so they only execute when the prop references actually change.
