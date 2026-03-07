@@ -21,6 +21,7 @@ jest.mock(
 jest.mock('@/lib/logger', () => ({
   logger: {
     info: jest.fn(),
+    warn: jest.fn(),
   },
 }));
 
@@ -28,6 +29,15 @@ jest.mock('@/lib/logger', () => ({
 jest.mock('@/lib/api-logger', () => ({
   logRequest: jest.fn(),
 }));
+
+// Mock rate-limit
+jest.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: jest.fn(),
+  getRateLimitHeaders: jest.fn(),
+}));
+
+import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+
 describe('User API Route', () => {
   let originalNodeEnv: string | undefined;
 
@@ -46,6 +56,13 @@ describe('User API Route', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (getRateLimitHeaders as jest.Mock).mockReturnValue({});
+    (checkRateLimit as jest.Mock).mockReturnValue({
+      success: true,
+      limit: 60,
+      remaining: 59,
+      reset: Date.now() + 60000,
+    });
   });
 
   const runTest = async (
@@ -108,5 +125,28 @@ describe('User API Route', () => {
     const res = await GET(req);
 
     expect(res.headers.get('Cache-Control')).toBe('no-store, max-age=0');
+  });
+
+  it('should block request when rate limit is exceeded', async () => {
+    (checkRateLimit as jest.Mock).mockReturnValue({
+      success: false,
+      limit: 60,
+      remaining: 0,
+      reset: Date.now() + 60000,
+    });
+
+    const req = new NextRequest('http://localhost/api/logto/user');
+    const res = await GET(req);
+
+    expect(checkRateLimit).toHaveBeenCalled();
+    expect(mockHandleUser).not.toHaveBeenCalled();
+    expect(res.status).toBe(429);
+
+    const data = await res.json();
+    expect(data.error).toBeDefined();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.any(Object),
+      'User endpoint rate limit exceeded'
+    );
   });
 });

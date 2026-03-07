@@ -4,10 +4,36 @@ import { NextResponse } from 'next/server';
 import { logtoConfig } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { logRequest } from '@/lib/api-logger';
+import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 const logto = new LogtoClient(logtoConfig);
 
 export const GET = async (req: NextRequest) => {
+  // Rate limiting to prevent abuse
+  const ip = (req as unknown as { ip?: string }).ip;
+  const identifier =
+    ip ??
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    req.headers.get('x-real-ip') ??
+    'unknown';
+
+  const rateLimitResult = checkRateLimit(identifier, {
+    maxRequests: 60, // 60 requests per minute
+    windowMs: 60 * 1000,
+    prefix: 'user',
+  });
+
+  if (!rateLimitResult.success) {
+    logger.warn({ ip: identifier }, 'User endpoint rate limit exceeded');
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      {
+        status: 429,
+        headers: getRateLimitHeaders(rateLimitResult),
+      }
+    );
+  }
+
   logRequest('user', req);
   const handler = logto.handleUser();
   const res = await handler(req);
