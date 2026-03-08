@@ -28,6 +28,13 @@ jest.mock('@/lib/logger', () => ({
 jest.mock('@/lib/api-logger', () => ({
   logRequest: jest.fn(),
 }));
+
+// Mock rate limiter
+jest.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: jest.fn().mockReturnValue({ success: true }),
+  getRateLimitHeaders: jest.fn().mockReturnValue({}),
+}));
+
 describe('User API Route', () => {
   let originalNodeEnv: string | undefined;
 
