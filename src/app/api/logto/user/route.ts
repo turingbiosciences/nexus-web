@@ -12,12 +12,7 @@ export const GET = async (req: NextRequest) => {
   logRequest('user', req);
 
   // Rate limiting to prevent DoS or abuse
-  const ip = (req as unknown as { ip?: string }).ip;
-  const identifier =
-    ip ??
-    req.headers.get('x-forwarded-for')?.split(',')[0] ??
-    req.headers.get('x-real-ip') ??
-    'unknown';
+  const identifier = req.ip ?? 'unknown';
 
   const rateLimitResult = checkRateLimit(identifier, {
     maxRequests: 100, // Slightly higher than sign-in, as it's an authenticated route used frequently
