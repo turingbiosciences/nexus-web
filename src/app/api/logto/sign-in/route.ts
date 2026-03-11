@@ -13,7 +13,7 @@ export const GET = async (req: NextRequest) => {
   const ip = (req as unknown as { ip?: string }).ip;
   const identifier =
     ip ??
-    req.headers.get('x-forwarded-for')?.split(',')[0] ??
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     req.headers.get('x-real-ip') ??
     'unknown';
 

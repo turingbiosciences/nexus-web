@@ -17,3 +17,9 @@
 **Vulnerability:** CI failed on the "security" step because `npm audit --audit-level=high` caught known vulnerabilities in `minimatch` and `rollup` introduced by transitive dependencies.
 **Learning:** Even if the codebase itself is secure, underlying tools (like bundlers and linters) can introduce high-severity vulnerabilities. Upgrading them via `npm install <pkg>@latest --save-dev` can force a safe version resolution in `package-lock.json`.
 **Prevention:** Regularly run `npm audit fix` and maintain updated dev dependencies to avoid failing automated CI checks.
+
+## 2026-02-06 - IP Spoofing Risk via Untrimmed Headers
+
+**Vulnerability:** The rate limiter IP identification logic used `req.headers.get('x-forwarded-for')?.split(',')[0]` without `.trim()`, allowing attackers to spoof IPs by sending `X-Forwarded-For:  1.2.3.4` (with a space) and bypass rate limits. Some endpoints also incorrectly prioritized `x-real-ip` before `x-forwarded-for`.
+**Learning:** IP addresses extracted from HTTP headers (especially CSV lists like `X-Forwarded-For`) can contain leading or trailing whitespace, which defeats string-based exact matching in rate limit stores. Additionally, `X-Forwarded-For` usually provides the client IP more reliably than `X-Real-IP` behind multiple proxies.
+**Prevention:** Always append `.trim()` when extracting the first IP from `x-forwarded-for`, and ensure the precedence order is `req.ip` -> `x-forwarded-for` (trimmed) -> `x-real-ip` -> `'unknown'`.

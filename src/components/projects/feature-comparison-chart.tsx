@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -28,77 +29,88 @@ export function FeatureComparisonChart({ data }: FeatureComparisonChartProps) {
   // We take the top 20 features from each model and combine them
   // This avoids plotting 1000+ points which is unreadable
   const TOP_N_PER_MODEL = 20;
-  let chartData: Array<Record<string, string | number>> = [];
-  let modelNames: string[] = [];
 
-  if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
-    const entries = Object.entries(data);
+  // Memoize the expensive data transformation logic to prevent recalculation on every render
+  const { chartData, modelNames } = useMemo(() => {
+    let newChartData: Array<Record<string, string | number>> = [];
+    let newModelNames: string[] = [];
 
-    if (entries.length > 0) {
-      // 1. Map features to models
-      const modelToFeatures: Record<
-        string,
-        Array<{ name: string; importance: number }>
-      > = {};
+    if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+      const entries = Object.entries(data);
 
-      entries.forEach(([featureName, modelMap]) => {
-        if (typeof modelMap === 'object' && modelMap !== null) {
-          Object.entries(modelMap as Record<string, number>).forEach(
-            ([modelName, importance]) => {
-              if (!modelToFeatures[modelName]) modelToFeatures[modelName] = [];
-              if (typeof importance === 'number') {
-                modelToFeatures[modelName].push({
-                  name: featureName,
-                  importance,
-                });
+      if (entries.length > 0) {
+        // 1. Map features to models
+        const modelToFeatures: Record<
+          string,
+          Array<{ name: string; importance: number }>
+        > = {};
+
+        entries.forEach(([featureName, modelMap]) => {
+          if (typeof modelMap === 'object' && modelMap !== null) {
+            Object.entries(modelMap as Record<string, number>).forEach(
+              ([modelName, importance]) => {
+                if (!modelToFeatures[modelName])
+                  modelToFeatures[modelName] = [];
+                if (typeof importance === 'number') {
+                  modelToFeatures[modelName].push({
+                    name: featureName,
+                    importance,
+                  });
+                }
               }
-            }
-          );
-        }
-      });
-
-      // 2. Identify "Significant Features" (union of top N from each model)
-      const significantFeatureSet = new Set<string>();
-      modelNames = Object.keys(modelToFeatures);
-
-      modelNames.forEach((modelName) => {
-        modelToFeatures[modelName]
-          .sort((a, b) => b.importance - a.importance)
-          .slice(0, TOP_N_PER_MODEL)
-          .forEach((f) => significantFeatureSet.add(f.name));
-      });
-
-      // 3. Build chart data for significant features, filling missing with 0
-      chartData = Array.from(significantFeatureSet).map((featureName) => {
-        const point: Record<string, string | number> = { name: featureName };
-        const modelMap = data[featureName] as Record<string, number>;
-
-        modelNames.forEach((modelName) => {
-          // Explicitly set to 0 if missing as requested
-          point[modelName] = modelMap?.[modelName] ?? 0;
+            );
+          }
         });
-        return point;
-      });
 
-      // 4. Sort alphabetically or by max importance for better visualization
-      // Sorting by max importance usually makes the chart easier to read
-      chartData.sort((a, b) => {
-        const maxA = Math.max(...modelNames.map((m) => (a[m] as number) || 0));
-        const maxB = Math.max(...modelNames.map((m) => (b[m] as number) || 0));
-        return maxB - maxA;
-      });
-    }
-  } else if (Array.isArray(data)) {
-    // Fallback for array data if provided
-    chartData = data as Array<Record<string, string | number>>;
-    modelNames = Array.from(
-      new Set(
-        chartData.flatMap((item) =>
-          Object.keys(item).filter((key) => key !== 'index' && key !== 'name')
+        // 2. Identify "Significant Features" (union of top N from each model)
+        const significantFeatureSet = new Set<string>();
+        newModelNames = Object.keys(modelToFeatures);
+
+        newModelNames.forEach((modelName) => {
+          modelToFeatures[modelName]
+            .sort((a, b) => b.importance - a.importance)
+            .slice(0, TOP_N_PER_MODEL)
+            .forEach((f) => significantFeatureSet.add(f.name));
+        });
+
+        // 3. Build chart data for significant features, filling missing with 0
+        newChartData = Array.from(significantFeatureSet).map((featureName) => {
+          const point: Record<string, string | number> = { name: featureName };
+          const modelMap = data[featureName] as Record<string, number>;
+
+          newModelNames.forEach((modelName) => {
+            // Explicitly set to 0 if missing as requested
+            point[modelName] = modelMap?.[modelName] ?? 0;
+          });
+          return point;
+        });
+
+        // 4. Sort alphabetically or by max importance for better visualization
+        // Sorting by max importance usually makes the chart easier to read
+        newChartData.sort((a, b) => {
+          const maxA = Math.max(
+            ...newModelNames.map((m) => (a[m] as number) || 0)
+          );
+          const maxB = Math.max(
+            ...newModelNames.map((m) => (b[m] as number) || 0)
+          );
+          return maxB - maxA;
+        });
+      }
+    } else if (Array.isArray(data)) {
+      // Fallback for array data if provided
+      newChartData = data as Array<Record<string, string | number>>;
+      newModelNames = Array.from(
+        new Set(
+          newChartData.flatMap((item) =>
+            Object.keys(item).filter((key) => key !== 'index' && key !== 'name')
+          )
         )
-      )
-    );
-  }
+      );
+    }
+
+    return { chartData: newChartData, modelNames: newModelNames };
+  }, [data]);
 
   const handleExportCSV = () => {
     if (chartData.length === 0) return;
