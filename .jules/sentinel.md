@@ -17,3 +17,7 @@
 **Vulnerability:** The rate limiter IP identification logic used `req.headers.get('x-forwarded-for')?.split(',')[0]` without `.trim()`, allowing attackers to spoof IPs by sending `X-Forwarded-For:  1.2.3.4` (with a space) and bypass rate limits. Some endpoints also incorrectly prioritized `x-real-ip` before `x-forwarded-for`.
 **Learning:** IP addresses extracted from HTTP headers (especially CSV lists like `X-Forwarded-For`) can contain leading or trailing whitespace, which defeats string-based exact matching in rate limit stores. Additionally, `X-Forwarded-For` usually provides the client IP more reliably than `X-Real-IP` behind multiple proxies.
 **Prevention:** Always append `.trim()` when extracting the first IP from `x-forwarded-for`, and ensure the precedence order is `req.ip` -> `x-forwarded-for` (trimmed) -> `x-real-ip` -> `'unknown'`.
+## 2026-02-06 - target="_blank" Vulnerability
+**Vulnerability:** External links using `target="_blank"` without `rel="noopener noreferrer"` found in `src/app/sentry-example-page/page.tsx` allow the newly opened tab to potentially hijack the original window via `window.opener` (reverse tabnabbing).
+**Learning:** React elements utilizing `target="_blank"` should uniformly implement `rel="noopener noreferrer"` to mitigate this tabnabbing risk. This is a common pattern that is easy to overlook without linter rules enforcing it.
+**Prevention:** Always combine `target="_blank"` with `rel="noopener noreferrer"`. Consider adding or enabling ESLint rule `react/jsx-no-target-blank` to catch these automatically.
