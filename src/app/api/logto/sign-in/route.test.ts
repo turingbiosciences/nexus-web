@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 
 // Mock LogtoClient
 const mockHandleSignIn = jest.fn();
-const mockHandleSignInFactory = jest.fn(() => mockHandleSignIn);
+const mockHandleSignInFactory = jest.fn((..._args: any[]) => mockHandleSignIn);
 
 jest.mock(
   '@logto/next/edge',
