@@ -17,3 +17,9 @@
 **Vulnerability:** The rate limiter IP identification logic used `req.headers.get('x-forwarded-for')?.split(',')[0]` without `.trim()`, allowing attackers to spoof IPs by sending `X-Forwarded-For:  1.2.3.4` (with a space) and bypass rate limits. Some endpoints also incorrectly prioritized `x-real-ip` before `x-forwarded-for`.
 **Learning:** IP addresses extracted from HTTP headers (especially CSV lists like `X-Forwarded-For`) can contain leading or trailing whitespace, which defeats string-based exact matching in rate limit stores. Additionally, `X-Forwarded-For` usually provides the client IP more reliably than `X-Real-IP` behind multiple proxies.
 **Prevention:** Always append `.trim()` when extracting the first IP from `x-forwarded-for`, and ensure the precedence order is `req.ip` -> `x-forwarded-for` (trimmed) -> `x-real-ip` -> `'unknown'`.
+
+## 2026-03-13 - Next.js Open Redirect Vulnerabilities & Protocol Relative Bypasses
+
+**Vulnerability:** The Logto authentication API routes (`/api/logto/sign-in` and `/api/logto/sign-out`) were accepting arbitrary unvalidated `redirect` URLs from query parameters and passing them to the Logto SDK. This could allow an attacker to trick a user into clicking a link that redirects them to an external, potentially malicious website after authentication (Open Redirect).
+**Learning:** Even though absolute URLs and relative paths like `//evil.com` are known Open Redirect vectors, modern browsers also normalize `/\` to `//` (e.g. `/\evil.com` becomes `//evil.com`), which can bypass simple `url.startsWith('//')` filters.
+**Prevention:** When validating redirect URLs, use a dedicated `isSafeUrl` utility to parse and verify that the origin matches the `NEXTAUTH_URL` or that it is a relative path. For relative path validation, explicitly reject both `//` and `/\` to prevent protocol-relative bypasses.

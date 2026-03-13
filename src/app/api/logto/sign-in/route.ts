@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { logtoConfig } from '@/lib/auth';
 import { logRequestWithResponse } from '@/lib/api-logger';
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { isSafeUrl } from '@/lib/security';
 
 const logto = new LogtoClient(logtoConfig);
 
@@ -33,7 +34,10 @@ export const GET = async (req: NextRequest) => {
     );
   }
 
-  const handler = logto.handleSignIn();
+  const redirect = req.nextUrl.searchParams.get('redirect');
+  const redirectUri = isSafeUrl(redirect) ? redirect! : undefined;
+
+  const handler = logto.handleSignIn(redirectUri);
   const res = await handler(req);
   logRequestWithResponse('sign-in', req, res);
   return res;

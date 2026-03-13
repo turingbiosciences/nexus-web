@@ -51,6 +51,42 @@ export function sanitizeUrl(url: string): string {
 }
 
 /**
+ * Checks if a URL is safe to redirect to.
+ * Prevents Open Redirect vulnerabilities by ensuring the URL is either
+ * a local relative path or matches the expected base URL's origin.
+ *
+ * @param url The URL to check.
+ * @param baseUrl Optional base URL to compare origins. Defaults to NEXTAUTH_URL.
+ * @returns True if the URL is safe, false otherwise.
+ */
+export function isSafeUrl(
+  url: string | null | undefined,
+  baseUrl: string = process.env.NEXTAUTH_URL || ''
+): boolean {
+  if (!url || typeof url !== 'string') {
+    return false;
+  }
+
+  // Allow relative URLs starting with / but NOT // or /\ (protocol-relative bypasses)
+  if (url.startsWith('/') && !url.startsWith('//') && !url.startsWith('/\\')) {
+    return true;
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+    if (!baseUrl) {
+      // If no base URL is provided/available, only allow relative paths
+      return false;
+    }
+    const parsedBaseUrl = new URL(baseUrl);
+    return parsedUrl.origin === parsedBaseUrl.origin;
+  } catch {
+    // If URL parsing fails, it's unsafe
+    return false;
+  }
+}
+
+/**
  * Sanitizes a filename to prevent directory traversal and ensure safe characters.
  * @param filename - The filename to sanitize.
  * @returns The sanitized filename.

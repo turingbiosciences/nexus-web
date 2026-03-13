@@ -4,12 +4,13 @@ import { NextRequest } from 'next/server';
 
 // Mock LogtoClient
 const mockHandleSignIn = jest.fn();
+const mockHandleSignInFactory = jest.fn(() => mockHandleSignIn);
 
 jest.mock(
   '@logto/next/edge',
   () => {
     return jest.fn().mockImplementation(() => ({
-      handleSignIn: () => mockHandleSignIn,
+      handleSignIn: (...args: any[]) => mockHandleSignInFactory(...args),
     }));
   },
   { virtual: true }
@@ -29,6 +30,16 @@ jest.mock('@/lib/rate-limit', () => ({
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 describe('Sign-in API Route', () => {
+  const originalEnv = process.env.NEXTAUTH_URL;
+
+  beforeAll(() => {
+    process.env.NEXTAUTH_URL = 'http://localhost';
+  });
+
+  afterAll(() => {
+    process.env.NEXTAUTH_URL = originalEnv;
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     (getRateLimitHeaders as jest.Mock).mockReturnValue({});
@@ -57,8 +68,36 @@ describe('Sign-in API Route', () => {
         prefix: 'sign-in',
       })
     );
-    expect(mockHandleSignIn).toHaveBeenCalled();
+    expect(mockHandleSignInFactory).toHaveBeenCalledWith(undefined);
     expect(res.status).toBe(302);
+  });
+
+  it('should pass safe redirect URI to LogtoClient', async () => {
+    (checkRateLimit as jest.Mock).mockReturnValue({ success: true });
+    mockHandleSignIn.mockResolvedValue(
+      new Response('redirect', { status: 302 })
+    );
+
+    const req = new NextRequest(
+      'http://localhost/api/logto/sign-in?redirect=/dashboard'
+    );
+    await GET(req);
+
+    expect(mockHandleSignInFactory).toHaveBeenCalledWith('/dashboard');
+  });
+
+  it('should pass undefined for unsafe redirect URI', async () => {
+    (checkRateLimit as jest.Mock).mockReturnValue({ success: true });
+    mockHandleSignIn.mockResolvedValue(
+      new Response('redirect', { status: 302 })
+    );
+
+    const req = new NextRequest(
+      'http://localhost/api/logto/sign-in?redirect=https://evil.com'
+    );
+    await GET(req);
+
+    expect(mockHandleSignInFactory).toHaveBeenCalledWith(undefined);
   });
 
   it('should block request when rate limit is exceeded', async () => {
