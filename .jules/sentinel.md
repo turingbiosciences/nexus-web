@@ -19,6 +19,7 @@
 **Prevention:** Always append `.trim()` when extracting the first IP from `x-forwarded-for`, and ensure the precedence order is `req.ip` -> `x-forwarded-for` (trimmed) -> `x-real-ip` -> `'unknown'`.
 
 ## 2026-02-06 - Open Redirect Vulnerability
+
 **Vulnerability:** The application lacked a utility to validate if a URL is safe for redirection, making it susceptible to Open Redirect vulnerabilities if user input is used to determine redirect destinations.
 **Learning:** Redirecting users based on arbitrary input can lead to phishing attacks and stealing credentials.
 **Prevention:** Always validate URLs using an `isSafeUrl` function to ensure they are relative paths (starting with `/` but not `//`) or match the same origin in a browser context before performing a redirect.

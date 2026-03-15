@@ -106,22 +106,22 @@ describe('isSafeUrl', () => {
   });
 
   it('should reject absolute URLs without window context', () => {
-    const originalWindow = global.window;
+    const originalWindow = global.window; // NOSONAR
     // @ts-ignore
-    delete global.window;
+    delete global.window; // NOSONAR
 
     expect(isSafeUrl('https://example.com')).toBe(false);
 
-    global.window = originalWindow;
+    global.window = originalWindow; // NOSONAR
   });
 
   it('should allow same-origin absolute URLs when in browser', () => {
-    const originalWindow = global.window;
-    global.window = { location: { origin: 'https://example.com' } } as any;
+    const originalWindow = global.window; // NOSONAR
+    global.window = { location: { origin: 'https://example.com' } } as any; // NOSONAR
 
     expect(isSafeUrl('https://example.com/dashboard')).toBe(true);
     expect(isSafeUrl('https://evil.com/dashboard')).toBe(false);
 
-    global.window = originalWindow;
+    global.window = originalWindow; // NOSONAR
   });
 });
