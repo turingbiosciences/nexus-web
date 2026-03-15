@@ -1,4 +1,4 @@
-import { sanitizeUrl, sanitizeFilename } from '../security';
+import { sanitizeUrl, sanitizeFilename, isSafeUrl } from '../security';
 
 describe('Security Utilities', () => {
   describe('sanitizeUrl', () => {
@@ -84,5 +84,44 @@ describe('Security Utilities', () => {
       expect(sanitizeFilename('.')).toMatch(/^upload_[0-9a-f-]+$/i);
       expect(sanitizeFilename('..')).toMatch(/^upload_[0-9a-f-]+$/i);
     });
+  });
+});
+
+describe('isSafeUrl', () => {
+  it('should allow valid relative paths', () => {
+    expect(isSafeUrl('/dashboard')).toBe(true);
+    expect(isSafeUrl('/path/to/resource')).toBe(true);
+    expect(isSafeUrl('/?query=123')).toBe(true);
+    expect(isSafeUrl('/#fragment')).toBe(true);
+  });
+
+  it('should reject protocol-relative paths', () => {
+    expect(isSafeUrl('//evil.com')).toBe(false);
+    expect(isSafeUrl('//evil.com/path')).toBe(false);
+  });
+
+  it('should reject javascript URIs', () => {
+    expect(isSafeUrl('javascript:alert(1)')).toBe(false);
+    expect(isSafeUrl('javascript://alert(1)')).toBe(false);
+  });
+
+  it('should reject absolute URLs without window context', () => {
+    const originalWindow = global.window;
+    // @ts-ignore
+    delete global.window;
+
+    expect(isSafeUrl('https://example.com')).toBe(false);
+
+    global.window = originalWindow;
+  });
+
+  it('should allow same-origin absolute URLs when in browser', () => {
+    const originalWindow = global.window;
+    global.window = { location: { origin: 'https://example.com' } } as any;
+
+    expect(isSafeUrl('https://example.com/dashboard')).toBe(true);
+    expect(isSafeUrl('https://evil.com/dashboard')).toBe(false);
+
+    global.window = originalWindow;
   });
 });

@@ -91,3 +91,33 @@ export function sanitizeFilename(filename: string): string {
 
   return safeName;
 }
+
+/**
+ * Validates whether a given URL is safe for redirection to prevent Open Redirect vulnerabilities.
+ * A URL is considered safe if it is a relative path (starts with '/' but not '//') or if it
+ * matches the same origin in a browser environment.
+ *
+ * @param url - The URL to validate.
+ * @returns True if the URL is safe, false otherwise.
+ */
+export function isSafeUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') return false;
+
+  // Safe relative URL: starts with '/' but not '//' (which would be protocol-relative)
+  if (url.startsWith('/') && !url.startsWith('//')) {
+    return true;
+  }
+
+  // If running in browser environment, check if it matches the current origin
+  if (typeof window !== 'undefined') {
+    try {
+      const parsedUrl = new URL(url, window.location.origin);
+      return parsedUrl.origin === window.location.origin;
+    } catch {
+      return false;
+    }
+  }
+
+  // If server-side and not a safe relative URL, reject it to be safe
+  return false;
+}

@@ -17,3 +17,8 @@
 **Vulnerability:** The rate limiter IP identification logic used `req.headers.get('x-forwarded-for')?.split(',')[0]` without `.trim()`, allowing attackers to spoof IPs by sending `X-Forwarded-For:  1.2.3.4` (with a space) and bypass rate limits. Some endpoints also incorrectly prioritized `x-real-ip` before `x-forwarded-for`.
 **Learning:** IP addresses extracted from HTTP headers (especially CSV lists like `X-Forwarded-For`) can contain leading or trailing whitespace, which defeats string-based exact matching in rate limit stores. Additionally, `X-Forwarded-For` usually provides the client IP more reliably than `X-Real-IP` behind multiple proxies.
 **Prevention:** Always append `.trim()` when extracting the first IP from `x-forwarded-for`, and ensure the precedence order is `req.ip` -> `x-forwarded-for` (trimmed) -> `x-real-ip` -> `'unknown'`.
+
+## 2026-02-06 - Open Redirect Vulnerability
+**Vulnerability:** The application lacked a utility to validate if a URL is safe for redirection, making it susceptible to Open Redirect vulnerabilities if user input is used to determine redirect destinations.
+**Learning:** Redirecting users based on arbitrary input can lead to phishing attacks and stealing credentials.
+**Prevention:** Always validate URLs using an `isSafeUrl` function to ensure they are relative paths (starting with `/` but not `//`) or match the same origin in a browser context before performing a redirect.
