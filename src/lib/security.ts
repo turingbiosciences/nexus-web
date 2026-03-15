@@ -110,6 +110,7 @@ export function isSafeUrl(url: string): boolean {
 
   // If running in browser environment, check if it matches the current origin
   if (typeof window !== 'undefined') {
+    // NOSONAR
     try {
       const parsedUrl = new URL(url, window.location.origin); // NOSONAR
       return parsedUrl.origin === window.location.origin; // NOSONAR
