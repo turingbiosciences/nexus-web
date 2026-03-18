@@ -3,11 +3,40 @@ import type { NextRequest } from 'next/server';
 import { logtoConfig } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { logRequest } from '@/lib/api-logger';
+import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { NextResponse } from 'next/server';
 
 const logto = new LogtoClient(logtoConfig);
 
 export const GET = async (req: NextRequest) => {
   logRequest('sign-in-callback', req);
+
+  // Rate limiting to prevent DoS or abuse on the callback route
+  const ip = (req as unknown as { ip?: string }).ip;
+  const identifier =
+    ip ??
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    req.headers.get('x-real-ip') ??
+    '127.0.0.1';
+
+  const rateLimitResult = checkRateLimit(identifier, {
+    maxRequests: 20,
+    windowMs: 60 * 1000,
+    prefix: 'sign-in-callback',
+  });
+
+  if (!rateLimitResult.success) {
+    return new NextResponse(
+      '<html><body><h1>429 Too Many Requests</h1><p>Please try again later.</p></body></html>',
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'text/html',
+          ...getRateLimitHeaders(rateLimitResult),
+        },
+      }
+    );
+  }
 
   // Log error parameters if present
   const url = new URL(req.url);
