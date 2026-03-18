@@ -18,7 +18,7 @@ export const GET = async (req: NextRequest) => {
     ip ??
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     req.headers.get('x-real-ip') ??
-    'unknown';
+    '127.0.0.1';
 
   const rateLimitResult = checkRateLimit(identifier, {
     maxRequests: 100, // Slightly higher than sign-in, as it's an authenticated route used frequently
