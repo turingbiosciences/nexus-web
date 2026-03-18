@@ -4,18 +4,13 @@ import { NextResponse } from 'next/server';
 import { logtoConfig } from '@/lib/auth';
 import { logRequestWithResponse } from '@/lib/api-logger';
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { isSafeUrl } from '@/lib/security';
+import { getClientIp } from '@/lib/ip';
 
 const logto = new LogtoClient(logtoConfig);
 
 export const GET = async (req: NextRequest) => {
-  // Use req.ip if available (Next.js populates this), otherwise fallback to headers
-  // specific Next.js versions might not have ip in the type definition
-  const ip = (req as unknown as { ip?: string }).ip;
-  const identifier =
-    ip ??
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip') ??
-    'unknown';
+  const identifier = getClientIp(req);
 
   const rateLimitResult = checkRateLimit(identifier, {
     maxRequests: 20,
@@ -33,7 +28,10 @@ export const GET = async (req: NextRequest) => {
     );
   }
 
-  const handler = logto.handleSignIn();
+  const redirect = req.nextUrl.searchParams.get('redirect');
+  const redirectUri = isSafeUrl(redirect) ? redirect! : undefined;
+
+  const handler = logto.handleSignIn(redirectUri);
   const res = await handler(req);
   logRequestWithResponse('sign-in', req, res);
   return res;

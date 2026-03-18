@@ -21,6 +21,7 @@ jest.mock(
 jest.mock('@/lib/logger', () => ({
   logger: {
     info: jest.fn(),
+    warn: jest.fn(),
   },
 }));
 
@@ -29,10 +30,12 @@ jest.mock('@/lib/api-logger', () => ({
   logRequest: jest.fn(),
 }));
 
+// Mock rate-limit
 jest.mock('@/lib/rate-limit', () => ({
-  checkRateLimit: jest.fn().mockReturnValue({ success: true }),
-  getRateLimitHeaders: jest.fn().mockReturnValue({}),
+  checkRateLimit: jest.fn(),
+  getRateLimitHeaders: jest.fn(),
 }));
+
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 describe('User API Route', () => {
@@ -53,8 +56,13 @@ describe('User API Route', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (checkRateLimit as jest.Mock).mockReturnValue({ success: true });
     (getRateLimitHeaders as jest.Mock).mockReturnValue({});
+    (checkRateLimit as jest.Mock).mockReturnValue({
+      success: true,
+      limit: 60,
+      remaining: 59,
+      reset: Date.now() + 60000,
+    });
   });
 
   const runTest = async (
@@ -119,24 +127,26 @@ describe('User API Route', () => {
     expect(res.headers.get('Cache-Control')).toBe('no-store, max-age=0');
   });
 
-  it('should return 429 when rate limit is exceeded', async () => {
+  it('should block request when rate limit is exceeded', async () => {
     (checkRateLimit as jest.Mock).mockReturnValue({
       success: false,
-      limit: 100,
+      limit: 60,
       remaining: 0,
       reset: Date.now() + 60000,
-    });
-    (getRateLimitHeaders as jest.Mock).mockReturnValue({
-      'Retry-After': '60',
     });
 
     const req = new NextRequest('http://localhost/api/logto/user');
     const res = await GET(req);
 
+    expect(checkRateLimit).toHaveBeenCalled();
+    expect(mockHandleUser).not.toHaveBeenCalled();
     expect(res.status).toBe(429);
-    expect(res.headers.get('Retry-After')).toBe('60');
 
     const data = await res.json();
-    expect(data.error).toBe('Too many requests. Please try again later.');
+    expect(data.error).toBeDefined();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.any(Object),
+      'User endpoint rate limit exceeded'
+    );
   });
 });

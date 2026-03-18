@@ -1,6 +1,60 @@
-import { sanitizeUrl, sanitizeFilename } from '../security';
+import { sanitizeUrl, sanitizeFilename, isSafeUrl } from '../security';
 
 describe('Security Utilities', () => {
+  describe('isSafeUrl', () => {
+    it('should return false for invalid or missing URLs', () => {
+      expect(isSafeUrl(null)).toBe(false);
+      expect(isSafeUrl(undefined)).toBe(false);
+      expect(isSafeUrl('')).toBe(false);
+      expect(isSafeUrl('not a url')).toBe(false);
+    });
+
+    it('should return true for relative URLs starting with /', () => {
+      expect(isSafeUrl('/dashboard')).toBe(true);
+      expect(isSafeUrl('/users?id=1')).toBe(true);
+    });
+
+    it('should return false for protocol-relative URLs', () => {
+      expect(isSafeUrl('//evil.com')).toBe(false);
+      expect(isSafeUrl('//example.com/test')).toBe(false);
+      expect(isSafeUrl('/\\evil.com')).toBe(false); // browser normalization bypass
+    });
+
+    it('should return false for absolute URLs if baseUrl is missing', () => {
+      expect(isSafeUrl('https://example.com', '')).toBe(false);
+    });
+
+    it('should return true for absolute URLs that match the baseUrl origin', () => {
+      expect(
+        isSafeUrl(
+          'https://app.example.com/dashboard',
+          'https://app.example.com'
+        )
+      ).toBe(true);
+      expect(
+        isSafeUrl('http://localhost:3000/test', 'http://localhost:3000')
+      ).toBe(true);
+    });
+
+    it('should return false for absolute URLs with a different origin', () => {
+      expect(
+        isSafeUrl(
+          'https://evil.example.com/dashboard',
+          'https://app.example.com'
+        )
+      ).toBe(false);
+      expect(
+        isSafeUrl(
+          'https://app.example.com.evil.com/test',
+          'https://app.example.com'
+        )
+      ).toBe(false);
+      expect(
+        isSafeUrl('http://localhost:3001/test', 'http://localhost:3000')
+      ).toBe(false);
+    });
+  });
+
   describe('sanitizeUrl', () => {
     it('should redact sensitive query parameters', () => {
       const url =
