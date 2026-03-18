@@ -3,6 +3,7 @@ import LogtoClient from '@logto/next/edge';
 import { logtoConfig } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/ip';
 
 const logto = new LogtoClient(logtoConfig);
 
@@ -10,13 +11,7 @@ export const GET = async (req: NextRequest) => {
   logger.debug('M2M token request received');
 
   // Rate limiting: 10 requests per minute per IP
-  // Use req.ip if available (Next.js populates this), otherwise fallback to headers safely
-  const ip = (req as unknown as { ip?: string }).ip;
-  const identifier =
-    ip ??
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip')?.trim() ??
-    'unknown';
+  const identifier = getClientIp(req);
   const rateLimitResult = checkRateLimit(identifier, {
     maxRequests: 10,
     windowMs: 60 * 1000, // 1 minute

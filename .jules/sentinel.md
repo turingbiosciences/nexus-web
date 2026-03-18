@@ -17,3 +17,9 @@
 **Vulnerability:** The rate limiter IP identification logic used `req.headers.get('x-forwarded-for')?.split(',')[0]` without `.trim()`, allowing attackers to spoof IPs by sending `X-Forwarded-For:  1.2.3.4` (with a space) and bypass rate limits. Some endpoints also incorrectly prioritized `x-real-ip` before `x-forwarded-for`.
 **Learning:** IP addresses extracted from HTTP headers (especially CSV lists like `X-Forwarded-For`) can contain leading or trailing whitespace, which defeats string-based exact matching in rate limit stores. Additionally, `X-Forwarded-For` usually provides the client IP more reliably than `X-Real-IP` behind multiple proxies.
 **Prevention:** Always append `.trim()` when extracting the first IP from `x-forwarded-for`, and ensure the precedence order is `req.ip` -> `x-forwarded-for` (trimmed) -> `x-real-ip` -> `'unknown'`.
+
+## 2026-03-18 - Rate Limiting on OAuth Callback Routes
+
+**Vulnerability:** The browser-facing OAuth callback route (`sign-in-callback`) lacked rate limiting, exposing the application to Denial of Service (DoS) attacks and resource exhaustion via repetitive requests.
+**Learning:** Browser-facing callback routes must implement rate limiting similarly to their initiating routes. When implementing rate limiting on these routes, returning raw JSON or a 302 redirect can break the browser UX during the redirect flow or exacerbate client spamming.
+**Prevention:** Always implement rate limiting on public and authenticated callback endpoints using robust IP identification (`req.ip ?? req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown'`). For browser-facing routes, return an HTML response with a `429 Too Many Requests` status code and `Content-Type: text/html` to provide a clear and user-friendly experience.
