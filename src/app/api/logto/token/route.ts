@@ -3,6 +3,7 @@ import LogtoClient from '@logto/next/edge';
 import { logtoConfig } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/ip';
 
 const logto = new LogtoClient(logtoConfig);
 
@@ -11,12 +12,7 @@ export const GET = async (req: NextRequest) => {
 
   // Rate limiting: 10 requests per minute per IP
   // Use req.ip if available (Next.js populates this), otherwise fallback to headers safely
-  const ip = (req as unknown as { ip?: string }).ip;
-  const identifier =
-    ip ??
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip') ??
-    '127.0.0.1';
+  const identifier = getClientIp(req) ?? 'unknown';
   const rateLimitResult = checkRateLimit(identifier, {
     maxRequests: 10,
     windowMs: 60 * 1000, // 1 minute
