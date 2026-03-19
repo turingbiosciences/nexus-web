@@ -4,6 +4,7 @@ import { logtoConfig } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { logRequest } from '@/lib/api-logger';
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/ip';
 import { NextResponse } from 'next/server';
 
 const logto = new LogtoClient(logtoConfig);
@@ -12,12 +13,7 @@ export const GET = async (req: NextRequest) => {
   logRequest('sign-in-callback', req);
 
   // Rate limiting to prevent DoS or abuse on the callback route
-  const ip = (req as unknown as { ip?: string }).ip;
-  const identifier =
-    ip ??
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip') ??
-    '127.0.0.1';
+  const identifier = getClientIp(req) ?? 'unknown';
 
   const rateLimitResult = checkRateLimit(identifier, {
     maxRequests: 20,

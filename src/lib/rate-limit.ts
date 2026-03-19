@@ -55,7 +55,7 @@ export interface RateLimitResult {
  *
  * @example
  * ```typescript
- * const result = checkRateLimit(req.ip ?? "127.0.0.1", {
+ * const result = checkRateLimit(getClientIp(req) ?? 'unknown', {
  *   maxRequests: 10,
  *   windowMs: 60000, // 1 minute
  *   prefix: "token"
