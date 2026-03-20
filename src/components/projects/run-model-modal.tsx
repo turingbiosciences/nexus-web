@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { useDatasets } from '@/lib/queries/datasets';
@@ -33,12 +33,14 @@ export function RunModelModal({
     limit: 3,
   });
 
-  // Sort datasets by most recent first (ensure we have an array)
-  const datasets = Array.isArray(datasetsData)
-    ? [...datasetsData].sort(
-        (a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime()
-      )
-    : [];
+  // Memoize sorted datasets to prevent O(N log N) sorting on every render
+  const datasets = useMemo(() => {
+    return Array.isArray(datasetsData)
+      ? [...datasetsData].sort(
+          (a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime()
+        )
+      : [];
+  }, [datasetsData]);
 
   // Reset selection when modal opens/closes
   useEffect(() => {
