@@ -39,5 +39,10 @@ export const GET = async (req: NextRequest) => {
   }
 
   const handler = logto.handleSignInCallback();
-  return handler(req);
+  const res = await handler(req);
+
+  // Add Cache-Control headers to prevent caching of this state-changing GET request
+  res.headers.set('Cache-Control', 'no-store, max-age=0');
+
+  return res;
 };
