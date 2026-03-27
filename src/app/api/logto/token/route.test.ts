@@ -1,6 +1,7 @@
 /** @jest-environment node */
 import { GET } from './route';
 import { NextRequest } from 'next/server';
+import { NO_CACHE_HEADERS } from '@/lib/http-headers';
 
 // Mock LogtoClient
 const mockGetLogtoContext = jest.fn();
@@ -59,6 +60,6 @@ describe('Token API Route', () => {
     const res = await GET(req);
 
     expect(res.status).toBe(200);
-    expect(res.headers.get('Cache-Control')).toBe('no-store, max-age=0');
+    expect(res.headers.get('Cache-Control')).toBe(NO_CACHE_HEADERS);
   });
 });

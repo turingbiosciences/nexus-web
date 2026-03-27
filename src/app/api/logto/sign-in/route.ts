@@ -5,6 +5,7 @@ import { logtoConfig } from '@/lib/auth';
 import { logRequestWithResponse } from '@/lib/api-logger';
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/ip';
+import { NO_CACHE_HEADERS } from '@/lib/http-headers';
 
 const logto = new LogtoClient(logtoConfig);
 
@@ -31,6 +32,10 @@ export const GET = async (req: NextRequest) => {
 
   const handler = logto.handleSignIn();
   const res = await handler(req);
+
+  // Add Cache-Control headers to prevent caching of this state-changing GET request
+  res.headers.set('Cache-Control', NO_CACHE_HEADERS);
+
   logRequestWithResponse('sign-in', req, res);
   return res;
 };

@@ -34,6 +34,7 @@ jest.mock('@/lib/rate-limit', () => ({
   getRateLimitHeaders: jest.fn().mockReturnValue({}),
 }));
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { NO_CACHE_HEADERS } from '@/lib/http-headers';
 
 describe('User API Route', () => {
   let originalNodeEnv: string | undefined;
@@ -116,7 +117,7 @@ describe('User API Route', () => {
     const req = new NextRequest('http://localhost/api/logto/user');
     const res = await GET(req);
 
-    expect(res.headers.get('Cache-Control')).toBe('no-store, max-age=0');
+    expect(res.headers.get('Cache-Control')).toBe(NO_CACHE_HEADERS);
   });
 
   it('should return 429 when rate limit is exceeded', async () => {

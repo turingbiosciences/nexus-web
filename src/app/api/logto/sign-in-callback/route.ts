@@ -6,6 +6,7 @@ import { logRequest } from '@/lib/api-logger';
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/ip';
 import { NextResponse } from 'next/server';
+import { NO_CACHE_HEADERS } from '@/lib/http-headers';
 
 const logto = new LogtoClient(logtoConfig);
 
@@ -53,6 +54,9 @@ export const GET = async (req: NextRequest) => {
 
   const handler = logto.handleSignInCallback();
   const res = await handler(req);
+
+  // Add Cache-Control headers to prevent caching of this state-changing GET request
+  res.headers.set('Cache-Control', NO_CACHE_HEADERS);
 
   // Log cookies being set for session persistence diagnostics
   const setCookies = res.headers.getSetCookie?.() || [];

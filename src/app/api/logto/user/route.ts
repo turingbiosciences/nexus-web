@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger';
 import { logRequest } from '@/lib/api-logger';
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/ip';
+import { NO_CACHE_HEADERS } from '@/lib/http-headers';
 
 const logto = new LogtoClient(logtoConfig);
 
@@ -82,7 +83,7 @@ export const GET = async (req: NextRequest) => {
   return NextResponse.json(responseData, {
     status: res.status,
     headers: {
-      'Cache-Control': 'no-store, max-age=0',
+      'Cache-Control': NO_CACHE_HEADERS,
     },
   });
 };
