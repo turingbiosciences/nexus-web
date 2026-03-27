@@ -6,6 +6,7 @@ import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/ip';
 import { logRequest } from '@/lib/api-logger';
 import { logger } from '@/lib/logger';
+import { NO_CACHE_HEADERS } from '@/lib/http-headers';
 
 const logto = new LogtoClient(logtoConfig);
 
@@ -39,5 +40,11 @@ export const GET = async (req: NextRequest) => {
   }
 
   const handler = logto.handleSignInCallback();
-  return handler(req);
+  const res = await handler(req);
+
+  Object.entries(NO_CACHE_HEADERS).forEach(([key, value]) => {
+    res.headers.set(key, value);
+  });
+
+  return res;
 };

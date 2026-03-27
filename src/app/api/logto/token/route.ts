@@ -4,6 +4,7 @@ import { logtoConfig } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/ip';
+import { NO_CACHE_HEADERS } from '@/lib/http-headers';
 
 const logto = new LogtoClient(logtoConfig);
 
@@ -158,9 +159,7 @@ export const GET = async (req: NextRequest) => {
         tokenType: tokenData.token_type,
       },
       {
-        headers: {
-          'Cache-Control': 'no-store, max-age=0',
-        },
+        headers: NO_CACHE_HEADERS,
       }
     );
   } catch (error) {
