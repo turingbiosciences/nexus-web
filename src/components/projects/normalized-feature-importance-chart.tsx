@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -23,8 +24,11 @@ interface NormalizedFeatureImportanceChartProps {
 export function NormalizedFeatureImportanceChart({
   data,
 }: NormalizedFeatureImportanceChartProps) {
-  // Parse using shared utility
-  const modelCharts = parseFeatureImportanceByModel(data, 10);
+  // Parse using shared utility, memoized to prevent O(N log N) recalculation on render
+  const modelCharts = useMemo(
+    () => parseFeatureImportanceByModel(data, 10),
+    [data]
+  );
 
   if (modelCharts.length === 0) {
     return (
