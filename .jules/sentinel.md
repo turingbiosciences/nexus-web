@@ -31,6 +31,7 @@
 **Prevention:** API routes returning sensitive data (like tokens or PII) or performing state-changing operations via `GET` must explicitly include `Cache-Control: no-store, max-age=0` headers in the `NextResponse` to prevent caching.
 
 ## 2024-05-24 - Cache Control on Authentication Callbacks
+
 **Vulnerability:** Missing strict cache control headers on authentication routes, leading to Use of Cache Containing Sensitive Information (CWE-524). Stale or cached responses on generic callbacks, sign-ins, and tokens can cause authentication loops or data leaks via intermediate proxies/browsers.
 **Learning:** Next.js caching rules can aggressively cache responses if not explicitly disabled. Adding headers directly to `NextResponse` using `NO_CACHE_HEADERS` is essential for routes dealing with Logto states or returning dynamic user claims.
 **Prevention:** Apply the `NO_CACHE_HEADERS` constant universally across all `src/app/api/logto/*` routes to maintain uncacheable security parameters.
