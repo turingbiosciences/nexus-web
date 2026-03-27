@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -59,8 +60,11 @@ export function FeatureImportanceChart({
   bestConfig,
   featureImportance,
 }: FeatureImportanceChartProps) {
-  // Parse feature importance data using shared utility
-  const features = parseFeatureImportance(featureImportance);
+  // Parse feature importance data using shared utility, memoized to prevent O(N log N) recalculation on render
+  const features = useMemo(
+    () => parseFeatureImportance(featureImportance),
+    [featureImportance]
+  );
 
   if (features.length === 0) {
     return (

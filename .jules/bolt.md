@@ -17,3 +17,8 @@
 
 **Learning:** The `FeatureComparisonChart` component was iterating, sorting, and transforming a potentially large nested `data` object on every single render. This O(N log N) recalculation of nested map structures could cause frame drops and unnecessary main thread blocking during unrelated component or parent re-renders.
 **Action:** Always wrap expensive synchronous data parsing, nested iteration, and object/array transformations inside components with a `useMemo` hook, especially when processing data for large or complex Recharts visualizations, so they only execute when the prop references actually change.
+
+## 2026-02-06 - Memoized Expensive Data Transformation in FeatureImportanceChart
+
+**Learning:** The `FeatureImportanceChart` and `NormalizedFeatureImportanceChart` components were calling `parseFeatureImportance` synchronously during the render loop. Since parsing involves array sorting, mapping, and filtering (O(N log N)), performing this unmemoized transformation caused redundant processing overhead on every render when the charts or their parents updated, even if the underlying `featureImportance` data had not changed.
+**Action:** Always wrap expensive data parsing and transformation routines (e.g., `parseFeatureImportance`, sorting arrays for charts) in `useMemo` so that they execute only when the referenced props actually change, keeping the render loop lightweight and performant.
