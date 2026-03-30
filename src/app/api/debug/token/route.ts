@@ -17,6 +17,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { logtoConfig } from '@/lib/auth';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
+import { logger } from '@/lib/logger';
 
 // Use centralized config to ensure debug endpoint tests the same authentication flow as production
 const logto = new LogtoClient(logtoConfig);
@@ -26,14 +27,14 @@ export const GET = async (req: NextRequest) => {
     return new NextResponse(null, { status: 404 });
   }
 
-  console.log('\n=== Token Debug Endpoint ===');
+  logger.info('\n=== Token Debug Endpoint ===');
 
   try {
     const apiResource = getApiBaseUrl();
-    console.log('Expected API resource:', apiResource);
+    logger.info({ apiResource }, 'Expected API resource');
 
     // Step 1: Check user authentication status
-    console.log('Step 1: Checking authentication...');
+    logger.info('Step 1: Checking authentication...');
     const userHandler = logto.handleUser();
     const userResponse = await userHandler(req);
     const userData = (await userResponse.json()) as {
@@ -41,16 +42,16 @@ export const GET = async (req: NextRequest) => {
       claims?: Record<string, unknown>;
     };
 
-    console.log('User authenticated:', userData.isAuthenticated);
+    logger.info({ isAuthenticated: userData.isAuthenticated }, 'User authenticated');
     if (userData.claims) {
       const sub = (userData.claims as { sub?: string }).sub;
-      console.log('User ID (sub):', sub);
+      logger.info({ sub }, 'User ID (sub)');
     }
 
     // Step 2: Inspect cookies
     const cookies = req.cookies.getAll();
-    console.log('\nStep 2: Cookie inspection');
-    console.log('Total cookies:', cookies.length);
+    logger.info('\nStep 2: Cookie inspection');
+    logger.info({ totalCookies: cookies.length }, 'Total cookies');
 
     const logtoCookies = cookies.filter(
       (c) =>
@@ -60,9 +61,9 @@ export const GET = async (req: NextRequest) => {
         c.name.includes('access')
     );
 
-    console.log('Logto-related cookies found:', logtoCookies.length);
+    logger.info({ logtoCookiesCount: logtoCookies.length }, 'Logto-related cookies found');
     logtoCookies.forEach((c) => {
-      console.log(`  Cookie: ${c.name} (length: ${c.value.length})`);
+      logger.info({ cookieName: c.name, length: c.value.length }, `Cookie length info`);
     });
 
     const cookieInfo = logtoCookies.map((c) => ({
@@ -121,7 +122,7 @@ export const GET = async (req: NextRequest) => {
           ],
     });
   } catch (error) {
-    console.error('Debug endpoint error:', error);
+    logger.error({ error }, 'Debug endpoint error');
     return NextResponse.json(
       {
         error: 'Internal error',
