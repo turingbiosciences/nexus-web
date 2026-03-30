@@ -42,7 +42,10 @@ export const GET = async (req: NextRequest) => {
       claims?: Record<string, unknown>;
     };
 
-    logger.info({ isAuthenticated: userData.isAuthenticated }, 'User authenticated');
+    logger.info(
+      { isAuthenticated: userData.isAuthenticated },
+      'User authenticated'
+    );
     if (userData.claims) {
       const sub = (userData.claims as { sub?: string }).sub;
       logger.info({ sub }, 'User ID (sub)');
@@ -61,9 +64,15 @@ export const GET = async (req: NextRequest) => {
         c.name.includes('access')
     );
 
-    logger.info({ logtoCookiesCount: logtoCookies.length }, 'Logto-related cookies found');
+    logger.info(
+      { logtoCookiesCount: logtoCookies.length },
+      'Logto-related cookies found'
+    );
     logtoCookies.forEach((c) => {
-      logger.info({ cookieName: c.name, length: c.value.length }, `Cookie length info`);
+      logger.info(
+        { cookieName: c.name, length: c.value.length },
+        `Cookie length info`
+      );
     });
 
     const cookieInfo = logtoCookies.map((c) => ({

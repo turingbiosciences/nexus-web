@@ -35,7 +35,9 @@
 **Vulnerability:** External links in `sentry-example-page` used `target="_blank"` without `rel="noopener noreferrer"`.
 **Learning:** This exposes the application to a Reverse Tabnabbing attack, where the newly opened tab can manipulate the original page by accessing `window.opener`. This can be exploited to redirect the original page to a malicious phishing site.
 **Prevention:** Always include `rel="noopener noreferrer"` on `<a>` tags when using `target="_blank"`.
+
 ## $(date +%Y-%m-%d) - Secure Logging in Debug Endpoints
+
 **Vulnerability:** Debug endpoints (`/api/debug/token` and `/api/logto/debug-cookies`) were using plain `console.log` and `console.error`. This bypassed the centralized `logger` which enforces structured format, redaction of sensitive data, and Sentry integration.
 **Learning:** Even though debug endpoints are guarded by `NODE_ENV === 'development'`, bypassing the centralized logger can inadvertently expose session data, tokens, and PII to unsanitized console output, which is particularly risky if these logs are captured or if the environment checks fail/are bypassed.
 **Prevention:** Always strictly use the centralized `logger` (e.g., `logger.info`, `logger.debug`, `logger.error`) in all server-side contexts to ensure consistent security and privacy, including in development or debug-only paths.
