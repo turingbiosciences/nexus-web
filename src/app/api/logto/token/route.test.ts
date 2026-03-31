@@ -1,5 +1,6 @@
 /** @jest-environment node */
 import { NextRequest } from 'next/server';
+import { NO_CACHE_HEADERS } from '@/lib/http-headers';
 
 // We need to define mocks before imports
 jest.mock(
@@ -88,7 +89,7 @@ describe('Token API Route Security Test', () => {
     const res = await GET(req);
 
     expect(res.status).toBe(200);
-    expect(res.headers.get('Cache-Control')).toBe('no-store, max-age=0');
+    expect(res.headers.get('Cache-Control')).toBe(NO_CACHE_HEADERS);
   });
 
   it('should not leak sensitive upstream error details in Error message', async () => {
