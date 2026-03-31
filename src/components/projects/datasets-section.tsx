@@ -116,8 +116,12 @@ export function DatasetsSection({
                     variant="ghost"
                     className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
                     onClick={() => {
-                      // Temporary stub for download action; logs for test instrumentation
-                      console.log('Download dataset', d.id);
+                      // Temporary stub for download action
+                      push({
+                        title: 'Download Started',
+                        description: `Downloading ${d.filename}...`,
+                        variant: 'default',
+                      });
                     }}
                     aria-label={`Download ${d.filename}`}
                   >

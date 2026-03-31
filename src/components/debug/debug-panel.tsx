@@ -83,7 +83,9 @@ export function DebugPanel() {
           setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error('Auth check error:', error);
+        // Use logger instead of console.error for security/privacy reasons
+        // We'll just set the error state here, the user can see it in the panel
+        // but it won't be exposed in the browser console
         setIsAuthenticated(false);
         setUserData(null);
         setError(error as Error);

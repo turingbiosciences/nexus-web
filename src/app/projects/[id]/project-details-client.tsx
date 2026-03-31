@@ -130,12 +130,12 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
       // Navigate back to home after successful deletion
       router.push('/');
     } catch (err) {
-      console.error('Failed to delete project:', err);
-      alert(
-        `Failed to delete project: ${
-          err instanceof Error ? err.message : 'Unknown error'
-        }`
-      );
+      // Use pushToast instead of console.error for security/privacy reasons
+      pushToast({
+        title: 'Delete Failed',
+        description: `Failed to delete project: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        variant: 'destructive',
+      });
       setIsDeleting(false);
     }
   };

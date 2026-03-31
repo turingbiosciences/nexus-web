@@ -43,8 +43,8 @@ const MAX_RETRIES = 5;
  * ```tsx
  * const { job, isConnected, error } = useJobStatus(projectId, jobId, {
  *   accessToken,
- *   onComplete: (job) => console.log("Job completed:", job),
- *   onError: (error) => console.error("Job failed:", error),
+ *   onComplete: (job) => logger.info("Job completed:", job),
+ *   onError: (error) => logger.error("Job failed:", error),
  * });
  * ```
  */

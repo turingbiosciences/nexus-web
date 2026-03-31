@@ -103,8 +103,6 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
         variant: 'default',
       });
     } catch (error) {
-      console.error('Download error:', error);
-
       let errorTitle = 'Download Failed';
       let errorDescription = 'An unexpected error occurred. Please try again.';
 
