@@ -83,7 +83,6 @@ export function DebugPanel() {
           setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error('Auth check error:', error);
         setIsAuthenticated(false);
         setUserData(null);
         setError(error as Error);
