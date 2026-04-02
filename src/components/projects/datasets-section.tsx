@@ -119,7 +119,8 @@ export function DatasetsSection({
                       // Temporary stub for download action; push toast for UI feedback
                       push({
                         title: 'Not implemented',
-                        description: 'Downloading datasets is not yet implemented.',
+                        description:
+                          'Downloading datasets is not yet implemented.',
                         variant: 'default',
                       });
                     }}
