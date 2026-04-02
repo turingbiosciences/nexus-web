@@ -190,9 +190,8 @@ describe('DatasetsSection', () => {
     expect(deleteButtons).toHaveLength(2);
   });
 
-  it('logs to console when download button is clicked', async () => {
+  it('shows toast when download button is clicked', async () => {
     const user = userEvent.setup();
-    const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
     render(<DatasetsSection projectId="project-1" />);
 
@@ -201,9 +200,12 @@ describe('DatasetsSection', () => {
     });
     await user.click(downloadButtons[0]);
 
-    expect(consoleSpy).toHaveBeenCalledWith('Download dataset', 'dataset-2');
-
-    consoleSpy.mockRestore();
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Not implemented',
+        description: 'Downloading datasets is not yet implemented.',
+      })
+    );
   });
 
   it('handles delete dataset with optimistic update', async () => {
