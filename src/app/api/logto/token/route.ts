@@ -115,9 +115,8 @@ export const GET = async (req: NextRequest) => {
         { status: tokenResponse.status, errorText },
         'Token fetch failed'
       );
-      throw new Error(
-        `Token fetch failed: ${tokenResponse.status} - ${errorText}`
-      );
+      // SECURITY: Do not include errorText in the Error message as it may leak sensitive information
+      throw new Error('Token fetch failed');
     }
 
     const tokenData = (await tokenResponse.json()) as {

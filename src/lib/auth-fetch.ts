@@ -38,6 +38,32 @@ function isTokenExpiredError(status: number, body: string): boolean {
 }
 
 /**
+ * Helper to safely merge Authorization header with existing headers
+ * Handles plain objects, Headers instances, and array of arrays
+ */
+function getHeadersWithAuth(
+  headers: HeadersInit | undefined,
+  token: string
+): HeadersInit {
+  if (headers instanceof Headers) {
+    const newHeaders = new Headers(headers);
+    newHeaders.set('Authorization', `Bearer ${token}`);
+    return newHeaders;
+  }
+
+  if (Array.isArray(headers)) {
+    const newHeaders = new Headers(headers);
+    newHeaders.set('Authorization', `Bearer ${token}`);
+    return newHeaders;
+  }
+
+  return {
+    ...(headers as Record<string, string>),
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+/**
  * Authentication-aware fetch that automatically handles token expiration.
  * Use this for all authenticated API calls.
  */
@@ -50,10 +76,7 @@ export async function authFetch(
   // First attempt with current token
   let response = await fetch(url, {
     ...fetchOptions,
-    headers: {
-      ...fetchOptions.headers,
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getHeadersWithAuth(fetchOptions.headers, token),
   });
 
   // Check if token expired
@@ -74,10 +97,7 @@ export async function authFetch(
             // Retry with new token
             response = await fetch(url, {
               ...fetchOptions,
-              headers: {
-                ...fetchOptions.headers,
-                Authorization: `Bearer ${newToken}`,
-              },
+              headers: getHeadersWithAuth(fetchOptions.headers, newToken),
             });
 
             // If still 401 after refresh, give up and redirect
@@ -119,10 +139,7 @@ export async function simpleFetch(
 ): Promise<Response> {
   const response = await fetch(url, {
     ...options,
-    headers: {
-      ...options?.headers,
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getHeadersWithAuth(options?.headers, token),
   });
 
   // Check for token expiration
