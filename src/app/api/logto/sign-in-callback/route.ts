@@ -29,6 +29,7 @@ export const GET = async (req: NextRequest) => {
         status: 429,
         headers: {
           'Content-Type': 'text/html',
+          'Cache-Control': NO_CACHE_HEADERS,
           ...getRateLimitHeaders(rateLimitResult),
         },
       }
