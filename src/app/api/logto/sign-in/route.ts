@@ -22,10 +22,13 @@ export const GET = async (req: NextRequest) => {
 
   if (!rateLimitResult.success) {
     return NextResponse.json(
-      { error: 'Too many sign-in attempts. Please try again later.' },
+      { error: 'Too many requests. Please try again later.' },
       {
         status: 429,
-        headers: getRateLimitHeaders(rateLimitResult),
+        headers: {
+          'Cache-Control': NO_CACHE_HEADERS,
+          ...getRateLimitHeaders(rateLimitResult),
+        },
       }
     );
   }
