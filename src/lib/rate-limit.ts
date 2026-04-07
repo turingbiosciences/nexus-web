@@ -8,6 +8,7 @@
  */
 
 import { logger } from '@/lib/logger';
+import { NO_CACHE_HEADERS } from '@/lib/http-headers';
 
 interface RateLimitEntry {
   count: number;
@@ -139,6 +140,7 @@ export function getRateLimitHeaders(
           'Retry-After': Math.ceil(
             (result.reset - Date.now()) / 1000
           ).toString(),
+          'Cache-Control': NO_CACHE_HEADERS,
         }),
   };
 }

@@ -132,6 +132,7 @@ describe('rate-limit', () => {
       expect(headers['X-RateLimit-Remaining']).toBe('0');
       expect(headers['Retry-After']).toBeDefined();
       expect(parseInt(headers['Retry-After'])).toBeGreaterThan(0);
+      expect(headers['Cache-Control']).toBe('no-store, max-age=0');
     });
   });
 });
