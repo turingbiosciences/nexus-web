@@ -41,3 +41,9 @@
 **Vulnerability:** Debug endpoints (`/api/debug/token` and `/api/logto/debug-cookies`) were using plain `console.log` and `console.error`. This bypassed the centralized `logger` which enforces structured format, redaction of sensitive data, and Sentry integration.
 **Learning:** Even though debug endpoints are guarded by `NODE_ENV === 'development'`, bypassing the centralized logger can inadvertently expose session data, tokens, and PII to unsanitized console output, which is particularly risky if these logs are captured or if the environment checks fail/are bypassed.
 **Prevention:** Always strictly use the centralized `logger` (e.g., `logger.info`, `logger.debug`, `logger.error`) in all server-side contexts to ensure consistent security and privacy, including in development or debug-only paths.
+
+## $(date +%Y-%m-%d) - Caching Lockout States on Rate Limiting
+
+**Vulnerability:** Rate limited responses (429 Too Many Requests) failed to specify `Cache-Control` headers, permitting reverse proxies or browsers to mistakenly cache the 429 response when an attack or spam of requests occurred.
+**Learning:** If 429 lockout responses are cached by infrastructure (e.g. Vercel Edge, Cloudflare) or browsers without explicitly being prevented (`no-store, max-age=0`), legitimate clients might be locked out of the application even after their rate limit window expires because the cache serves the HTTP 429 response indefinitely or for an extended period.
+**Prevention:** Ensure that global rate limit response generating utilities explicitly define `'Cache-Control': NO_CACHE_HEADERS` alongside standard rate limiting headers like `Retry-After`.
