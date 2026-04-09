@@ -51,8 +51,12 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => 'Unknown error');
+    logger.error(
+      { status: response.status, statusText: response.statusText, errorText },
+      'Failed to fetch projects'
+    );
     throw new Error(
-      `Failed to fetch projects: ${response.status} ${response.statusText} - ${errorText}`
+      `Failed to fetch projects: ${response.status} ${response.statusText}`
     );
   }
 
@@ -148,8 +152,17 @@ export async function deleteProject(
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => 'Unknown error');
+    logger.error(
+      {
+        projectId,
+        status: response.status,
+        statusText: response.statusText,
+        errorText,
+      },
+      'Failed to delete project'
+    );
     throw new Error(
-      `Failed to delete project: ${response.status} ${response.statusText} - ${errorText}`
+      `Failed to delete project: ${response.status} ${response.statusText}`
     );
   }
 
@@ -208,8 +221,12 @@ export async function createProject(
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => 'Unknown error');
+    logger.error(
+      { status: response.status, statusText: response.statusText, errorText },
+      'Failed to create project'
+    );
     throw new Error(
-      `Failed to create project: ${response.status} ${response.statusText} - ${errorText}`
+      `Failed to create project: ${response.status} ${response.statusText}`
     );
   }
 
@@ -275,8 +292,12 @@ export async function getDashboardStats(
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => 'Unknown error');
+    logger.error(
+      { status: response.status, statusText: response.statusText, errorText },
+      'Failed to fetch dashboard stats'
+    );
     throw new Error(
-      `Failed to fetch dashboard stats: ${response.status} ${response.statusText} - ${errorText}`
+      `Failed to fetch dashboard stats: ${response.status} ${response.statusText}`
     );
   }
 

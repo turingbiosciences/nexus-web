@@ -4,6 +4,7 @@ import { ProjectDataset } from '@/types/project';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
 import { useAccessToken } from '@/components/providers/token-provider';
 import { sanitizeFilename } from '@/lib/security';
+import { logger } from '@/lib/logger';
 
 interface UploadArgs {
   projectId: string;
@@ -58,7 +59,11 @@ async function apiUploadDataset({
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to upload file: ${response.status} - ${errorText}`);
+    logger.error(
+      { projectId, status: response.status, errorText },
+      'Failed to upload file'
+    );
+    throw new Error(`Failed to upload file: ${response.status}`);
   }
 
   const dataset = await response.json();
@@ -95,9 +100,11 @@ async function apiDeleteDataset({
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(
-      `Failed to delete dataset: ${response.status} - ${errorText}`
+    logger.error(
+      { projectId, datasetId, status: response.status, errorText },
+      'Failed to delete dataset'
     );
+    throw new Error(`Failed to delete dataset: ${response.status}`);
   }
 
   return { success: true };

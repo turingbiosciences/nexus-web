@@ -112,7 +112,7 @@ describe('projects API', () => {
       });
 
       await expect(fetchProjects('test-token')).rejects.toThrow(
-        'Failed to fetch projects: 500 Internal Server Error - Server error details'
+        'Failed to fetch projects: 500 Internal Server Error'
       );
     });
 
@@ -130,7 +130,7 @@ describe('projects API', () => {
       });
 
       await expect(fetchProjects('test-token')).rejects.toThrow(
-        'Failed to fetch projects: 500 Internal Server Error - Unknown error'
+        'Failed to fetch projects: 500 Internal Server Error'
       );
     });
 
@@ -261,9 +261,7 @@ describe('projects API', () => {
 
       await expect(
         createProject('test-token', { name: 'Test', description: 'Test' })
-      ).rejects.toThrow(
-        'Failed to create project: 400 Bad Request - Invalid project data'
-      );
+      ).rejects.toThrow('Failed to create project: 400 Bad Request');
     });
 
     it('handles error when create response text fails', async () => {
@@ -281,9 +279,7 @@ describe('projects API', () => {
 
       await expect(
         createProject('test-token', { name: 'Test', description: 'Test' })
-      ).rejects.toThrow(
-        'Failed to create project: 500 Internal Server Error - Unknown error'
-      );
+      ).rejects.toThrow('Failed to create project: 500 Internal Server Error');
     });
   });
 
@@ -349,7 +345,7 @@ describe('projects API', () => {
       });
 
       await expect(getDashboardStats('test-token')).rejects.toThrow(
-        'Failed to fetch dashboard stats: 500 Internal Server Error - Server error'
+        'Failed to fetch dashboard stats: 500 Internal Server Error'
       );
     });
   });
