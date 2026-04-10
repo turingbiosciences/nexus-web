@@ -22,3 +22,7 @@
 
 **Learning:** The `FeatureImportanceChart` and `NormalizedFeatureImportanceChart` components were calling `parseFeatureImportance` synchronously during the render loop. Since parsing involves array sorting, mapping, and filtering (O(N log N)), performing this unmemoized transformation caused redundant processing overhead on every render when the charts or their parents updated, even if the underlying `featureImportance` data had not changed.
 **Action:** Always wrap expensive data parsing and transformation routines (e.g., `parseFeatureImportance`, sorting arrays for charts) in `useMemo` so that they execute only when the referenced props actually change, keeping the render loop lightweight and performant.
+
+## 2026-02-06 - O(1) Lookups for Repository and Data Providers
+**Learning:** Repositories or providers (e.g., `projectsRepository` or `ProjectsProvider`) were utilizing O(N) `.find()` methods on arrays for fetching single items. In scenarios where datasets or projects list grew in size, this resulted in unnecessary overhead compared to instantaneous hash map lookups.
+**Action:** When a repository or provider needs to implement a lookup by ID (`get(id)`), always ensure the backing structure maintains a native JavaScript `Map` (alongside arrays if order is needed). Refactor operations that fetch entire lists just to filter one item into direct `Map.get(id)` requests to preserve strict O(1) performance and avoid unneeded memory allocation.

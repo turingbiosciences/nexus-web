@@ -10,8 +10,10 @@ let store: Project[] = mockProjects.map((p) => ({
   results: p.results ? [...p.results] : [],
 }));
 
+const storeMap: Map<string, Project> = new Map(store.map((p) => [p.id, p]));
+
 function findProject(id: string): Project | undefined {
-  return store.find((p) => p.id === id);
+  return storeMap.get(id);
 }
 
 export class MockProjectsRepository implements ProjectsRepository {
@@ -44,6 +46,7 @@ export class MockProjectsRepository implements ProjectsRepository {
       ],
     };
     store = [project, ...store];
+    storeMap.set(project.id, project);
     return project;
   }
 
@@ -56,6 +59,7 @@ export class MockProjectsRepository implements ProjectsRepository {
     const now = new Date();
     const updated: Project = { ...existing, ...patch, updatedAt: now };
     store = store.map((p) => (p.id === id ? updated : p));
+    storeMap.set(id, updated);
     return updated;
   }
 
