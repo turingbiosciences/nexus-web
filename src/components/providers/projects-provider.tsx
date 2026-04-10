@@ -259,7 +259,11 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 
   // Memoize projects array into a Map to provide O(1) lookup performance
   const projectsMap = useMemo(() => {
-    return new Map(projects.map((p) => [p.id, p]));
+    const map = new Map<string, Project>();
+    for (const project of projects) {
+      map.set(project.id, project);
+    }
+    return map;
   }, [projects]);
 
   const getProjectById = useCallback(
