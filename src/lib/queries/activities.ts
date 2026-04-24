@@ -82,8 +82,7 @@ export const useActivities = createAuthQuery<
   queryKeyPrefix: 'activities',
   getEndpoint: (projectId) => `/projects/${projectId}/activities`,
   fetchMock: async (projectId) => {
-    const projects = await projectsRepository.list();
-    const project = projects.find((p) => p.id === projectId);
+    const project = await projectsRepository.get(projectId);
     return project?.activities || [];
   },
   transformResponse: transformActivities,
