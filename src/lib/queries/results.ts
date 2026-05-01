@@ -51,8 +51,8 @@ export const useResults = createAuthQuery<
   queryKeyPrefix: 'results',
   getEndpoint: (projectId) => `/projects/${projectId}/results`,
   fetchMock: async (projectId) => {
-    const projects = await projectsRepository.list();
-    const project = projects.find((p) => p.id === projectId);
+    // ⚡ Bolt: Replaced O(N) list traversal with O(1) map lookup
+    const project = await projectsRepository.get(projectId);
     return project?.results || [];
   },
   transformResponse: transformResults,

@@ -22,3 +22,7 @@
 
 **Learning:** The `FeatureImportanceChart` and `NormalizedFeatureImportanceChart` components were calling `parseFeatureImportance` synchronously during the render loop. Since parsing involves array sorting, mapping, and filtering (O(N log N)), performing this unmemoized transformation caused redundant processing overhead on every render when the charts or their parents updated, even if the underlying `featureImportance` data had not changed.
 **Action:** Always wrap expensive data parsing and transformation routines (e.g., `parseFeatureImportance`, sorting arrays for charts) in `useMemo` so that they execute only when the referenced props actually change, keeping the render loop lightweight and performant.
+## 2026-05-01 - O(N) Traversal in Mock Query Handlers
+
+**Learning:** The mock fetch handlers for activities and results in `src/lib/queries` were retrieving the entire projects collection using `projectsRepository.list()` and then performing an `Array.prototype.find()` search. This resulted in O(N) time complexity and unnecessary memory allocation, which scales poorly even in mock/local environments.
+**Action:** Replaced the O(N) array traversal with an O(1) map lookup by directly using `projectsRepository.get(projectId)`. Always utilize direct key lookups in mock or API layers when fetching a single specific resource.
