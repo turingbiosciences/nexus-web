@@ -70,16 +70,15 @@ export function parseFeatureImportance(
     const hasRankKeys = entries.some(([key]) => key.startsWith('rank_'));
 
     if (hasRankKeys) {
-      // Extract from rank structure, sorted by rank number
+      // Extract from rank structure, sorted by rank number using Schwartzian Transform
       features = entries
         .filter(([key]) => key.startsWith('rank_'))
-        .sort((a, b) => {
-          const rankA = parseInt(a[0].replace('rank_', ''));
-          const rankB = parseInt(b[0].replace('rank_', ''));
-          return rankA - rankB;
-        })
-        .map(([, value]) => {
-          const rankData = value as RankData;
+        .map(([key, value]) => ({
+          rank: parseInt(key.slice(5), 10),
+          rankData: value as RankData,
+        }))
+        .sort((a, b) => a.rank - b.rank)
+        .map(({ rankData }) => {
           return {
             name: (rankData.feature || rankData.name || '').trim(),
             importance:
