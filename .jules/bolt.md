@@ -22,7 +22,8 @@
 
 **Learning:** The `FeatureImportanceChart` and `NormalizedFeatureImportanceChart` components were calling `parseFeatureImportance` synchronously during the render loop. Since parsing involves array sorting, mapping, and filtering (O(N log N)), performing this unmemoized transformation caused redundant processing overhead on every render when the charts or their parents updated, even if the underlying `featureImportance` data had not changed.
 **Action:** Always wrap expensive data parsing and transformation routines (e.g., `parseFeatureImportance`, sorting arrays for charts) in `useMemo` so that they execute only when the referenced props actually change, keeping the render loop lightweight and performant.
+
 ## 2026-02-06 - Schwartzian Transform for Rank Parsing
 
-**Learning:** The `parseFeatureImportance` utility was parsing rank numbers using `replace` and `parseInt` *inside* the sort comparator `(a, b) => parseInt(a[0].replace('rank_', '')) - parseInt(b[0].replace('rank_', ''))`. Since standard V8 sorting relies on Quicksort/Timsort which does `O(N log N)` comparisons, this caused unnecessary repetitive string operations during sort, degrading parsing performance on large datasets.
-**Action:** Extract expensive sorting keys *before* the sort operation using a Schwartzian Transform (map-sort-map), and use `slice` instead of regex or `replace` when extracting fixed-prefix suffixes.
+**Learning:** The `parseFeatureImportance` utility was parsing rank numbers using `replace` and `parseInt` _inside_ the sort comparator `(a, b) => parseInt(a[0].replace('rank_', '')) - parseInt(b[0].replace('rank_', ''))`. Since standard V8 sorting relies on Quicksort/Timsort which does `O(N log N)` comparisons, this caused unnecessary repetitive string operations during sort, degrading parsing performance on large datasets.
+**Action:** Extract expensive sorting keys _before_ the sort operation using a Schwartzian Transform (map-sort-map), and use `slice` instead of regex or `replace` when extracting fixed-prefix suffixes.
