@@ -64,41 +64,77 @@ export function parseFeatureImportance(
       })
       .filter((f) => f && f.name && typeof f.importance === 'number');
   } else if (typeof data === 'object' && data !== null) {
-    const entries = Object.entries(data as Record<string, unknown>);
+    const dataObj = data as Record<string, unknown>;
 
-    // Check if it's a rank structure (rank_1, rank_2, etc.)
-    const hasRankKeys = entries.some(([key]) => key.startsWith('rank_'));
+    // Check if it's a rank structure by examining the first few keys
+    let isRankStructure = false;
+    for (const key in dataObj) {
+      if (key.startsWith('rank_')) {
+        isRankStructure = true;
+        break;
+      }
+    }
 
-    if (hasRankKeys) {
-      // Extract from rank structure, sorted by rank number
-      features = entries
-        .filter(([key]) => key.startsWith('rank_'))
+    if (isRankStructure) {
+      const parsedFeatures: (FeatureImportanceData & { _rank: number })[] = [];
+
+      for (const key in dataObj) {
+        if (key.startsWith('rank_')) {
+          const rankData = dataObj[key] as RankData;
+          const name = (rankData.feature || rankData.name || '').trim();
+
+          if (name) {
+            parsedFeatures.push({
+              name,
+              importance:
+                typeof rankData.importance === 'number'
+                  ? rankData.importance
+                  : 0,
+              normalizedImportance:
+                typeof rankData.normalized_importance === 'number'
+                  ? rankData.normalized_importance
+                  : undefined,
+              _rank: parseInt(key.slice(5), 10),
+            });
+          }
+        }
+      }
+
+      // The original code did:
+      // 1. sort by rank (a.rank - b.rank)
+      // 2. map over elements
+      // 3. filter by name
+      // 4. sort by importance (descending)
+      //
+      // Because sort in JS is stable, sorting by rank first meant that when
+      // elements have the same importance, their original rank order is preserved.
+      // So we must sort by importance first, and fallback to rank if importance is tied.
+      features = parsedFeatures
         .sort((a, b) => {
-          const rankA = parseInt(a[0].replace('rank_', ''));
-          const rankB = parseInt(b[0].replace('rank_', ''));
-          return rankA - rankB;
+          if (a.importance !== b.importance) {
+            return b.importance - a.importance;
+          }
+          return a._rank - b._rank;
         })
-        .map(([, value]) => {
-          const rankData = value as RankData;
-          return {
-            name: (rankData.feature || rankData.name || '').trim(),
-            importance:
-              typeof rankData.importance === 'number' ? rankData.importance : 0,
-            normalizedImportance:
-              typeof rankData.normalized_importance === 'number'
-                ? rankData.normalized_importance
-                : undefined,
-          };
-        })
-        .filter((f) => f.name);
+        .map(({ _rank, ...rest }) => rest);
+
+      return features;
     } else {
       // Treat as simple key-value pairs: { feature_name: importance }
-      features = entries
-        .map(([name, importance]) => ({
-          name,
-          importance: typeof importance === 'number' ? importance : 0,
-        }))
-        .filter((f) => typeof f.importance === 'number');
+      for (const name in dataObj) {
+        if (Object.prototype.hasOwnProperty.call(dataObj, name)) {
+          const importance = dataObj[name];
+          features.push({
+            name,
+            importance: typeof importance === 'number' ? importance : 0,
+          });
+        }
+      }
+
+      // We must explicitly filter out items where importance evaluation previously resulted in typeof checking to ensure only valid items made it through,
+      // but original code was `.map(([name, imp]) => ({ name, importance: typeof imp === 'number' ? imp : 0 })).filter(f => typeof f.importance === 'number')`
+      // Wait, original code coerced to 0, then filtered for typeof === 'number'. Since 0 is a number, it always passes the filter!
+      // Therefore no items are dropped.
     }
   }
 
