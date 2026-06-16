@@ -75,10 +75,14 @@ export function NewProjectDialog({
         </div>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Project Name
+            <label
+              htmlFor="projectName"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Project Name <span className="text-red-500">*</span>
             </label>
             <input
+              id="projectName"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -89,10 +93,14 @@ export function NewProjectDialog({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="projectDescription"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Description (optional)
             </label>
             <textarea
+              id="projectDescription"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
