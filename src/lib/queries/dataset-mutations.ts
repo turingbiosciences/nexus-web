@@ -17,6 +17,18 @@ interface DeleteArgs {
   token?: string | null;
 }
 
+interface DownloadArgs {
+  projectId: string;
+  datasetId: string;
+  token?: string | null;
+}
+
+interface DownloadUrlResponse {
+  download_url: string;
+  filename: string;
+  expires_in: number;
+}
+
 /**
  * Helper to get access token from args or fetch it
  */
@@ -150,6 +162,52 @@ export function useDeleteDatasetMutation(projectId: string) {
     onSuccess: () => {
       // On success, invalidate to refetch with fresh server data
       qc.invalidateQueries({ queryKey: datasetsKey(projectId) });
+    },
+  });
+}
+
+async function apiGetDatasetDownloadUrl({
+  projectId,
+  datasetId,
+  token,
+}: DownloadArgs): Promise<DownloadUrlResponse> {
+  const apiEndpoint = getApiBaseUrl();
+  const accessToken = await ensureAccessToken(token);
+
+  const response = await fetch(
+    `${apiEndpoint}/projects/${projectId}/files/${datasetId}/download`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Failed to get download URL: ${response.status} - ${errorText}`
+    );
+  }
+
+  return response.json();
+}
+
+export function useDownloadDatasetMutation(projectId: string) {
+  const { accessToken } = useAccessToken();
+
+  return useMutation({
+    mutationKey: ['download', projectId],
+    mutationFn: (datasetId: string) =>
+      apiGetDatasetDownloadUrl({ projectId, datasetId, token: accessToken }),
+    onSuccess: ({ download_url, filename }) => {
+      const a = document.createElement('a');
+      a.href = download_url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     },
   });
 }

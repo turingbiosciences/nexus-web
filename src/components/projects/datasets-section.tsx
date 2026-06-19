@@ -10,7 +10,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@/components/ui/toast-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Download, Trash2 } from 'lucide-react';
-import { useDeleteDatasetMutation } from '@/lib/queries/dataset-mutations';
+import {
+  useDeleteDatasetMutation,
+  useDownloadDatasetMutation,
+} from '@/lib/queries/dataset-mutations';
 
 interface DatasetsSectionProps {
   projectId: string;
@@ -37,6 +40,7 @@ export function DatasetsSection({
   const remoteLoading = datasetsQuery.isLoading;
   const nextCursor = (datasetsQuery as { nextCursor?: string }).nextCursor;
   const deleteMutation = useDeleteDatasetMutation(projectId);
+  const downloadMutation = useDownloadDatasetMutation(projectId);
   const { push } = useToast();
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
 
@@ -111,13 +115,16 @@ export function DatasetsSection({
                     size="sm"
                     variant="ghost"
                     className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    disabled={downloadMutation.isPending}
                     onClick={() => {
-                      // Temporary stub for download action; push toast for UI feedback
-                      push({
-                        title: 'Not implemented',
-                        description:
-                          'Downloading datasets is not yet implemented.',
-                        variant: 'default',
+                      downloadMutation.mutate(d.id, {
+                        onError: () => {
+                          push({
+                            title: 'Download failed',
+                            description: `Could not download ${d.filename}. Please retry.`,
+                            variant: 'destructive',
+                          });
+                        },
                       });
                     }}
                     aria-label={`Download ${d.filename}`}
