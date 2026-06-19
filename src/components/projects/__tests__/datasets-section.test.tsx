@@ -9,6 +9,7 @@ const mockUpdateProject = jest.fn();
 const mockPush = jest.fn();
 const mockUploadMutate = jest.fn();
 const mockDeleteMutate = jest.fn();
+const mockDownloadMutate = jest.fn();
 const mockUseDatasetsReturn = jest.fn();
 
 jest.mock('@/components/providers/projects-provider', () => ({
@@ -30,6 +31,10 @@ jest.mock('@/lib/queries/dataset-mutations', () => ({
   }),
   useDeleteDatasetMutation: () => ({
     mutate: mockDeleteMutate,
+    isPending: false,
+  }),
+  useDownloadDatasetMutation: () => ({
+    mutate: mockDownloadMutate,
     isPending: false,
   }),
 }));
@@ -190,7 +195,7 @@ describe('DatasetsSection', () => {
     expect(deleteButtons).toHaveLength(2);
   });
 
-  it('shows toast when download button is clicked', async () => {
+  it('calls download mutation when download button is clicked', async () => {
     const user = userEvent.setup();
 
     render(<DatasetsSection projectId="project-1" />);
@@ -200,12 +205,11 @@ describe('DatasetsSection', () => {
     });
     await user.click(downloadButtons[0]);
 
-    expect(mockPush).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: 'Not implemented',
-        description: 'Downloading datasets is not yet implemented.',
-      })
+    expect(mockDownloadMutate).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ onError: expect.any(Function) })
     );
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it('handles delete dataset with optimistic update', async () => {

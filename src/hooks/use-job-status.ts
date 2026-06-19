@@ -65,6 +65,10 @@ export function useJobStatus(
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Incrementing this triggers the effect to open a fresh EventSource (reconnect).
+  const [retryKey, setRetryKey] = useState(0);
+  // Track previous jobId so we only reset state on job change, not on retries.
+  const prevJobIdRef = useRef<string | null>(null);
 
   // Use refs for callbacks to avoid dependency cycles
   const onCompleteRef = useRef(onComplete);
@@ -293,8 +297,13 @@ export function useJobStatus(
       return;
     }
 
-    // Reset job state when starting a new subscription
-    setJob(null);
+    // Reset job state and retry count only when switching to a different job,
+    // not when reconnecting after a transient drop (retryKey change).
+    if (jobId !== prevJobIdRef.current) {
+      setJob(null);
+      retryCountRef.current = 0;
+      prevJobIdRef.current = jobId;
+    }
 
     if (useMock) {
       startMockSSE(projectId, jobId);
@@ -311,7 +320,10 @@ export function useJobStatus(
     // Pass token via query string since EventSource doesn't support headers
     const url = `${baseUrl}/projects/${projectId}/training/${jobId}/stream?token=${encodeURIComponent(accessToken)}`;
 
-    logger.info({ projectId, jobId }, 'Connecting to job status SSE stream');
+    logger.info(
+      { projectId, jobId, retryKey, retryCount: retryCountRef.current },
+      'Connecting to job status SSE stream'
+    );
 
     const eventSource = new EventSource(url);
     eventSourceRef.current = eventSource;
@@ -320,6 +332,7 @@ export function useJobStatus(
       logger.info({ projectId, jobId }, 'SSE connection established');
       setIsConnected(true);
       setIsLoading(false);
+      // Reset retry count on a successful open so transient drops don't burn retries permanently.
       retryCountRef.current = 0;
     };
 
@@ -339,11 +352,15 @@ export function useJobStatus(
     });
 
     eventSource.onerror = (e) => {
+      // If disconnect() was already called (e.g. after a terminal event), the
+      // ref is null — skip retry so we don't spuriously reopen the stream.
+      if (!eventSourceRef.current) return;
+
       logger.error({ projectId, jobId, event: e }, 'SSE connection error');
       setIsConnected(false);
       eventSource.close();
+      eventSourceRef.current = null;
 
-      // Attempt reconnection with exponential backoff
       if (retryCountRef.current < MAX_RETRIES) {
         const delay = Math.min(
           INITIAL_RETRY_DELAY * Math.pow(2, retryCountRef.current),
@@ -356,12 +373,10 @@ export function useJobStatus(
           'Scheduling SSE reconnection'
         );
 
-        // Note: reconnection would restart the effect, so we just set an error here
-        // In production, you might want a more sophisticated retry mechanism
+        // Increment retryKey to trigger the effect to open a fresh EventSource.
         retryTimeoutRef.current = setTimeout(() => {
-          setError('Connection lost. Please try again.');
-          setIsLoading(false);
-          onErrorRef.current?.('Connection lost - please refresh');
+          retryTimeoutRef.current = null;
+          setRetryKey((k) => k + 1);
         }, delay);
       } else {
         setError('Connection lost. Please refresh the page.');
@@ -382,6 +397,7 @@ export function useJobStatus(
     startMockSSE,
     handleEvent,
     disconnect,
+    retryKey,
   ]);
 
   return {
