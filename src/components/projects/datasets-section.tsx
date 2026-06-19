@@ -115,7 +115,10 @@ export function DatasetsSection({
                     size="sm"
                     variant="ghost"
                     className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    disabled={downloadMutation.isPending}
+                    disabled={
+                      downloadMutation.isPending &&
+                      downloadMutation.variables === d.id
+                    }
                     onClick={() => {
                       downloadMutation.mutate(d.id, {
                         onError: () => {

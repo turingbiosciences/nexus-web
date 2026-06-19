@@ -202,12 +202,20 @@ export function useDownloadDatasetMutation(projectId: string) {
     mutationFn: (datasetId: string) =>
       apiGetDatasetDownloadUrl({ projectId, datasetId, token: accessToken }),
     onSuccess: ({ download_url, filename }) => {
-      const a = document.createElement('a');
-      a.href = download_url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      try {
+        const parsed = new URL(download_url);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          throw new Error(`Unexpected protocol: ${parsed.protocol}`);
+        }
+        const a = document.createElement('a');
+        a.href = parsed.toString();
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } catch (e) {
+        console.error('Failed to download dataset: invalid URL', e);
+      }
     },
   });
 }
