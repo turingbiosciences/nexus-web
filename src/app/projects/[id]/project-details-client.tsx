@@ -71,21 +71,33 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
       // Refresh results after job completes
       resultsQuery.refetch();
       setIsRunning(false);
+      // Auto-clear the persisted job so the progress card disappears on reload
+      clearJobId();
     },
-    [pushToast, resultsQuery]
+    [pushToast, resultsQuery, clearJobId]
   );
 
   const handleJobError = useCallback(
     (error: string) => {
+      // Connection-lost errors mean the SSE stream closed (job already done or
+      // stale localStorage entry). Silently clear the job rather than surfacing
+      // a confusing "Connection lost" card to the user.
+      const isConnectionError =
+        /connection lost|please refresh|maximum retries/i.test(error);
+      if (isConnectionError) {
+        setIsRunning(false);
+        clearJobId();
+        return;
+      }
       pushToast({
         title: 'Training Failed',
         description: error,
         variant: 'destructive',
-        duration: 0,
+        duration: 10000,
       });
       setIsRunning(false);
     },
-    [pushToast]
+    [pushToast, clearJobId]
   );
 
   // Subscribe to job status updates via SSE
@@ -186,7 +198,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
           title: 'Training Error',
           description: data.message || JSON.stringify(data),
           variant: 'destructive',
-          duration: 0,
+          duration: 10000,
         });
         setIsRunning(false);
       }
@@ -195,7 +207,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
         title: 'Request Failed',
         description: `Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
         variant: 'destructive',
-        duration: 0,
+        duration: 10000,
       });
       setIsRunning(false);
     }

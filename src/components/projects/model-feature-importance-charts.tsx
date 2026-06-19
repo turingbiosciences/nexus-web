@@ -26,6 +26,11 @@ interface ModelFeatureImportanceChartsProps {
   modelConfigs: Record<string, ModelConfig>;
 }
 
+// Maximum data points shown in the elbow chart. With thousands of features the
+// curve collapses to a vertical-then-horizontal line; capping at 50 lets the
+// actual elbow be visible while staying within the 20-100 target range.
+const MAX_CHART_FEATURES = 50;
+
 interface ChartFeature {
   rank: number;
   importance: number;
@@ -51,8 +56,12 @@ export function ModelFeatureImportanceCharts({
       // Use shared parsing utility
       const parsedFeatures = parseFeatureImportance(config.feature_importance);
 
+      // Cap to MAX_CHART_FEATURES so the elbow curve remains visible. With
+      // thousands of features the full dataset collapses to a vertical line.
+      const cappedFeatures = parsedFeatures.slice(0, MAX_CHART_FEATURES);
+
       // Convert to chart format with ranks
-      const features: ChartFeature[] = parsedFeatures.map((f, index) => ({
+      const features: ChartFeature[] = cappedFeatures.map((f, index) => ({
         rank: index + 1,
         importance: f.importance,
         feature: f.name,
@@ -64,7 +73,7 @@ export function ModelFeatureImportanceCharts({
           name: d.feature,
           importance: d.importance,
         }));
-        const topN = findElbowPoint(featuresForElbow);
+        const topN = findElbowPoint(featuresForElbow, MAX_CHART_FEATURES);
         const topFeatures = features.slice(0, topN);
 
         charts.push({

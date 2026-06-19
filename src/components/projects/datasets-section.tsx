@@ -10,10 +10,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@/components/ui/toast-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Download, Trash2 } from 'lucide-react';
-import {
-  useUploadDatasetMutation,
-  useDeleteDatasetMutation,
-} from '@/lib/queries/dataset-mutations';
+import { useDeleteDatasetMutation } from '@/lib/queries/dataset-mutations';
 
 interface DatasetsSectionProps {
   projectId: string;
@@ -39,7 +36,6 @@ export function DatasetsSection({
     | undefined; // flattened array per hook contract (paginated=false default)
   const remoteLoading = datasetsQuery.isLoading;
   const nextCursor = (datasetsQuery as { nextCursor?: string }).nextCursor;
-  const uploadMutation = useUploadDatasetMutation(projectId);
   const deleteMutation = useDeleteDatasetMutation(projectId);
   const { push } = useToast();
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
@@ -192,25 +188,15 @@ export function DatasetsSection({
             onUploadComplete={(files) => {
               if (!project) return;
               files.forEach((f) => {
+                // File was already uploaded by FileUploader via XHR — just
+                // update optimistic state, show a toast, and refetch.
                 addDataset(project.id);
-                uploadMutation.mutate(f, {
-                  onSuccess: () => {
-                    push({
-                      title: 'Upload complete',
-                      description: `${f.name} was uploaded successfully.`,
-                      variant: 'default',
-                    });
-                    // Refetch datasets list from API after successful upload
-                    datasetsQuery.refetch();
-                  },
-                  onError: () => {
-                    push({
-                      title: 'Upload failed',
-                      description: `Could not upload ${f.name}. Please try again.`,
-                      variant: 'destructive',
-                    });
-                  },
+                push({
+                  title: 'Upload complete',
+                  description: `${f.name} was uploaded successfully.`,
+                  variant: 'default',
                 });
+                datasetsQuery.refetch();
               });
             }}
           />

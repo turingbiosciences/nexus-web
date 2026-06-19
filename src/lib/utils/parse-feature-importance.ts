@@ -149,9 +149,13 @@ export function parseFeatureImportanceByModel(
  * This helps determine the optimal number of top features to display.
  *
  * @param features Sorted feature importance data (descending by importance)
- * @returns Optimal number of features to display (between 3 and 10)
+ * @param maxFeatures Maximum features to return (default 50)
+ * @returns Optimal number of features to display (between 3 and maxFeatures)
  */
-export function findElbowPoint(features: FeatureImportanceData[]): number {
+export function findElbowPoint(
+  features: FeatureImportanceData[],
+  maxFeatures: number = 50
+): number {
   if (features.length < 3) {
     return Math.min(features.length, 5);
   }
@@ -175,6 +179,6 @@ export function findElbowPoint(features: FeatureImportanceData[]): number {
     }
   }
 
-  // Ensure we show at least 3 and at most 10 features
-  return Math.max(3, Math.min(elbowIndex + 2, 10));
+  // Ensure we show at least 3 and at most maxFeatures features
+  return Math.max(3, Math.min(elbowIndex + 2, maxFeatures));
 }

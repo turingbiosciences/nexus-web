@@ -47,6 +47,11 @@ const ALGORITHM_MEASURES: Record<
     description:
       'Measures how much on average the prediction changes when the feature value changes.',
   },
+  linear_boost: {
+    label: 'Coefficient Magnitude',
+    description:
+      "Absolute value of the linear model coefficients produced by the boosting ensemble, indicating each feature's contribution to the decision boundary.",
+  },
 };
 
 interface FeatureImportanceChartProps {
