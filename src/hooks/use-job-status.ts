@@ -107,7 +107,7 @@ export function useJobStatus(
     setIsConnected(false);
   }, []);
 
-  // Handle incoming SSE events - no dependencies on changing values
+  // Handle incoming SSE events
   const handleEvent = useCallback(
     (event: MessageEvent) => {
       try {
@@ -189,6 +189,9 @@ export function useJobStatus(
           } else if (jobData.status === 'failed') {
             onErrorRef.current?.(jobData.error || 'Job failed');
           }
+          // Close the EventSource after a terminal event so the server-side
+          // connection close does not trigger a spurious onerror → retry chain.
+          disconnect();
         }
       } catch (err) {
         logger.error(
@@ -197,7 +200,7 @@ export function useJobStatus(
         );
       }
     },
-    [projectId]
+    [projectId, disconnect]
   );
 
   // Mock SSE for development/testing

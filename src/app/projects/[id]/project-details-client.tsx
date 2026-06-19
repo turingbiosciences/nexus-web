@@ -79,11 +79,12 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
 
   const handleJobError = useCallback(
     (error: string) => {
-      // Connection-lost errors mean the SSE stream closed (job already done or
-      // stale localStorage entry). Silently clear the job rather than surfacing
-      // a confusing "Connection lost" card to the user.
-      const isConnectionError =
-        /connection lost|please refresh|maximum retries/i.test(error);
+      // Only clear the job after all retries are exhausted (final failure
+      // message). Intermediate retry errors ("Connection lost - please refresh")
+      // are not matched here so a transient network hiccup does not discard an
+      // active job. Terminal completion also closes the EventSource cleanly in
+      // the hook, so this path mainly handles stale localStorage job IDs.
+      const isConnectionError = /maximum retries/i.test(error);
       if (isConnectionError) {
         setIsRunning(false);
         clearJobId();

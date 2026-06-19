@@ -189,15 +189,17 @@ export function DatasetsSection({
               if (!project) return;
               files.forEach((f) => {
                 // File was already uploaded by FileUploader via XHR — just
-                // update optimistic state, show a toast, and refetch.
+                // update optimistic state and show a toast per file.
                 addDataset(project.id);
                 push({
                   title: 'Upload complete',
                   description: `${f.name} was uploaded successfully.`,
                   variant: 'default',
                 });
-                datasetsQuery.refetch();
               });
+              // Single refetch after all files are processed to avoid N
+              // redundant API calls when multiple files are uploaded at once.
+              datasetsQuery.refetch();
             }}
           />
         )}
