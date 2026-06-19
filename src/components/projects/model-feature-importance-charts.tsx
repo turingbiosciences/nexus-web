@@ -26,6 +26,14 @@ interface ModelFeatureImportanceChartsProps {
   modelConfigs: Record<string, ModelConfig>;
 }
 
+// Maximum data points shown in the elbow chart curve. With thousands of
+// features the curve collapses to a vertical line; 50 keeps the elbow visible.
+const MAX_CHART_FEATURES = 50;
+// Maximum rows in the textual top-features list below the chart. The elbow
+// point can reach MAX_CHART_FEATURES in degenerate cases, so we cap the list
+// independently to prevent a 50-row card that overflows the layout.
+const MAX_LIST_FEATURES = 15;
+
 interface ChartFeature {
   rank: number;
   importance: number;
@@ -51,8 +59,12 @@ export function ModelFeatureImportanceCharts({
       // Use shared parsing utility
       const parsedFeatures = parseFeatureImportance(config.feature_importance);
 
+      // Cap to MAX_CHART_FEATURES so the elbow curve remains visible. With
+      // thousands of features the full dataset collapses to a vertical line.
+      const cappedFeatures = parsedFeatures.slice(0, MAX_CHART_FEATURES);
+
       // Convert to chart format with ranks
-      const features: ChartFeature[] = parsedFeatures.map((f, index) => ({
+      const features: ChartFeature[] = cappedFeatures.map((f, index) => ({
         rank: index + 1,
         importance: f.importance,
         feature: f.name,
@@ -64,8 +76,11 @@ export function ModelFeatureImportanceCharts({
           name: d.feature,
           importance: d.importance,
         }));
-        const topN = findElbowPoint(featuresForElbow);
-        const topFeatures = features.slice(0, topN);
+        const topN = findElbowPoint(featuresForElbow, MAX_CHART_FEATURES);
+        const topFeatures = features.slice(
+          0,
+          Math.min(topN, MAX_LIST_FEATURES)
+        );
 
         charts.push({
           modelName,

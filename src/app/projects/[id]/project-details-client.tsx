@@ -71,21 +71,34 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
       // Refresh results after job completes
       resultsQuery.refetch();
       setIsRunning(false);
+      // Auto-clear the persisted job so the progress card disappears on reload
+      clearJobId();
     },
-    [pushToast, resultsQuery]
+    [pushToast, resultsQuery, clearJobId]
   );
 
   const handleJobError = useCallback(
     (error: string) => {
+      // Only clear the job after all retries are exhausted (final failure
+      // message). Intermediate retry errors ("Connection lost - please refresh")
+      // are not matched here so a transient network hiccup does not discard an
+      // active job. Terminal completion also closes the EventSource cleanly in
+      // the hook, so this path mainly handles stale localStorage job IDs.
+      const isConnectionError = /maximum retries/i.test(error);
+      if (isConnectionError) {
+        setIsRunning(false);
+        clearJobId();
+        return;
+      }
       pushToast({
         title: 'Training Failed',
         description: error,
         variant: 'destructive',
-        duration: 0,
+        duration: 10000,
       });
       setIsRunning(false);
     },
-    [pushToast]
+    [pushToast, clearJobId]
   );
 
   // Subscribe to job status updates via SSE
@@ -186,7 +199,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
           title: 'Training Error',
           description: data.message || JSON.stringify(data),
           variant: 'destructive',
-          duration: 0,
+          duration: 10000,
         });
         setIsRunning(false);
       }
@@ -195,7 +208,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
         title: 'Request Failed',
         description: `Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
         variant: 'destructive',
-        duration: 0,
+        duration: 10000,
       });
       setIsRunning(false);
     }
