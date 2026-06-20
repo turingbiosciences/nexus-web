@@ -13,6 +13,8 @@ const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    // react-markdown v10+ is ESM-only; stub it out so Jest (CommonJS) doesn't choke
+    'react-markdown': '<rootDir>/src/__mocks__/react-markdown.tsx',
   },
   testMatch: ['**/__tests__/**/*.(ts|tsx)', '**/?(*.)+(test|spec).(ts|tsx)'],
   collectCoverageFrom: [
