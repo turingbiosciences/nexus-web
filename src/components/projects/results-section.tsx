@@ -11,6 +11,7 @@ import { FeatureComparisonChart } from './feature-comparison-chart';
 import { AggregateFeatureImportanceTable } from './aggregate-feature-importance-table';
 import { ModelFeatureImportanceCharts } from './model-feature-importance-charts';
 import { ModelConfig } from '@/types/model-config';
+import { CARTAnalysisSection } from './cart-analysis-section';
 import { Download } from 'lucide-react';
 import { useAccessToken } from '@/components/providers/token-provider';
 import { authFetch } from '@/lib/auth-fetch';
@@ -196,6 +197,14 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                     data?: { all_model_configs?: Record<string, ModelConfig> };
                   }
                 ).data?.all_model_configs;
+                const cartData = (
+                  result as unknown as {
+                    data?: {
+                      graph_svg_url?: string | null;
+                      analysis_report_url?: string | null;
+                    };
+                  }
+                ).data;
 
                 return (
                   <li
@@ -362,6 +371,11 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                                 }
                               />
                             )}
+                            {/* CART Surrogate Analysis */}
+                            <CARTAnalysisSection
+                              graphSvgUrl={cartData?.graph_svg_url}
+                              analysisReportUrl={cartData?.analysis_report_url}
+                            />
                           </>
                         ) : (
                           <p className="text-sm text-gray-500">
