@@ -1,2 +1,2 @@
-const Markdown = ({ children }: { children: string }) => <>{children}</>;
+const Markdown = ({ children }: { children?: string | null }) => <>{children}</>;
 export default Markdown;
