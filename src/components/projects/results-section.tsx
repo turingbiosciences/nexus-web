@@ -197,6 +197,14 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                     data?: { all_model_configs?: Record<string, ModelConfig> };
                   }
                 ).data?.all_model_configs;
+                const cartData = (
+                  result as unknown as {
+                    data?: {
+                      graph_svg_url?: string | null;
+                      analysis_report_url?: string | null;
+                    };
+                  }
+                ).data;
 
                 return (
                   <li
@@ -365,22 +373,8 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                             )}
                             {/* CART Surrogate Analysis */}
                             <CARTAnalysisSection
-                              graphSvgUrl={
-                                (
-                                  result as unknown as {
-                                    data?: { graph_svg_url?: string | null };
-                                  }
-                                ).data?.graph_svg_url
-                              }
-                              analysisReportUrl={
-                                (
-                                  result as unknown as {
-                                    data?: {
-                                      analysis_report_url?: string | null;
-                                    };
-                                  }
-                                ).data?.analysis_report_url
-                              }
+                              graphSvgUrl={cartData?.graph_svg_url}
+                              analysisReportUrl={cartData?.analysis_report_url}
                             />
                           </>
                         ) : (

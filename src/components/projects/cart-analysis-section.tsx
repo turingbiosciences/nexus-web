@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Markdown from 'react-markdown';
 
 interface CARTAnalysisSectionProps {
   graphSvgUrl: string | null | undefined;
@@ -16,14 +17,31 @@ export function CARTAnalysisSection({
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
-    if (!analysisReportUrl) return;
+    if (!analysisReportUrl) {
+      setReportText(null);
+      setReportError(false);
+      return;
+    }
+
+    let active = true;
+    setReportText(null);
+    setReportError(false);
+
     fetch(analysisReportUrl)
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.text();
       })
-      .then(setReportText)
-      .catch(() => setReportError(true));
+      .then((text) => {
+        if (active) setReportText(text);
+      })
+      .catch(() => {
+        if (active) setReportError(true);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [analysisReportUrl]);
 
   if (!graphSvgUrl && !analysisReportUrl) return null;
@@ -36,6 +54,7 @@ export function CARTAnalysisSection({
 
       {graphSvgUrl && (
         <div className="border rounded-lg overflow-auto bg-white p-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={graphSvgUrl}
             alt="CART surrogate decision tree"
@@ -74,9 +93,9 @@ export function CARTAnalysisSection({
               ) : reportText === null ? (
                 <p className="text-sm text-gray-400">Loading…</p>
               ) : (
-                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
-                  {reportText}
-                </pre>
+                <div className="prose prose-sm max-w-none text-gray-700">
+                  <Markdown>{reportText}</Markdown>
+                </div>
               )}
             </div>
           )}
