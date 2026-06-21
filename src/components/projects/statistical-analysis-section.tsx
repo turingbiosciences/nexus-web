@@ -39,6 +39,7 @@ function FeaturePanel({
     <div className="border rounded-lg overflow-hidden">
       <button
         onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
         className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors text-left"
       >
         <span className="font-mono text-xs text-gray-800 truncate">
@@ -81,7 +82,9 @@ function FeaturePanel({
                       Threshold
                     </td>
                     <td className="py-1.5 font-mono text-gray-800">
-                      {cutoff.threshold.toFixed(4)}
+                      {typeof cutoff.threshold === 'number'
+                        ? cutoff.threshold.toFixed(4)
+                        : 'N/A'}
                     </td>
                   </tr>
                   <tr className="border-b">
@@ -105,7 +108,9 @@ function FeaturePanel({
                       Gini improvement
                     </td>
                     <td className="py-1.5 font-mono text-gray-800">
-                      {cutoff.gini_improvement.toFixed(4)}
+                      {typeof cutoff.gini_improvement === 'number'
+                        ? cutoff.gini_improvement.toFixed(4)
+                        : 'N/A'}
                     </td>
                   </tr>
                 </tbody>
