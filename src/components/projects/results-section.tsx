@@ -12,7 +12,10 @@ import { AggregateFeatureImportanceTable } from './aggregate-feature-importance-
 import { ModelFeatureImportanceCharts } from './model-feature-importance-charts';
 import { ModelConfig } from '@/types/model-config';
 import { CARTAnalysisSection } from './cart-analysis-section';
-import { StatisticalAnalysisSection } from './statistical-analysis-section';
+import {
+  StatisticalAnalysisSection,
+  StatisticalAnalysisData,
+} from './statistical-analysis-section';
 import { Download } from 'lucide-react';
 import { useAccessToken } from '@/components/providers/token-provider';
 import { authFetch } from '@/lib/auth-fetch';
@@ -209,22 +212,7 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                 const statisticalData = (
                   result as unknown as {
                     data?: {
-                      statistical_analysis?: {
-                        top_features: string[];
-                        cart_cutoffs: Record<
-                          string,
-                          {
-                            feature: string;
-                            threshold: number;
-                            rule: string;
-                            left_class: string;
-                            right_class: string;
-                            gini_improvement: number;
-                          }
-                        >;
-                        box_plot_urls: Record<string, string>;
-                        ci_bar_urls: Record<string, string>;
-                      } | null;
+                      statistical_analysis?: StatisticalAnalysisData | null;
                     };
                   }
                 ).data?.statistical_analysis;

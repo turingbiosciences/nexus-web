@@ -1,17 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useId } from 'react';
 
-interface CartCutoff {
+export interface CartCutoff {
   feature: string;
-  threshold: number;
+  threshold: number | null;
   rule: string;
   left_class: string;
   right_class: string;
-  gini_improvement: number;
+  gini_improvement: number | null;
 }
 
-interface StatisticalAnalysisData {
+export interface StatisticalAnalysisData {
   top_features: string[];
   cart_cutoffs: Record<string, CartCutoff>;
   box_plot_urls: Record<string, string>;
@@ -29,17 +29,21 @@ function FeaturePanel({
   ciBarUrl,
 }: {
   feature: string;
-  cutoff: CartCutoff | undefined;
+  cutoff: CartCutoff | null | undefined;
   boxPlotUrl: string | undefined;
   ciBarUrl: string | undefined;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const buttonId = useId();
+  const panelId = useId();
 
   return (
     <div className="border rounded-lg overflow-hidden">
       <button
+        id={buttonId}
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
+        aria-controls={panelId}
         className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors text-left"
       >
         <span className="font-mono text-xs text-gray-800 truncate">
@@ -61,7 +65,12 @@ function FeaturePanel({
       </button>
 
       {expanded && (
-        <div className="p-4 bg-white space-y-4">
+        <div
+          id={panelId}
+          role="region"
+          aria-labelledby={buttonId}
+          className="p-4 bg-white space-y-4"
+        >
           {cutoff && (
             <div>
               <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
