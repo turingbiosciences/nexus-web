@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState, useEffect, memo } from 'react';
+import { useCallback, useState, useEffect, useRef, memo } from 'react';
 import { useDropzone } from 'react-dropzone';
 import * as tus from 'tus-js-client';
 import { Upload, X, CheckCircle, AlertCircle, Pause, Play } from 'lucide-react';
@@ -364,6 +364,21 @@ export function FileUploader({
       );
     }
   };
+
+  // Keep a stable ref to startUpload so the auto-start effect below never
+  // captures a stale closure while still seeing the latest auth values.
+  const startUploadRef = useRef(startUpload);
+  startUploadRef.current = startUpload;
+
+  // Auto-start uploads as soon as files enter the queue and auth is ready.
+  // Using the ref avoids including startUpload in deps (it is recreated every
+  // render) while still calling the version that has the latest token/auth state.
+  useEffect(() => {
+    if (!isAuthenticated || authLoading) return;
+    const pending = uploads.filter((u) => u.status === 'pending');
+    if (pending.length === 0) return;
+    pending.forEach((u) => startUploadRef.current(u));
+  }, [uploads, isAuthenticated, authLoading]);
 
   // When auth becomes available, clear transient auth errors and revert auth-related error statuses back to pending
   useEffect(() => {
