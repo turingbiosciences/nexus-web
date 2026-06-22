@@ -91,10 +91,12 @@ describe('ResultsSection', () => {
 
     render(<ResultsSection projectId="test-project-id" />);
 
+    // result.name is the fallback filename when no run_parameters.file_id is present
     expect(screen.getByText('Result 1')).toBeInTheDocument();
-    expect(screen.getByText('Analysis Type A')).toBeInTheDocument();
     expect(screen.getByText('Result 2')).toBeInTheDocument();
-    expect(screen.getByText('Analysis Type B')).toBeInTheDocument();
+    // result.type is no longer rendered; the header now shows the dataset filename
+    expect(screen.queryByText('Analysis Type A')).not.toBeInTheDocument();
+    expect(screen.queryByText('Analysis Type B')).not.toBeInTheDocument();
   });
 
   it('formats dates correctly', () => {
