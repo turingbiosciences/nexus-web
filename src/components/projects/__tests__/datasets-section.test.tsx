@@ -9,6 +9,7 @@ const mockUpdateProject = jest.fn();
 const mockPush = jest.fn();
 const mockUploadMutate = jest.fn();
 const mockDeleteMutate = jest.fn();
+const mockDownloadMutate = jest.fn();
 const mockUseDatasetsReturn = jest.fn();
 
 jest.mock('@/components/providers/projects-provider', () => ({
@@ -30,6 +31,10 @@ jest.mock('@/lib/queries/dataset-mutations', () => ({
   }),
   useDeleteDatasetMutation: () => ({
     mutate: mockDeleteMutate,
+    isPending: false,
+  }),
+  useDownloadDatasetMutation: () => ({
+    mutate: mockDownloadMutate,
     isPending: false,
   }),
 }));
@@ -190,7 +195,7 @@ describe('DatasetsSection', () => {
     expect(deleteButtons).toHaveLength(2);
   });
 
-  it('shows toast when download button is clicked', async () => {
+  it('calls download mutation when download button is clicked', async () => {
     const user = userEvent.setup();
 
     render(<DatasetsSection projectId="project-1" />);
@@ -200,12 +205,11 @@ describe('DatasetsSection', () => {
     });
     await user.click(downloadButtons[0]);
 
-    expect(mockPush).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: 'Not implemented',
-        description: 'Downloading datasets is not yet implemented.',
-      })
+    expect(mockDownloadMutate).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ onError: expect.any(Function) })
     );
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it('handles delete dataset with optimistic update', async () => {
@@ -281,31 +285,21 @@ describe('DatasetsSection', () => {
 
   it('handles file upload completion', async () => {
     const user = userEvent.setup();
-    mockUploadMutate.mockImplementation((file, options) => {
-      options.onSuccess?.();
-    });
 
     render(<DatasetsSection projectId="project-1" />);
 
     const uploadButton = screen.getByRole('button', { name: /upload file/i });
     await user.click(uploadButton);
 
+    // onUploadComplete fires after the XHR inside FileUploader completes.
+    // It should update optimistic state and refetch — NOT re-post the file.
     expect(mockAddDataset).toHaveBeenCalledWith('project-1');
-
-    expect(mockUploadMutate).toHaveBeenCalledWith(
-      expect.any(File),
-      expect.objectContaining({
-        onSuccess: expect.any(Function),
-        onError: expect.any(Function),
-      })
-    );
+    expect(mockDatasetsQuery.refetch).toHaveBeenCalled();
+    expect(mockUploadMutate).not.toHaveBeenCalled();
   });
 
-  it('shows success toast on upload success', async () => {
+  it('shows success toast on upload completion', async () => {
     const user = userEvent.setup();
-    mockUploadMutate.mockImplementation((file, options) => {
-      options.onSuccess?.();
-    });
 
     render(<DatasetsSection projectId="project-1" />);
 
@@ -316,24 +310,6 @@ describe('DatasetsSection', () => {
       title: 'Upload complete',
       description: 'test.csv was uploaded successfully.',
       variant: 'default',
-    });
-  });
-
-  it('shows error toast on upload failure', async () => {
-    const user = userEvent.setup();
-    mockUploadMutate.mockImplementation((file, options) => {
-      options.onError?.();
-    });
-
-    render(<DatasetsSection projectId="project-1" />);
-
-    const uploadButton = screen.getByRole('button', { name: /upload file/i });
-    await user.click(uploadButton);
-
-    expect(mockPush).toHaveBeenCalledWith({
-      title: 'Upload failed',
-      description: 'Could not upload test.csv. Please try again.',
-      variant: 'destructive',
     });
   });
 

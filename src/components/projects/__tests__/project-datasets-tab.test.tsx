@@ -19,6 +19,10 @@ jest.mock('@/lib/queries/dataset-mutations', () => ({
     mutate: jest.fn(),
     isPending: false,
   })),
+  useDownloadDatasetMutation: jest.fn(() => ({
+    mutate: jest.fn(),
+    isPending: false,
+  })),
 }));
 jest.mock('@/components/ui/toast-provider', () => ({
   useToast: jest.fn(() => ({

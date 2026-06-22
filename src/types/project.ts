@@ -60,6 +60,7 @@ export interface DashboardStats {
     xgboost: number;
     catboost: number;
     lightgbm: number;
+    linear_boost: number;
   };
   total_runtime_seconds: number;
   recent_runs: DashboardRun[];

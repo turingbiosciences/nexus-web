@@ -11,8 +11,8 @@ import { useToast } from '@/components/ui/toast-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Download, Trash2 } from 'lucide-react';
 import {
-  useUploadDatasetMutation,
   useDeleteDatasetMutation,
+  useDownloadDatasetMutation,
 } from '@/lib/queries/dataset-mutations';
 
 interface DatasetsSectionProps {
@@ -39,8 +39,8 @@ export function DatasetsSection({
     | undefined; // flattened array per hook contract (paginated=false default)
   const remoteLoading = datasetsQuery.isLoading;
   const nextCursor = (datasetsQuery as { nextCursor?: string }).nextCursor;
-  const uploadMutation = useUploadDatasetMutation(projectId);
   const deleteMutation = useDeleteDatasetMutation(projectId);
+  const downloadMutation = useDownloadDatasetMutation(projectId);
   const { push } = useToast();
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
 
@@ -115,13 +115,19 @@ export function DatasetsSection({
                     size="sm"
                     variant="ghost"
                     className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    disabled={
+                      downloadMutation.isPending &&
+                      downloadMutation.variables === d.id
+                    }
                     onClick={() => {
-                      // Temporary stub for download action; push toast for UI feedback
-                      push({
-                        title: 'Not implemented',
-                        description:
-                          'Downloading datasets is not yet implemented.',
-                        variant: 'default',
+                      downloadMutation.mutate(d.id, {
+                        onError: () => {
+                          push({
+                            title: 'Download failed',
+                            description: `Could not download ${d.filename}. Please retry.`,
+                            variant: 'destructive',
+                          });
+                        },
                       });
                     }}
                     aria-label={`Download ${d.filename}`}
@@ -192,26 +198,18 @@ export function DatasetsSection({
             onUploadComplete={(files) => {
               if (!project) return;
               files.forEach((f) => {
+                // File was already uploaded by FileUploader via XHR — just
+                // update optimistic state and show a toast per file.
                 addDataset(project.id);
-                uploadMutation.mutate(f, {
-                  onSuccess: () => {
-                    push({
-                      title: 'Upload complete',
-                      description: `${f.name} was uploaded successfully.`,
-                      variant: 'default',
-                    });
-                    // Refetch datasets list from API after successful upload
-                    datasetsQuery.refetch();
-                  },
-                  onError: () => {
-                    push({
-                      title: 'Upload failed',
-                      description: `Could not upload ${f.name}. Please try again.`,
-                      variant: 'destructive',
-                    });
-                  },
+                push({
+                  title: 'Upload complete',
+                  description: `${f.name} was uploaded successfully.`,
+                  variant: 'default',
                 });
               });
+              // Single refetch after all files are processed to avoid N
+              // redundant API calls when multiple files are uploaded at once.
+              datasetsQuery.refetch();
             }}
           />
         )}

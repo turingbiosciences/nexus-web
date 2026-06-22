@@ -311,6 +311,7 @@ export const mockDashboardStats: DashboardStats = {
     xgboost: 1,
     catboost: 1,
     lightgbm: 1,
+    linear_boost: 0,
   },
   total_runtime_seconds: 6300.5,
   recent_runs: [
