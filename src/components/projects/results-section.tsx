@@ -1,6 +1,7 @@
 'use client';
 
 import { useResults } from '@/lib/queries/results';
+import { useDatasets } from '@/lib/queries/datasets';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useMemo } from 'react';
@@ -28,6 +29,14 @@ interface ResultsSectionProps {
 
 export function ResultsSection({ projectId }: ResultsSectionProps) {
   const resultsQuery = useResults(projectId);
+  const { data: datasetsRaw } = useDatasets(projectId);
+  const datasets = Array.isArray(datasetsRaw) ? datasetsRaw : undefined;
+  const datasetMap = useMemo(() => {
+    const map = new Map<string, string>();
+    datasets?.forEach((d) => map.set(d.id, d.filename));
+    return map;
+  }, [datasets]);
+
   const results = useMemo(() => {
     const data = resultsQuery.data || [];
     // Sort by createdAt in descending order (newest first)
@@ -196,6 +205,22 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
               {results.map((result, index) => {
                 const resultKey = result.id || `result-${index}`;
                 const isExpanded = expandedResults.has(resultKey);
+                const runParams = (
+                  result as unknown as {
+                    data?: {
+                      run_parameters?: {
+                        file_id?: string;
+                        target_column?: string;
+                        exclude_columns?: string[];
+                      };
+                    };
+                  }
+                ).data?.run_parameters;
+                const datasetFilename = runParams?.file_id
+                  ? (datasetMap.get(runParams.file_id) ?? runParams.file_id)
+                  : result.name;
+                const targetColumn = runParams?.target_column;
+                const excludeColumns = runParams?.exclude_columns ?? [];
                 const modelConfigs = (
                   result as {
                     data?: { all_model_configs?: Record<string, ModelConfig> };
@@ -237,8 +262,8 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-gray-900">
-                            {result.name}
+                          <h4 className="font-medium text-gray-900 font-mono text-sm">
+                            {datasetFilename}
                           </h4>
                           {index === 0 && (
                             <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
@@ -246,9 +271,26 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {result.type}
-                        </p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1">
+                          {targetColumn && (
+                            <p className="text-xs text-gray-500">
+                              <span className="font-medium text-gray-600">
+                                Target:
+                              </span>{' '}
+                              <span className="font-mono">{targetColumn}</span>
+                            </p>
+                          )}
+                          {excludeColumns.length > 0 && (
+                            <p className="text-xs text-gray-500">
+                              <span className="font-medium text-gray-600">
+                                Excluded:
+                              </span>{' '}
+                              <span className="font-mono">
+                                {excludeColumns.join(', ')}
+                              </span>
+                            </p>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-xs text-gray-400">
