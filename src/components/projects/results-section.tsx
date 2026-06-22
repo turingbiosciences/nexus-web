@@ -23,6 +23,16 @@ import { authFetch } from '@/lib/auth-fetch';
 import { getApiUrl } from '@/lib/api/utils';
 import { useToast } from '@/components/ui/toast-provider';
 
+interface AnalysisResult {
+  data?: {
+    run_parameters?: {
+      file_id?: string;
+      target_column?: string;
+      exclude_columns?: string[];
+    };
+  };
+}
+
 interface ResultsSectionProps {
   projectId: string;
 }
@@ -30,12 +40,13 @@ interface ResultsSectionProps {
 export function ResultsSection({ projectId }: ResultsSectionProps) {
   const resultsQuery = useResults(projectId);
   const { data: datasetsRaw } = useDatasets(projectId);
-  const datasets = Array.isArray(datasetsRaw) ? datasetsRaw : undefined;
   const datasetMap = useMemo(() => {
     const map = new Map<string, string>();
-    datasets?.forEach((d) => map.set(d.id, d.filename));
+    if (Array.isArray(datasetsRaw)) {
+      datasetsRaw.forEach((d) => map.set(d.id, d.filename));
+    }
     return map;
-  }, [datasets]);
+  }, [datasetsRaw]);
 
   const results = useMemo(() => {
     const data = resultsQuery.data || [];
@@ -205,17 +216,8 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
               {results.map((result, index) => {
                 const resultKey = result.id || `result-${index}`;
                 const isExpanded = expandedResults.has(resultKey);
-                const runParams = (
-                  result as unknown as {
-                    data?: {
-                      run_parameters?: {
-                        file_id?: string;
-                        target_column?: string;
-                        exclude_columns?: string[];
-                      };
-                    };
-                  }
-                ).data?.run_parameters;
+                const runParams = (result as unknown as AnalysisResult).data
+                  ?.run_parameters;
                 const datasetFilename = runParams?.file_id
                   ? (datasetMap.get(runParams.file_id) ?? runParams.file_id)
                   : result.name;
