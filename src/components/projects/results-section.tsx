@@ -61,9 +61,15 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
   const [expandedResults, setExpandedResults] = useState<Set<string>>(
     new Set()
   );
+  const [visibleCount, setVisibleCount] = useState(3);
   const [isDownloading, setIsDownloading] = useState(false);
   const { accessToken, refreshToken } = useAccessToken();
   const { push: pushToast } = useToast();
+
+  // Reset pagination when project changes
+  useEffect(() => {
+    setVisibleCount(3);
+  }, [projectId]);
 
   // Initialize expanded state with the first result when results load
   useEffect(() => {
@@ -213,7 +219,7 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
           <>
             {/* Results List */}
             <ul className="space-y-3">
-              {results.map((result, index) => {
+              {results.slice(0, visibleCount).map((result, index) => {
                 const resultKey = result.id || `result-${index}`;
                 const isExpanded = expandedResults.has(resultKey);
                 const runParams = (result as unknown as AnalysisResult).data
@@ -447,6 +453,17 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                 );
               })}
             </ul>
+            {results.length > visibleCount && (
+              <div className="flex justify-center pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setVisibleCount((c) => c + 3)}
+                >
+                  Load more ({results.length - visibleCount} remaining)
+                </Button>
+              </div>
+            )}
           </>
         )}
       </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface CARTAnalysisSectionProps {
   graphSvgUrl: string | null | undefined;
@@ -94,7 +95,7 @@ export function CARTAnalysisSection({
                 <p className="text-sm text-gray-400">Loading…</p>
               ) : (
                 <div className="prose prose-sm max-w-none text-gray-700">
-                  <Markdown>{reportText}</Markdown>
+                  <Markdown remarkPlugins={[remarkGfm]}>{reportText}</Markdown>
                 </div>
               )}
             </div>
