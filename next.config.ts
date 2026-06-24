@@ -27,7 +27,7 @@ const nextConfig: NextConfig = {
       "img-src 'self' data: https:",
       "font-src 'self'",
       // Allow connections to Logto, API, and Sentry
-      `connect-src 'self' https://*.logto.io https://*.logto.app https://*.ondigitalocean.app https://*.sentry.io${turingApiOrigin ? ` ${turingApiOrigin}` : ''}`,
+      `connect-src 'self' https://*.logto.io https://*.logto.app https://*.ondigitalocean.app https://*.digitaloceanspaces.com https://*.sentry.io${turingApiOrigin ? ` ${turingApiOrigin}` : ''}`,
       // Allow workers for Sentry
       "worker-src 'self' blob:",
       "frame-ancestors 'none'",

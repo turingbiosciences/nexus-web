@@ -1,0 +1,129 @@
+name: Gemini PR Review
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  gemini-review:
+    name: Gemini Code Review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Generate PR diff
+        run: |
+          git diff origin/main...HEAD -- \
+            ':(exclude)*.lock' \
+            ':(exclude)package-lock.json' \
+            ':(exclude)*.svg' \
+          | head -c 30000 > pr_diff.txt
+          echo "Diff size: $(wc -c < pr_diff.txt) bytes"
+
+      - name: Run Gemini review
+        id: review
+        continue-on-error: true
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          REVIEW=$(python3 - <<'PYEOF'
+          import json, os, sys, urllib.request, urllib.error
+
+          api_key = os.environ.get("GEMINI_API_KEY", "")
+          if not api_key:
+              print("GEMINI_API_KEY not set", file=sys.stderr)
+              sys.exit(0)
+
+          diff = open("pr_diff.txt").read()
+          prompt = (
+              "<role>\n"
+              "You are an uncompromising, expert technical reviewer analyzing a pull request diff. "
+              "Your sole focus is on identifying defects, security risks, performance bottlenecks, "
+              "and deviations from structural standards.\n"
+              "</role>\n\n"
+              "<instructions>\n"
+              "1. Analyze the provided git diff.\n"
+              "2. CRITICAL: Do NOT provide any positive feedback, compliments, or conversational "
+              "filler. Exclude all remarks about what the code does well.\n"
+              "3. For each identified issue, output the block defined in the output format below. "
+              "If no issues are found, state \"No actionable issues identified.\" under the "
+              "Actionable Feedback heading.\n"
+              "4. When suggesting code changes, provide the exact replacement code.\n"
+              "</instructions>\n\n"
+              "<output_format>\n"
+              "### PR Summary\n"
+              "[1-3 sentence technical summary of what this diff changes.]\n\n"
+              "### Actionable Feedback\n"
+              "[Repeat the following block for each issue, separated by ---]\n\n"
+              "**File:** `[filename]`\n"
+              "**Severity:** [Critical | High | Medium]\n"
+              "**Issue:** [Concise description of the bug, risk, or architectural concern]\n"
+              "**Suggestion:**\n"
+              "```[language]\n"
+              "[Corrected code block]\n"
+              "```\n"
+              "</output_format>\n\n"
+              "Git diff:\n"
+              + diff
+          )
+
+          payload = json.dumps({
+              "contents": [{"parts": [{"text": prompt}]}],
+              "generationConfig": {"maxOutputTokens": 1024},
+          }).encode()
+
+          url = (
+              "https://generativelanguage.googleapis.com/v1beta/models/"
+              f"gemini-2.5-flash:generateContent?key={api_key}"
+          )
+          req = urllib.request.Request(
+              url, data=payload, headers={"Content-Type": "application/json"}
+          )
+
+          try:
+              with urllib.request.urlopen(req, timeout=60) as resp:
+                  data = json.loads(resp.read())
+          except urllib.error.HTTPError as e:
+              body = e.read().decode()[:500]
+              print(f"Gemini API error {e.code}: {body}", file=sys.stderr)
+              sys.exit(1)
+
+          text = (
+              data.get("candidates", [{}])[0]
+              .get("content", {})
+              .get("parts", [{}])[0]
+              .get("text", "")
+          )
+          print(text)
+          PYEOF
+          )
+          echo "REVIEW<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$REVIEW" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Post review comment
+        if: steps.review.outputs.REVIEW != ''
+        uses: actions/github-script@v7
+        env:
+          REVIEW_BODY: ${{ steps.review.outputs.REVIEW }}
+        with:
+          script: |
+            const body = `## Gemini Code Review\n\n${process.env.REVIEW_BODY}\n\n---\n*Automated review by [Gemini API](https://ai.google.dev/)*`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+      - name: Skip notice (no API key)
+        if: steps.review.outputs.REVIEW == ''
+        run: echo "Gemini review skipped (empty output — check GEMINI_API_KEY secret)"

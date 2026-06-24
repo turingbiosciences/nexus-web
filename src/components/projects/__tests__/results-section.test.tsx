@@ -91,10 +91,12 @@ describe('ResultsSection', () => {
 
     render(<ResultsSection projectId="test-project-id" />);
 
+    // result.name is the fallback filename when no run_parameters.file_id is present
     expect(screen.getByText('Result 1')).toBeInTheDocument();
-    expect(screen.getByText('Analysis Type A')).toBeInTheDocument();
     expect(screen.getByText('Result 2')).toBeInTheDocument();
-    expect(screen.getByText('Analysis Type B')).toBeInTheDocument();
+    // result.type is no longer rendered; the header now shows the dataset filename
+    expect(screen.queryByText('Analysis Type A')).not.toBeInTheDocument();
+    expect(screen.queryByText('Analysis Type B')).not.toBeInTheDocument();
   });
 
   it('formats dates correctly', () => {
@@ -219,7 +221,7 @@ describe('ResultsSection', () => {
     expect(svg).toHaveClass('h-12', 'w-12');
   });
 
-  it('renders multiple results correctly', () => {
+  it('renders only 3 results by default and shows load more button', () => {
     const results = Array.from({ length: 5 }, (_, i) => ({
       id: `${i}`,
       name: `Result ${i}`,
@@ -234,7 +236,8 @@ describe('ResultsSection', () => {
     render(<ResultsSection projectId="test-project-id" />);
 
     const listItems = screen.getAllByRole('listitem');
-    expect(listItems).toHaveLength(5);
+    expect(listItems).toHaveLength(3);
+    expect(screen.getByText('Load more (2 remaining)')).toBeInTheDocument();
   });
 
   it('renders download button when results are present', () => {
