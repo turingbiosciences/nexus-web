@@ -35,13 +35,11 @@ interface AnalysisResult {
   };
 }
 
-function formatDuration(startIso: string, endIso: string): string {
-  const secs = Math.max(
-    0,
-    Math.round(
-      (new Date(endIso).getTime() - new Date(startIso).getTime()) / 1000
-    )
-  );
+function formatDuration(startIso: string, endIso: string): string | null {
+  const start = new Date(startIso).getTime();
+  const end = new Date(endIso).getTime();
+  if (isNaN(start) || isNaN(end)) return null;
+  const secs = Math.max(0, Math.round((end - start) / 1000));
   if (secs < 60) return `${secs}s`;
   const m = Math.floor(secs / 60);
   const s = secs % 60;
