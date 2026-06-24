@@ -17,7 +17,7 @@ import { authFetch } from '@/lib/auth-fetch';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
 import { ProjectResult } from '@/types/project';
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 3;
 
 interface ApiResultItem {
   id: string;
