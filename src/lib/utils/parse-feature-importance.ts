@@ -188,6 +188,6 @@ export function findElbowPoint(
     }
   }
 
-  // elbowIndex is 0-based; convert to 1-based count, minimum 5.
-  return Math.max(5, Math.min(elbowIndex + 1, maxFeatures));
+  // elbowIndex is 0-based; convert to 1-based count, minimum 5 (or n if n < 5).
+  return Math.max(Math.min(5, n), Math.min(elbowIndex + 1, maxFeatures));
 }
