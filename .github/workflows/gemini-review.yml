@@ -25,7 +25,7 @@ jobs:
             ':(exclude)*.lock' \
             ':(exclude)package-lock.json' \
             ':(exclude)*.svg' \
-          | head -c 30000 > pr_diff.txt
+          | head -c 50000 > pr_diff.txt
           echo "Diff size: $(wc -c < pr_diff.txt) bytes"
 
       - name: Run Gemini review
@@ -43,41 +43,73 @@ jobs:
               sys.exit(0)
 
           diff = open("pr_diff.txt").read()
+
           prompt = (
               "<role>\n"
-              "You are an uncompromising, expert technical reviewer analyzing a pull request diff. "
-              "Your sole focus is on identifying defects, security risks, performance bottlenecks, "
-              "and deviations from structural standards.\n"
+              "You are an expert code reviewer for nexus-web, a Next.js/TypeScript frontend.\n"
+              "Find real bugs, security risks, accessibility problems, and architectural"
+              " violations — not style issues.\n"
               "</role>\n\n"
+              "<project_context>\n"
+              "- Next.js 14 App Router, React 18, TypeScript (strict mode).\n"
+              "- Tailwind CSS for styling; no CSS modules or styled-components.\n"
+              "- Data fetching via React Query (TanStack Query v5): useResults, useDatasets,"
+              " etc. Mutations invalidate the relevant query cache keys.\n"
+              "- Auth via Logto: access tokens come from useAccessToken(); all API calls go"
+              " through authFetch() which handles token refresh automatically.\n"
+              "- API calls go to nexus-api (FastAPI). The base URL comes from getApiUrl().\n"
+              "- ESLint, Prettier, and tsc --noEmit run in CI — do not flag issues they"
+              " already catch.\n"
+              "- Components use 'use client' only when they need browser APIs or React"
+              " state/effects; server components are the default.\n"
+              "</project_context>\n\n"
               "<instructions>\n"
-              "1. Analyze the provided git diff.\n"
-              "2. CRITICAL: Do NOT provide any positive feedback, compliments, or conversational "
-              "filler. Exclude all remarks about what the code does well.\n"
-              "3. For each identified issue, output the block defined in the output format below. "
-              "If no issues are found, state \"No actionable issues identified.\" under the "
-              "Actionable Feedback heading.\n"
-              "4. When suggesting code changes, provide the exact replacement code.\n"
+              "1. Analyze the git diff below.\n"
+              "2. Report only real issues: bugs, broken React patterns (stale closures,"
+              " missing deps in hooks, incorrect key props), XSS risks, incorrect auth"
+              " token handling, broken React Query invalidation, or accessibility problems.\n"
+              "3. Skip style nits, formatting, and anything ESLint/tsc/sonarcloud already"
+              " catches.\n"
+              "4. For each issue, provide the exact file path and the new-file line number"
+              " (right side of the diff). Compute it from the @@ hunk header: the integer"
+              " after '+' is the starting line of that hunk in the new file; count"
+              " non-deletion lines (lines starting with ' ' or '+') downward to the target.\n"
+              "5. Maximum 5 issues. If none exist, return an empty issues array.\n"
+              "6. Output valid JSON only — no markdown fences, no prose outside the JSON.\n"
               "</instructions>\n\n"
-              "<output_format>\n"
-              "### PR Summary\n"
-              "[1-3 sentence technical summary of what this diff changes.]\n\n"
-              "### Actionable Feedback\n"
-              "[Repeat the following block for each issue, separated by ---]\n\n"
-              "**File:** `[filename]`\n"
-              "**Severity:** [Critical | High | Medium]\n"
-              "**Issue:** [Concise description of the bug, risk, or architectural concern]\n"
-              "**Suggestion:**\n"
-              "```[language]\n"
-              "[Corrected code block]\n"
-              "```\n"
-              "</output_format>\n\n"
               "Git diff:\n"
               + diff
           )
 
+          schema = {
+              "type": "object",
+              "properties": {
+                  "summary": {"type": "string"},
+                  "issues": {
+                      "type": "array",
+                      "items": {
+                          "type": "object",
+                          "properties": {
+                              "file":       {"type": "string"},
+                              "line":       {"type": "integer"},
+                              "severity":   {"type": "string", "enum": ["High", "Medium", "Low"]},
+                              "issue":      {"type": "string"},
+                              "suggestion": {"type": "string"},
+                          },
+                          "required": ["file", "line", "severity", "issue", "suggestion"],
+                      },
+                  },
+              },
+              "required": ["summary", "issues"],
+          }
+
           payload = json.dumps({
               "contents": [{"parts": [{"text": prompt}]}],
-              "generationConfig": {"maxOutputTokens": 1024},
+              "generationConfig": {
+                  "maxOutputTokens": 8192,
+                  "responseMimeType": "application/json",
+                  "responseSchema": schema,
+              },
           }).encode()
 
           url = (
@@ -89,7 +121,7 @@ jobs:
           )
 
           try:
-              with urllib.request.urlopen(req, timeout=60) as resp:
+              with urllib.request.urlopen(req, timeout=90) as resp:
                   data = json.loads(resp.read())
           except urllib.error.HTTPError as e:
               body = e.read().decode()[:500]
@@ -102,28 +134,79 @@ jobs:
               .get("parts", [{}])[0]
               .get("text", "")
           )
-          print(text)
+
+          try:
+              parsed = json.loads(text)
+              print(json.dumps(parsed))
+          except json.JSONDecodeError as e:
+              print(f"Gemini returned non-JSON: {e}", file=sys.stderr)
+              print(f"Raw output: {text[:500]}", file=sys.stderr)
+              sys.exit(1)
           PYEOF
           )
           echo "REVIEW<<EOF" >> "$GITHUB_OUTPUT"
           echo "$REVIEW" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
-      - name: Post review comment
+      - name: Post review
         if: steps.review.outputs.REVIEW != ''
         uses: actions/github-script@v7
         env:
-          REVIEW_BODY: ${{ steps.review.outputs.REVIEW }}
+          REVIEW_JSON: ${{ steps.review.outputs.REVIEW }}
         with:
           script: |
-            const body = `## Gemini Code Review\n\n${process.env.REVIEW_BODY}\n\n---\n*Automated review by [Gemini API](https://ai.google.dev/)*`;
-            await github.rest.issues.createComment({
+            const review = JSON.parse(process.env.REVIEW_JSON);
+            const { summary, issues = [] } = review;
+
+            const { data: pr } = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body,
+              pull_number: context.issue.number,
             });
+            const commitId = pr.head.sha;
+
+            const icon = { High: '🔴', Medium: '🟡', Low: '🔵' };
+
+            const inlineComments = issues.map(issue => ({
+              path: issue.file,
+              line: issue.line,
+              side: 'RIGHT',
+              body: `${icon[issue.severity] || '⚪'} **${issue.severity}:** ${issue.issue}\n\n${issue.suggestion}`.trim(),
+            }));
+
+            let summaryBody = `## Gemini Code Review\n\n${summary}`;
+            if (issues.length === 0) summaryBody += '\n\n_No actionable issues identified._';
+
+            // Use the PR review API so comments appear inline on the diff
+            // (Files Changed tab) rather than cluttering the conversation thread.
+            // Falls back to a body-only review if the model produced bad line numbers.
+            try {
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                commit_id: commitId,
+                body: summaryBody,
+                event: 'COMMENT',
+                comments: inlineComments,
+              });
+            } catch (err) {
+              core.warning(`Inline review failed (${err.message}), posting summary with issue list`);
+              let fallbackBody = summaryBody;
+              for (const issue of issues) {
+                fallbackBody += `\n\n---\n${icon[issue.severity] || '⚪'} **${issue.severity} \`${issue.file}:${issue.line}\`**\n\n${issue.issue}\n\n${issue.suggestion}`;
+              }
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                commit_id: commitId,
+                body: fallbackBody,
+                event: 'COMMENT',
+                comments: [],
+              });
+            }
 
       - name: Skip notice (no API key)
         if: steps.review.outputs.REVIEW == ''
-        run: echo "Gemini review skipped (empty output — check GEMINI_API_KEY secret)"
+        run: echo "Gemini review skipped — check GEMINI_API_KEY secret"
