@@ -220,7 +220,7 @@ describe('findElbowPoint', () => {
     expect(result).toBeLessThanOrEqual(5);
   });
 
-  it('returns at least 3 for larger arrays', () => {
+  it('returns at least 5 for larger arrays', () => {
     const features = [
       { name: 'a', importance: 0.9 },
       { name: 'b', importance: 0.8 },
@@ -231,7 +231,7 @@ describe('findElbowPoint', () => {
 
     const result = findElbowPoint(features);
 
-    expect(result).toBeGreaterThanOrEqual(3);
+    expect(result).toBeGreaterThanOrEqual(5);
   });
 
   it('returns at most 10', () => {
@@ -258,7 +258,44 @@ describe('findElbowPoint', () => {
 
     const result = findElbowPoint(features);
 
-    expect(result).toBeGreaterThanOrEqual(3);
+    expect(result).toBeGreaterThanOrEqual(5);
     expect(result).toBeLessThanOrEqual(10);
+  });
+
+  it('finds later elbow for gradual CatBoost-style curve', () => {
+    // Simulate gradual decay (not a steep cliff) — elbow should be past rank 5
+    const features = [
+      { name: 'f1', importance: 25.44 },
+      { name: 'f2', importance: 17.54 },
+      { name: 'f3', importance: 12.08 },
+      { name: 'f4', importance: 8.0 },
+      { name: 'f5', importance: 5.5 },
+      { name: 'f6', importance: 3.8 },
+      { name: 'f7', importance: 2.5 },
+      { name: 'f8', importance: 2.1 },
+      { name: 'f9', importance: 1.5 },
+      { name: 'f10', importance: 1.1 },
+      { name: 'f11', importance: 0.8 },
+      { name: 'f12', importance: 0.5 },
+    ];
+
+    const result = findElbowPoint(features);
+
+    // Kneedle should find the visual elbow past rank 5, not at rank 3
+    expect(result).toBeGreaterThanOrEqual(5);
+  });
+
+  it('returns 5 minimum for steep LightGBM-style cliff', () => {
+    // Steep cliff: nearly all weight on first 2 features
+    const features = Array.from({ length: 50 }, (_, i) => ({
+      name: `f${i + 1}`,
+      importance:
+        i === 0 ? 94 : i === 1 ? 36 : i === 2 ? 7 : Math.max(0, 1 - i * 0.02),
+    }));
+
+    const result = findElbowPoint(features);
+
+    expect(result).toBeGreaterThanOrEqual(5);
+    expect(result).toBeLessThanOrEqual(50);
   });
 });
