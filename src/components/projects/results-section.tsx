@@ -490,7 +490,7 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                 >
                   {resultsQuery.isFetchingNextPage
                     ? 'Loading...'
-                    : `Load more (${totalCount - results.length} remaining)`}
+                    : `Load more (${Math.max(0, totalCount - results.length)} remaining)`}
                 </Button>
               </div>
             )}

@@ -80,7 +80,8 @@ export function useResults(
       if (!res.ok) throw new Error(`API request failed (${res.status})`);
       const data: ApiResultsPage = await res.json();
 
-      const results: ProjectResult[] = data.results.map((r) => ({
+      const rawResults = Array.isArray(data.results) ? data.results : [];
+      const results: ProjectResult[] = rawResults.map((r) => ({
         id: r.id,
         name: (r.name as string) || 'Analysis Result',
         type: (r.result_type as string) || 'Unknown',
@@ -92,12 +93,15 @@ export function useResults(
         results,
         totalCount: data.total_count,
         offset: pageParam,
-        hasMore: pageParam + results.length < data.total_count,
+        hasMore:
+          results.length > 0 && pageParam + results.length < data.total_count,
       };
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.offset + lastPage.results.length : undefined,
+      lastPage.hasMore && lastPage.results.length > 0
+        ? lastPage.offset + lastPage.results.length
+        : undefined,
     enabled,
     staleTime: 30_000,
     refetchOnMount: 'always',
