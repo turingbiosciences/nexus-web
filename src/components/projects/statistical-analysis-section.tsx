@@ -14,8 +14,7 @@ export interface CartCutoff {
 export interface StatisticalAnalysisData {
   top_features: string[];
   cart_cutoffs: Record<string, CartCutoff>;
-  box_plot_urls: Record<string, string>;
-  ci_bar_urls: Record<string, string>;
+  analysis_urls: Record<string, string>;
 }
 
 interface StatisticalAnalysisSectionProps {
@@ -25,13 +24,11 @@ interface StatisticalAnalysisSectionProps {
 function FeaturePanel({
   feature,
   cutoff,
-  boxPlotUrl,
-  ciBarUrl,
+  analysisUrl,
 }: {
   feature: string;
   cutoff: CartCutoff | null | undefined;
-  boxPlotUrl: string | undefined;
-  ciBarUrl: string | undefined;
+  analysisUrl: string | undefined;
 }) {
   const [expanded, setExpanded] = useState(false);
   const buttonId = useId();
@@ -127,32 +124,16 @@ function FeaturePanel({
             </div>
           )}
 
-          {boxPlotUrl && (
+          {analysisUrl && (
             <div>
               <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Distribution by Class (Box Plot)
+                Distribution &amp; 95% CI by Class
               </h5>
-              <div className="border rounded overflow-auto bg-white p-2">
+              <div className="border rounded overflow-auto bg-[#f9fafb] p-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={boxPlotUrl}
-                  alt={`Box plot for ${feature}`}
-                  className="max-w-full h-auto"
-                />
-              </div>
-            </div>
-          )}
-
-          {ciBarUrl && (
-            <div>
-              <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Median ± 95% CI by Class
-              </h5>
-              <div className="border rounded overflow-auto bg-white p-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={ciBarUrl}
-                  alt={`95% CI bar chart for ${feature}`}
+                  src={analysisUrl}
+                  alt={`Distribution and CI analysis for ${feature}`}
                   className="max-w-full h-auto"
                 />
               </div>
@@ -186,8 +167,7 @@ export function StatisticalAnalysisSection({
             key={feature}
             feature={feature}
             cutoff={data.cart_cutoffs?.[feature]}
-            boxPlotUrl={data.box_plot_urls?.[feature]}
-            ciBarUrl={data.ci_bar_urls?.[feature]}
+            analysisUrl={data.analysis_urls?.[feature]}
           />
         ))}
       </div>

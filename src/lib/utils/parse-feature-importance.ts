@@ -145,40 +145,49 @@ export function parseFeatureImportanceByModel(
 }
 
 /**
- * Find the elbow point in feature importance data using rate of change in slope.
- * This helps determine the optimal number of top features to display.
+ * Find the elbow point in feature importance data using the kneedle algorithm.
+ * Computes the perpendicular distance from each point to the reference line
+ * connecting (rank=0, importance=max) to (rank=n-1, importance=min) in
+ * normalized space. The point with maximum distance is the knee.
  *
  * @param features Sorted feature importance data (descending by importance)
  * @param maxFeatures Maximum features to return (default 50)
- * @returns Optimal number of features to display (between 3 and maxFeatures)
+ * @returns Optimal number of features to display (at least 5, at most maxFeatures)
  */
 export function findElbowPoint(
   features: FeatureImportanceData[],
   maxFeatures: number = 50
 ): number {
-  if (features.length < 3) {
-    return Math.min(features.length, 5);
+  const n = Math.min(features.length, maxFeatures);
+  if (n < 3) {
+    return Math.min(n, 5);
   }
 
-  // Calculate second derivative (rate of change of slope)
-  const secondDerivatives: number[] = [];
-  for (let i = 1; i < features.length - 1; i++) {
-    const slope1 = features[i].importance - features[i - 1].importance;
-    const slope2 = features[i + 1].importance - features[i].importance;
-    const secondDeriv = Math.abs(slope2 - slope1);
-    secondDerivatives.push(secondDeriv);
+  const values = features.slice(0, n).map((f) => f.importance);
+  const minVal = Math.min(...values);
+  const maxVal = Math.max(...values);
+  const range = maxVal - minVal;
+
+  // All features have the same importance — no meaningful elbow.
+  if (range === 0) {
+    return Math.min(5, n);
   }
 
-  // Find the maximum change in slope (elbow point)
-  let maxChange = 0;
+  // Kneedle: find max perpendicular distance from the line (0,1)→(1,0)
+  // in normalized [rank, importance] space.
+  // Line equation: x + y = 1  →  distance ∝ |1 - x - y|
+  let maxDist = -Infinity;
   let elbowIndex = 0;
-  for (let i = 0; i < secondDerivatives.length; i++) {
-    if (secondDerivatives[i] > maxChange) {
-      maxChange = secondDerivatives[i];
-      elbowIndex = i + 1; // Adjust for offset
+  for (let i = 0; i < n; i++) {
+    const x = i / (n - 1);
+    const y = (values[i] - minVal) / range;
+    const dist = Math.abs(1 - x - y);
+    if (dist > maxDist) {
+      maxDist = dist;
+      elbowIndex = i;
     }
   }
 
-  // Ensure we show at least 3 and at most maxFeatures features
-  return Math.max(3, Math.min(elbowIndex + 2, maxFeatures));
+  // elbowIndex is 0-based; convert to 1-based count, minimum 5 (or n if n < 5).
+  return Math.max(Math.min(5, n), Math.min(elbowIndex + 1, maxFeatures));
 }
