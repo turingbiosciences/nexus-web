@@ -30,7 +30,23 @@ interface AnalysisResult {
       target_column?: string;
       exclude_columns?: string[];
     };
+    training_started_at?: string;
+    training_completed_at?: string;
   };
+}
+
+function formatDuration(startIso: string, endIso: string): string | null {
+  const start = new Date(startIso).getTime();
+  const end = new Date(endIso).getTime();
+  if (isNaN(start) || isNaN(end)) return null;
+  const secs = Math.max(0, Math.round((end - start) / 1000));
+  if (secs < 60) return `${secs}s`;
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  if (m < 60) return s > 0 ? `${m}m ${s}s` : `${m}m`;
+  const h = Math.floor(m / 60);
+  const rem = m % 60;
+  return rem > 0 ? `${h}h ${rem}m` : `${h}h`;
 }
 
 interface ResultsSectionProps {
@@ -223,8 +239,16 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
               {results.slice(0, visibleCount).map((result, index) => {
                 const resultKey = result.id || `result-${index}`;
                 const isExpanded = expandedResults.has(resultKey);
-                const runParams = (result as unknown as AnalysisResult).data
-                  ?.run_parameters;
+                const resultData = (result as unknown as AnalysisResult).data;
+                const runParams = resultData?.run_parameters;
+                const trainingDuration =
+                  resultData?.training_started_at &&
+                  resultData?.training_completed_at
+                    ? formatDuration(
+                        resultData.training_started_at,
+                        resultData.training_completed_at
+                      )
+                    : null;
                 const datasetFilename = runParams?.file_id
                   ? (datasetMap.get(runParams.file_id) ?? runParams.file_id)
                   : result.name;
@@ -302,9 +326,16 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="text-xs text-gray-400">
-                          {result.createdAt.toLocaleDateString()}{' '}
-                          {result.createdAt.toLocaleTimeString()}
+                        <div className="text-right">
+                          <div className="text-xs text-gray-400">
+                            {result.createdAt.toLocaleDateString()}{' '}
+                            {result.createdAt.toLocaleTimeString()}
+                          </div>
+                          {trainingDuration && (
+                            <div className="text-xs text-gray-400 mt-0.5">
+                              Runtime: {trainingDuration}
+                            </div>
+                          )}
                         </div>
                         <svg
                           className={`w-5 h-5 text-gray-400 transition-transform ${
