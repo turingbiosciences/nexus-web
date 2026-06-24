@@ -66,9 +66,10 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
   const { accessToken, refreshToken } = useAccessToken();
   const { push: pushToast } = useToast();
 
-  // Reset pagination when project changes
+  // Reset pagination and expansion state when project changes
   useEffect(() => {
     setVisibleCount(3);
+    setExpandedResults(new Set());
   }, [projectId]);
 
   // Initialize expanded state with the first result when results load

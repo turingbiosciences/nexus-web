@@ -221,7 +221,7 @@ describe('ResultsSection', () => {
     expect(svg).toHaveClass('h-12', 'w-12');
   });
 
-  it('renders multiple results correctly', () => {
+  it('renders only 3 results by default and shows load more button', () => {
     const results = Array.from({ length: 5 }, (_, i) => ({
       id: `${i}`,
       name: `Result ${i}`,
@@ -236,7 +236,8 @@ describe('ResultsSection', () => {
     render(<ResultsSection projectId="test-project-id" />);
 
     const listItems = screen.getAllByRole('listitem');
-    expect(listItems).toHaveLength(5);
+    expect(listItems).toHaveLength(3);
+    expect(screen.getByText('Load more (2 remaining)')).toBeInTheDocument();
   });
 
   it('renders download button when results are present', () => {

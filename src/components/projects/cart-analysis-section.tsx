@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+const REMARK_PLUGINS = [remarkGfm];
+
 interface CARTAnalysisSectionProps {
   graphSvgUrl: string | null | undefined;
   analysisReportUrl: string | null | undefined;
@@ -95,7 +97,9 @@ export function CARTAnalysisSection({
                 <p className="text-sm text-gray-400">Loading…</p>
               ) : (
                 <div className="prose prose-sm max-w-none text-gray-700">
-                  <Markdown remarkPlugins={[remarkGfm]}>{reportText}</Markdown>
+                  <Markdown remarkPlugins={REMARK_PLUGINS}>
+                    {reportText}
+                  </Markdown>
                 </div>
               )}
             </div>
