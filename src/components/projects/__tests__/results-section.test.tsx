@@ -2,32 +2,61 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { ResultsSection } from '../results-section';
 import { useAccessToken } from '@/components/providers/token-provider';
-import { useQuery } from '@tanstack/react-query';
+import { useResults } from '@/lib/queries/results';
+import { useDatasets } from '@/lib/queries/datasets';
 import {
   createAccessTokenMock,
   createUnauthenticatedMock,
-  createSuccessQueryReturn,
-  createLoadingQueryReturn,
   setupTestEnv,
   cleanupTestEnv,
 } from '@/lib/test-mocks';
+import { useToast } from '@/components/ui/toast-provider';
 
-// Mock dependencies
 jest.mock('@/components/providers/token-provider');
-jest.mock('@tanstack/react-query');
+jest.mock('@/lib/queries/results');
+jest.mock('@/lib/queries/datasets');
 jest.mock('@/components/ui/toast-provider', () => ({
   useToast: jest.fn(),
 }));
 
-import { useToast } from '@/components/ui/toast-provider';
-
 const mockPushToast = jest.fn();
 const mockUseToast = useToast as jest.MockedFunction<typeof useToast>;
-
 const mockUseAccessToken = useAccessToken as jest.MockedFunction<
   typeof useAccessToken
 >;
-const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>;
+const mockUseResults = useResults as jest.MockedFunction<typeof useResults>;
+const mockUseDatasets = useDatasets as jest.MockedFunction<typeof useDatasets>;
+
+function makeResultsReturn(
+  results: unknown[],
+  opts: { hasNextPage?: boolean; totalCount?: number; isLoading?: boolean } = {}
+) {
+  const {
+    hasNextPage = false,
+    totalCount = results.length,
+    isLoading = false,
+  } = opts;
+  return {
+    data: isLoading
+      ? undefined
+      : {
+          pages: [{ results, totalCount, offset: 0, hasMore: hasNextPage }],
+          pageParams: [0],
+        },
+    isLoading,
+    isError: false,
+    error: null,
+    hasNextPage,
+    isFetchingNextPage: false,
+    fetchNextPage: jest.fn(),
+    refetch: jest.fn(),
+    isFetching: false,
+    isPending: isLoading,
+    isSuccess: !isLoading,
+    status: (isLoading ? 'pending' : 'success') as 'pending' | 'success',
+    fetchStatus: 'idle' as const,
+  } as unknown as ReturnType<typeof useResults>;
+}
 
 describe('ResultsSection', () => {
   beforeEach(() => {
@@ -38,6 +67,8 @@ describe('ResultsSection', () => {
       toasts: [],
       dismiss: jest.fn(),
     });
+    mockUseDatasets.mockReturnValue({ data: [], isLoading: false } as any);
+    mockUseResults.mockReturnValue(makeResultsReturn([]));
   });
 
   afterEach(() => {
@@ -45,9 +76,7 @@ describe('ResultsSection', () => {
   });
 
   it('renders loading state', () => {
-    mockUseQuery.mockReturnValue(
-      createLoadingQueryReturn() as ReturnType<typeof useQuery>
-    );
+    mockUseResults.mockReturnValue(makeResultsReturn([], { isLoading: true }));
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -56,10 +85,6 @@ describe('ResultsSection', () => {
   });
 
   it('renders empty state when no results', () => {
-    mockUseQuery.mockReturnValue(
-      createSuccessQueryReturn([]) as ReturnType<typeof useQuery>
-    );
-
     render(<ResultsSection projectId="test-project-id" />);
 
     expect(screen.getByText('Analysis Results')).toBeInTheDocument();
@@ -85,16 +110,12 @@ describe('ResultsSection', () => {
       },
     ];
 
-    mockUseQuery.mockReturnValue(
-      createSuccessQueryReturn(results) as ReturnType<typeof useQuery>
-    );
+    mockUseResults.mockReturnValue(makeResultsReturn(results));
 
     render(<ResultsSection projectId="test-project-id" />);
 
-    // result.name is the fallback filename when no run_parameters.file_id is present
     expect(screen.getByText('Result 1')).toBeInTheDocument();
     expect(screen.getByText('Result 2')).toBeInTheDocument();
-    // result.type is no longer rendered; the header now shows the dataset filename
     expect(screen.queryByText('Analysis Type A')).not.toBeInTheDocument();
     expect(screen.queryByText('Analysis Type B')).not.toBeInTheDocument();
   });
@@ -109,15 +130,11 @@ describe('ResultsSection', () => {
       },
     ];
 
-    mockUseQuery.mockReturnValue(
-      createSuccessQueryReturn(results) as ReturnType<typeof useQuery>
-    );
+    mockUseResults.mockReturnValue(makeResultsReturn(results));
 
     render(<ResultsSection projectId="test-project-id" />);
 
-    // Date should be formatted using toLocaleDateString
-    const dateElement = screen.getByText(/1\/15\/2024/);
-    expect(dateElement).toBeInTheDocument();
+    expect(screen.getByText(/1\/15\/2024/)).toBeInTheDocument();
   });
 
   it('shows hover effect on result items', () => {
@@ -130,107 +147,25 @@ describe('ResultsSection', () => {
       },
     ];
 
-    mockUseQuery.mockReturnValue(
-      createSuccessQueryReturn(results) as ReturnType<typeof useQuery>
-    );
+    mockUseResults.mockReturnValue(makeResultsReturn(results));
 
     const { container } = render(
       <ResultsSection projectId="test-project-id" />
     );
 
-    const resultItem = container.querySelector('.hover\\:bg-gray-50');
-    expect(resultItem).toBeInTheDocument();
+    expect(container.querySelector('.hover\\:bg-gray-50')).toBeInTheDocument();
   });
 
-  it('disables query when not authenticated', () => {
-    mockUseAccessToken.mockReturnValue(createUnauthenticatedMock());
-
-    mockUseQuery.mockReturnValue(
-      createSuccessQueryReturn([]) as ReturnType<typeof useQuery>
-    );
-
-    render(<ResultsSection projectId="test-project-id" />);
-
-    expect(mockUseQuery).toHaveBeenCalledWith(
-      expect.objectContaining({
-        enabled: false,
-      })
-    );
-  });
-
-  it('disables query when no access token', () => {
-    mockUseAccessToken.mockReturnValue(
-      createAccessTokenMock({
-        accessToken: null,
-        isAuthenticated: true,
-      })
-    );
-
-    mockUseQuery.mockReturnValue(
-      createSuccessQueryReturn([]) as ReturnType<typeof useQuery>
-    );
-
-    render(<ResultsSection projectId="test-project-id" />);
-
-    expect(mockUseQuery).toHaveBeenCalledWith(
-      expect.objectContaining({
-        enabled: false,
-      })
-    );
-  });
-
-  it('uses correct query key', () => {
-    mockUseQuery.mockReturnValue(
-      createSuccessQueryReturn([]) as ReturnType<typeof useQuery>
-    );
-
-    render(<ResultsSection projectId="my-project-123" />);
-
-    expect(mockUseQuery).toHaveBeenCalledWith(
-      expect.objectContaining({
-        queryKey: ['results', 'my-project-123', {}],
-      })
-    );
-  });
-
-  it('sets staleTime to 30 seconds', () => {
-    mockUseQuery.mockReturnValue(
-      createSuccessQueryReturn([]) as ReturnType<typeof useQuery>
-    );
-
-    render(<ResultsSection projectId="test-project-id" />);
-
-    expect(mockUseQuery).toHaveBeenCalledWith(
-      expect.objectContaining({
-        staleTime: 30_000,
-      })
-    );
-  });
-
-  it('displays SVG icon in empty state', () => {
-    mockUseQuery.mockReturnValue(
-      createSuccessQueryReturn([]) as ReturnType<typeof useQuery>
-    );
-
-    const { container } = render(
-      <ResultsSection projectId="test-project-id" />
-    );
-
-    const svg = container.querySelector('svg');
-    expect(svg).toBeInTheDocument();
-    expect(svg).toHaveClass('h-12', 'w-12');
-  });
-
-  it('renders only 3 results by default and shows load more button', () => {
-    const results = Array.from({ length: 5 }, (_, i) => ({
+  it('shows load more button when more pages are available on the server', () => {
+    const results = Array.from({ length: 3 }, (_, i) => ({
       id: `${i}`,
       name: `Result ${i}`,
       type: 'Analysis',
       createdAt: new Date('2024-01-01T10:00:00Z'),
     }));
 
-    mockUseQuery.mockReturnValue(
-      createSuccessQueryReturn(results) as ReturnType<typeof useQuery>
+    mockUseResults.mockReturnValue(
+      makeResultsReturn(results, { hasNextPage: true, totalCount: 5 })
     );
 
     render(<ResultsSection projectId="test-project-id" />);
@@ -238,6 +173,23 @@ describe('ResultsSection', () => {
     const listItems = screen.getAllByRole('listitem');
     expect(listItems).toHaveLength(3);
     expect(screen.getByText('Load more (2 remaining)')).toBeInTheDocument();
+  });
+
+  it('does not show load more button when all results are loaded', () => {
+    const results = Array.from({ length: 3 }, (_, i) => ({
+      id: `${i}`,
+      name: `Result ${i}`,
+      type: 'Analysis',
+      createdAt: new Date('2024-01-01T10:00:00Z'),
+    }));
+
+    mockUseResults.mockReturnValue(
+      makeResultsReturn(results, { hasNextPage: false, totalCount: 3 })
+    );
+
+    render(<ResultsSection projectId="test-project-id" />);
+
+    expect(screen.queryByText(/Load more/)).not.toBeInTheDocument();
   });
 
   it('renders download button when results are present', () => {
@@ -250,9 +202,7 @@ describe('ResultsSection', () => {
       },
     ];
 
-    mockUseQuery.mockReturnValue(
-      createSuccessQueryReturn(results) as ReturnType<typeof useQuery>
-    );
+    mockUseResults.mockReturnValue(makeResultsReturn(results));
 
     render(<ResultsSection projectId="test-project-id" />);
 
@@ -262,23 +212,19 @@ describe('ResultsSection', () => {
 
   it('shows success toast when download starts', async () => {
     const results = [{ id: '1', name: 'R1', type: 'T', createdAt: new Date() }];
-    mockUseQuery.mockReturnValue(createSuccessQueryReturn(results) as any);
+    mockUseResults.mockReturnValue(makeResultsReturn(results));
 
-    // Mock successful fetch
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       blob: () =>
         Promise.resolve(new Blob(['{}'], { type: 'application/json' })),
     });
-
-    // Mock URL.createObjectURL and revokeObjectURL
     window.URL.createObjectURL = jest.fn(() => 'mock-url');
     window.URL.revokeObjectURL = jest.fn();
 
     render(<ResultsSection projectId="p1" />);
 
-    const downloadBtn = screen.getByText('Download Results');
-    downloadBtn.click();
+    screen.getByText('Download Results').click();
 
     await React.act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -294,9 +240,8 @@ describe('ResultsSection', () => {
 
   it('shows error toast when download fails', async () => {
     const results = [{ id: '1', name: 'R1', type: 'T', createdAt: new Date() }];
-    mockUseQuery.mockReturnValue(createSuccessQueryReturn(results) as any);
+    mockUseResults.mockReturnValue(makeResultsReturn(results));
 
-    // Mock failed fetch
     global.fetch = jest.fn().mockResolvedValue({
       ok: false,
       status: 500,
@@ -306,8 +251,7 @@ describe('ResultsSection', () => {
 
     render(<ResultsSection projectId="p1" />);
 
-    const downloadBtn = screen.getByText('Download Results');
-    downloadBtn.click();
+    screen.getByText('Download Results').click();
 
     await React.act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -324,18 +268,14 @@ describe('ResultsSection', () => {
 
   it('shows error toast when downloading without access token', async () => {
     const results = [{ id: '1', name: 'R1', type: 'T', createdAt: new Date() }];
-    mockUseQuery.mockReturnValue(createSuccessQueryReturn(results) as any);
+    mockUseResults.mockReturnValue(makeResultsReturn(results));
     mockUseAccessToken.mockReturnValue(
-      createAccessTokenMock({
-        accessToken: null,
-        isAuthenticated: true,
-      })
+      createAccessTokenMock({ accessToken: null, isAuthenticated: true })
     );
 
     render(<ResultsSection projectId="p1" />);
 
-    const downloadBtn = screen.getByText('Download Results');
-    downloadBtn.click();
+    screen.getByText('Download Results').click();
 
     expect(mockPushToast).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -345,6 +285,14 @@ describe('ResultsSection', () => {
     );
   });
 
+  it('renders empty state when not authenticated', () => {
+    mockUseAccessToken.mockReturnValue(createUnauthenticatedMock());
+
+    render(<ResultsSection projectId="test-project-id" />);
+
+    expect(screen.getByText('No results available yet.')).toBeInTheDocument();
+  });
+
   it('renders model performance from the new "After" API structure', async () => {
     const results = [
       {
@@ -352,6 +300,7 @@ describe('ResultsSection', () => {
         name: 'Analysis Result',
         result_type: 'ml_analysis',
         created_at: new Date().toISOString(),
+        createdAt: new Date(),
         data: {
           all_model_configs: {
             xgboost: {
@@ -369,37 +318,19 @@ describe('ResultsSection', () => {
       },
     ];
 
-    // transformResults in results.ts will handle translating this to the UI expected format
-    const transformed = results.map((r) => ({
-      id: r.id,
-      name: r.name || 'Analysis Result',
-      type: r.result_type || 'Unknown',
-      createdAt: new Date(r.created_at),
-      ...(r as any),
-    }));
-
-    mockUseQuery.mockReturnValue(
-      createSuccessQueryReturn(transformed) as ReturnType<typeof useQuery>
-    );
+    mockUseResults.mockReturnValue(makeResultsReturn(results));
 
     render(<ResultsSection projectId="p1" />);
 
-    // Expand the result to show charts/tables
-    const resultHeader = screen.getByText('Analysis Result');
-    resultHeader.click();
+    screen.getByText('Analysis Result').click();
 
-    // Verify model name is rendered (formatted)
     expect(screen.getByText('Xgboost')).toBeInTheDocument();
-
-    // Verify AUROC is rendered (from best_config_metrics)
     expect(screen.getByText('0.9000')).toBeInTheDocument();
-
-    // Verify Details button is present (implies parameters were found)
     expect(screen.getByText('Details')).toBeInTheDocument();
   });
 
   it('renders model performance from flattened metrics structure', async () => {
-    const transformed = [
+    const results = [
       {
         id: 'r2',
         name: 'Flattened Result',
@@ -408,14 +339,8 @@ describe('ResultsSection', () => {
         data: {
           all_model_configs: {
             xgboost: {
-              // No best_config ID
-              metrics: {
-                roc_auc: 0.75,
-                accuracy: 0.8,
-              },
-              params: {
-                depth: 3,
-              },
+              metrics: { roc_auc: 0.75, accuracy: 0.8 },
+              params: { depth: 3 },
               feature_importance: { feature_A: 0.2 },
             },
           },
@@ -423,24 +348,24 @@ describe('ResultsSection', () => {
       },
     ];
 
-    mockUseQuery.mockReturnValue(
-      createSuccessQueryReturn(transformed) as ReturnType<typeof useQuery>
-    );
+    mockUseResults.mockReturnValue(makeResultsReturn(results));
 
     render(<ResultsSection projectId="p1" />);
 
-    // Expand the result
-    const resultHeader = screen.getByText('Flattened Result');
-    resultHeader.click();
+    screen.getByText('Flattened Result').click();
 
-    // Verify AUROC is rendered (from root metrics)
     expect(screen.getByText('0.7500')).toBeInTheDocument();
-
-    // Verify Details button is present (from root params)
     expect(screen.getByText('Details')).toBeInTheDocument();
-
-    // Verify N/A for Best Configuration (since best_config is missing and we reverted Optimized)
-    // There might be multiple N/As (table and chart), so check if at least one exists
     expect(screen.getAllByText('N/A').length).toBeGreaterThan(0);
+  });
+
+  it('displays SVG icon in empty state', () => {
+    const { container } = render(
+      <ResultsSection projectId="test-project-id" />
+    );
+
+    const svg = container.querySelector('svg');
+    expect(svg).toBeInTheDocument();
+    expect(svg).toHaveClass('h-12', 'w-12');
   });
 });

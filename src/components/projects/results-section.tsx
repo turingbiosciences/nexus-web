@@ -64,27 +64,22 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
     return map;
   }, [datasetsRaw]);
 
-  const results = useMemo(() => {
-    const data = resultsQuery.data || [];
-    // Sort by createdAt in descending order (newest first)
-    return [...data].sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
-      return dateB - dateA;
-    });
-  }, [resultsQuery.data]);
+  // Flatten all loaded pages — backend returns newest first so no client sort needed
+  const results = useMemo(
+    () => resultsQuery.data?.pages.flatMap((p) => p.results) ?? [],
+    [resultsQuery.data]
+  );
+  const totalCount = resultsQuery.data?.pages[0]?.totalCount ?? 0;
   const resultsLoading = resultsQuery.isLoading;
   const [expandedResults, setExpandedResults] = useState<Set<string>>(
     new Set()
   );
-  const [visibleCount, setVisibleCount] = useState(3);
   const [isDownloading, setIsDownloading] = useState(false);
   const { accessToken, refreshToken } = useAccessToken();
   const { push: pushToast } = useToast();
 
-  // Reset pagination and expansion state when project changes
+  // Reset expansion state when project changes
   useEffect(() => {
-    setVisibleCount(3);
     setExpandedResults(new Set());
   }, [projectId]);
 
@@ -236,7 +231,7 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
           <>
             {/* Results List */}
             <ul className="space-y-3">
-              {results.slice(0, visibleCount).map((result, index) => {
+              {results.map((result, index) => {
                 const resultKey = result.id || `result-${index}`;
                 const isExpanded = expandedResults.has(resultKey);
                 const resultData = (result as unknown as AnalysisResult).data;
@@ -485,14 +480,17 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                 );
               })}
             </ul>
-            {results.length > visibleCount && (
+            {resultsQuery.hasNextPage && (
               <div className="flex justify-center pt-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setVisibleCount((c) => c + 3)}
+                  onClick={() => resultsQuery.fetchNextPage()}
+                  disabled={resultsQuery.isFetchingNextPage}
                 >
-                  Load more ({results.length - visibleCount} remaining)
+                  {resultsQuery.isFetchingNextPage
+                    ? 'Loading...'
+                    : `Load more (${Math.max(0, totalCount - results.length)} remaining)`}
                 </Button>
               </div>
             )}

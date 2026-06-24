@@ -56,9 +56,9 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
   } = useProjects();
   const project = getProjectById(projectId);
 
-  // Fetch results to get the latest result date
+  // Fetch results to get the latest result date (first item of the first page)
   const resultsQuery = useResults(projectId);
-  const latestResult = resultsQuery.data?.[0];
+  const latestResult = resultsQuery.data?.pages[0]?.results[0];
 
   // Callbacks for job completion - defined before useJobStatus
   const handleJobComplete = useCallback(
