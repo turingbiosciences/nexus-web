@@ -28,6 +28,7 @@ const ALGO_LABELS: Record<string, string> = {
   xgboost: 'XGBoost',
   catboost: 'CatBoost',
   lightgbm: 'LightGBM',
+  linear_boost: 'LinearBoost',
   linearboost: 'LinearBoost',
 };
 
@@ -80,7 +81,7 @@ function EntryTable({
               </span>
             </td>
             <td className="px-3 py-1.5 text-gray-600">
-              {entry.algorithms.map(fmtAlgo).join(', ')}
+              {entry.algorithms?.map(fmtAlgo).join(', ') ?? ''}
             </td>
           </tr>
         ))}
@@ -169,9 +170,9 @@ export function ConvergenceTableSection({
             grouped into a cluster.
           </p>
           <div className="space-y-1.5">
-            {clusters.map((c, i) => (
+            {clusters.map((c) => (
               <div
-                key={i}
+                key={`${c.start_position}-${c.end_position}`}
                 className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs bg-amber-50 border border-amber-200 rounded px-3 py-2"
               >
                 <span className="font-mono font-medium text-gray-800">
@@ -182,7 +183,7 @@ export function ConvergenceTableSection({
                   up to {c.max_agreement}-model agreement
                 </span>
                 <span className="text-gray-600">
-                  {c.algorithms.map(fmtAlgo).join(', ')}
+                  {c.algorithms?.map(fmtAlgo).join(', ') ?? ''}
                 </span>
               </div>
             ))}
