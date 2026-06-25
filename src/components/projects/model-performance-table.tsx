@@ -70,7 +70,8 @@ export function ModelPerformanceTable({
           modelName,
           formattedModelName,
           rocAuc,
-          bestConfig: config.best_config || 'N/A',
+          bestConfig:
+            config.best_config || (config.params ? 'Optimized' : 'N/A'),
           modelParameters,
         };
       });

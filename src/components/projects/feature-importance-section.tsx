@@ -33,7 +33,9 @@ export function FeatureImportanceSection({
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {Object.entries(modelConfigs).map(([modelName, modelConfig]) => {
-          const bestConfigName = modelConfig.best_config || 'N/A';
+          const bestConfigName =
+            modelConfig.best_config ||
+            (modelConfig.params ? 'Optimized' : 'N/A');
 
           // Extract feature importance from the model level (not config level)
           const featureImportance = modelConfig.feature_importance as
