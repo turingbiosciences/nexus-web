@@ -148,14 +148,16 @@ function FeaturePanel({
 export function StatisticalAnalysisSection({
   data,
 }: StatisticalAnalysisSectionProps) {
+  if (!data) return null;
+
   const features = [
     ...new Set([
-      ...Object.keys(data?.cart_cutoffs ?? {}),
-      ...Object.keys(data?.analysis_urls ?? {}),
+      ...Object.keys(data.cart_cutoffs ?? {}),
+      ...Object.keys(data.analysis_urls ?? {}),
     ]),
   ];
 
-  if (!data || features.length === 0) return null;
+  if (features.length === 0) return null;
 
   return (
     <div className="space-y-4">
