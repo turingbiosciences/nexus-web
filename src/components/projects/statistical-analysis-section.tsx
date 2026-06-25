@@ -12,9 +12,9 @@ export interface CartCutoff {
 }
 
 export interface StatisticalAnalysisData {
-  top_features: string[];
   cart_cutoffs: Record<string, CartCutoff>;
   analysis_urls: Record<string, string>;
+  skipped_categorical_features?: string[];
 }
 
 interface StatisticalAnalysisSectionProps {
@@ -148,8 +148,16 @@ function FeaturePanel({
 export function StatisticalAnalysisSection({
   data,
 }: StatisticalAnalysisSectionProps) {
-  if (!data || !data.top_features || data.top_features.length === 0)
-    return null;
+  if (!data) return null;
+
+  const features = [
+    ...new Set([
+      ...Object.keys(data.cart_cutoffs ?? {}),
+      ...Object.keys(data.analysis_urls ?? {}),
+    ]),
+  ];
+
+  if (features.length === 0) return null;
 
   return (
     <div className="space-y-4">
@@ -157,12 +165,13 @@ export function StatisticalAnalysisSection({
         Statistical Analysis
       </h3>
       <p className="text-xs text-gray-500">
-        Top {data.top_features.length} features by convergence-weighted
-        importance. Each panel shows the optimal CART binary split, distribution
-        by class (box plot), and bootstrap 95% CI of the median.
+        CART threshold split and distribution analysis for the top converging
+        features from the parsimonious re-run. Each panel shows the optimal
+        binary split threshold, distribution by class (box plot), and bootstrap
+        95% CI of the median.
       </p>
       <div className="space-y-2">
-        {data.top_features.map((feature) => (
+        {features.map((feature) => (
           <FeaturePanel
             key={feature}
             feature={feature}
