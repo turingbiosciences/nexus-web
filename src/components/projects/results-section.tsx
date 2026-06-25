@@ -19,6 +19,10 @@ import {
 } from './statistical-analysis-section';
 import { ShapImportanceSection } from './shap-importance-section';
 import { ParsimoniousResultsSection } from './parsimonious-results-section';
+import {
+  ConvergenceTableSection,
+  ConvergenceTableData,
+} from './convergence-table-section';
 import { Download } from 'lucide-react';
 import { useAccessToken } from '@/components/providers/token-provider';
 import { authFetch } from '@/lib/auth-fetch';
@@ -40,6 +44,7 @@ interface AnalysisResult {
     statistical_analysis?: StatisticalAnalysisData | null;
     converging_features?: string[] | null;
     parsimonious_model_configs?: Record<string, ModelConfig> | null;
+    convergence_table?: ConvergenceTableData | null;
   };
 }
 
@@ -263,6 +268,7 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                 const convergingFeatures = resultData?.converging_features;
                 const parsimoniousModelConfigs =
                   resultData?.parsimonious_model_configs;
+                const convergenceTableData = resultData?.convergence_table;
 
                 return (
                   <li
@@ -453,6 +459,10 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                                 }
                               />
                             )}
+                            {/* Feature Convergence Table */}
+                            <ConvergenceTableSection
+                              data={convergenceTableData}
+                            />
                             {/* CART Surrogate Analysis */}
                             <CARTAnalysisSection
                               graphSvgUrl={cartData?.graph_svg_url}
