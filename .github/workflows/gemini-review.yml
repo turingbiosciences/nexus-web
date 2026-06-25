@@ -28,6 +28,27 @@ jobs:
           | head -c 50000 > pr_diff.txt
           echo "Diff size: $(wc -c < pr_diff.txt) bytes"
 
+      - name: Build symbol inventory
+        run: |
+          {
+            echo "=== Symbol inventory for changed files (unchanged lines are NOT shown in the diff) ==="
+            git diff --name-only origin/main...HEAD -- \
+              ':(exclude)*.lock' \
+              ':(exclude)package-lock.json' \
+              ':(exclude)*.svg' \
+            | while read -r f; do
+              [ -f "$f" ] || continue
+              echo "--- $f ($(wc -l < "$f") lines total) ---"
+              grep -En \
+                "^export function |^export async function |^export const |^export default |^export interface |^export type |^function |^interface |^type " \
+                "$f" | head -60 || true
+            done
+            echo ""
+          } > inventory.txt
+          cat inventory.txt pr_diff.txt > combined.txt
+          mv combined.txt pr_diff.txt
+          echo "Combined size: $(wc -c < pr_diff.txt) bytes"
+
       - name: Run Gemini review
         id: review
         continue-on-error: true
@@ -64,18 +85,23 @@ jobs:
               " state/effects; server components are the default.\n"
               "</project_context>\n\n"
               "<instructions>\n"
-              "1. Analyze the git diff below.\n"
+              "1. Analyze the symbol inventory and git diff below.\n"
               "2. Report only real issues: bugs, broken React patterns (stale closures,"
               " missing deps in hooks, incorrect key props), XSS risks, incorrect auth"
               " token handling, broken React Query invalidation, or accessibility problems.\n"
-              "3. Skip style nits, formatting, and anything ESLint/tsc/sonarcloud already"
+              "3. Do NOT flag code as missing or unimplemented because it is absent from"
+              " the diff. Files may have substantial unchanged code; only changed sections"
+              " appear. Consult the symbol inventory before concluding something is missing."
+              " Only flag a gap when the diff itself directly removes or breaks something"
+              " that was previously present.\n"
+              "4. Skip style nits, formatting, and anything ESLint/tsc/sonarcloud already"
               " catches.\n"
-              "4. For each issue, provide the exact file path and the new-file line number"
+              "5. For each issue, provide the exact file path and the new-file line number"
               " (right side of the diff). Compute it from the @@ hunk header: the integer"
               " after '+' is the starting line of that hunk in the new file; count"
               " non-deletion lines (lines starting with ' ' or '+') downward to the target.\n"
-              "5. Maximum 5 issues. If none exist, return an empty issues array.\n"
-              "6. Output valid JSON only — no markdown fences, no prose outside the JSON.\n"
+              "6. Maximum 5 issues. If none exist, return an empty issues array.\n"
+              "7. Output valid JSON only — no markdown fences, no prose outside the JSON.\n"
               "</instructions>\n\n"
               "Git diff:\n"
               + diff
