@@ -9,10 +9,10 @@ interface ParsimoniousResultsSectionProps {
 }
 
 function MetricCell({ value }: { value: unknown }) {
-  if (typeof value === 'number') {
+  if (typeof value === 'number' && !isNaN(value)) {
     return <span className="font-mono">{value.toFixed(4)}</span>;
   }
-  if (value === null || value === undefined)
+  if (value === null || value === undefined || Number.isNaN(value))
     return <span className="text-gray-400">—</span>;
   return <span>{String(value)}</span>;
 }
@@ -28,12 +28,13 @@ export function ParsimoniousResultsSection({
 
   if (!hasFeatures && !hasModels) return null;
 
-  const modelRows = hasModels
-    ? Object.entries(parsimoniousModelConfigs!).map(([name, cfg]) => {
-        const metrics = cfg.test_metrics ?? cfg.metrics ?? {};
-        return { name, metrics };
-      })
-    : [];
+  const modelRows =
+    parsimoniousModelConfigs && Object.keys(parsimoniousModelConfigs).length > 0
+      ? Object.entries(parsimoniousModelConfigs).map(([name, cfg]) => {
+          const metrics = cfg?.test_metrics ?? cfg?.metrics ?? {};
+          return { name, metrics };
+        })
+      : [];
 
   return (
     <div className="border rounded-lg p-4 bg-white space-y-4">
@@ -57,13 +58,13 @@ export function ParsimoniousResultsSection({
         </div>
       </div>
 
-      {hasFeatures && (
+      {convergingFeatures && convergingFeatures.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-semibold text-gray-600">
-            Converging features ({convergingFeatures!.length}) used in re-run:
+            Converging features ({convergingFeatures.length}) used in re-run:
           </p>
           <div className="flex flex-wrap gap-1">
-            {convergingFeatures!.map((f) => (
+            {convergingFeatures.map((f) => (
               <span
                 key={f}
                 className="inline-block bg-blue-50 text-blue-800 font-mono text-xs px-2 py-0.5 rounded border border-blue-200"

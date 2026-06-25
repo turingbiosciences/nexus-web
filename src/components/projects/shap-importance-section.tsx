@@ -19,7 +19,7 @@ const MODEL_COLORS: Record<string, string> = {
 };
 
 function getModelColor(modelName: string): string {
-  return MODEL_COLORS[modelName] ?? '#64748b';
+  return MODEL_COLORS[modelName.toLowerCase()] ?? '#64748b';
 }
 
 function ShapModelChart({
@@ -47,7 +47,8 @@ function ShapModelChart({
       </h5>
       <div className="space-y-1">
         {sorted.map(([feature, value], i) => {
-          const barPct = maxVal > 0 ? (value / maxVal) * 100 : 0;
+          const barPct =
+            maxVal > 0 ? Math.max(0, Math.min(100, (value / maxVal) * 100)) : 0;
           return (
             <div key={feature} className="flex items-center gap-2 text-xs">
               <span className="w-5 text-right text-gray-400 flex-shrink-0">

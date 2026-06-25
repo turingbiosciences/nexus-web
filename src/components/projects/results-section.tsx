@@ -34,6 +34,12 @@ interface AnalysisResult {
     };
     training_started_at?: string;
     training_completed_at?: string;
+    all_model_configs?: Record<string, ModelConfig>;
+    graph_svg_url?: string | null;
+    analysis_report_url?: string | null;
+    statistical_analysis?: StatisticalAnalysisData | null;
+    converging_features?: string[] | null;
+    parsimonious_model_configs?: Record<string, ModelConfig> | null;
   };
 }
 
@@ -251,41 +257,12 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                   : result.name;
                 const targetColumn = runParams?.target_column;
                 const excludeColumns = runParams?.exclude_columns ?? [];
-                const modelConfigs = (
-                  result as {
-                    data?: { all_model_configs?: Record<string, ModelConfig> };
-                  }
-                ).data?.all_model_configs;
-                const cartData = (
-                  result as unknown as {
-                    data?: {
-                      graph_svg_url?: string | null;
-                      analysis_report_url?: string | null;
-                    };
-                  }
-                ).data;
-                const statisticalData = (
-                  result as unknown as {
-                    data?: {
-                      statistical_analysis?: StatisticalAnalysisData | null;
-                    };
-                  }
-                ).data?.statistical_analysis;
-                const convergingFeatures = (
-                  result as unknown as {
-                    data?: { converging_features?: string[] | null };
-                  }
-                ).data?.converging_features;
-                const parsimoniousModelConfigs = (
-                  result as unknown as {
-                    data?: {
-                      parsimonious_model_configs?: Record<
-                        string,
-                        import('@/types/model-config').ModelConfig
-                      > | null;
-                    };
-                  }
-                ).data?.parsimonious_model_configs;
+                const modelConfigs = resultData?.all_model_configs;
+                const cartData = resultData;
+                const statisticalData = resultData?.statistical_analysis;
+                const convergingFeatures = resultData?.converging_features;
+                const parsimoniousModelConfigs =
+                  resultData?.parsimonious_model_configs;
 
                 return (
                   <li
