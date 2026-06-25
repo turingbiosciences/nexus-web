@@ -17,6 +17,8 @@ import {
   StatisticalAnalysisSection,
   StatisticalAnalysisData,
 } from './statistical-analysis-section';
+import { ShapImportanceSection } from './shap-importance-section';
+import { ParsimoniousResultsSection } from './parsimonious-results-section';
 import { Download } from 'lucide-react';
 import { useAccessToken } from '@/components/providers/token-provider';
 import { authFetch } from '@/lib/auth-fetch';
@@ -32,6 +34,12 @@ interface AnalysisResult {
     };
     training_started_at?: string;
     training_completed_at?: string;
+    all_model_configs?: Record<string, ModelConfig>;
+    graph_svg_url?: string | null;
+    analysis_report_url?: string | null;
+    statistical_analysis?: StatisticalAnalysisData | null;
+    converging_features?: string[] | null;
+    parsimonious_model_configs?: Record<string, ModelConfig> | null;
   };
 }
 
@@ -249,26 +257,12 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                   : result.name;
                 const targetColumn = runParams?.target_column;
                 const excludeColumns = runParams?.exclude_columns ?? [];
-                const modelConfigs = (
-                  result as {
-                    data?: { all_model_configs?: Record<string, ModelConfig> };
-                  }
-                ).data?.all_model_configs;
-                const cartData = (
-                  result as unknown as {
-                    data?: {
-                      graph_svg_url?: string | null;
-                      analysis_report_url?: string | null;
-                    };
-                  }
-                ).data;
-                const statisticalData = (
-                  result as unknown as {
-                    data?: {
-                      statistical_analysis?: StatisticalAnalysisData | null;
-                    };
-                  }
-                ).data?.statistical_analysis;
+                const modelConfigs = resultData?.all_model_configs;
+                const cartData = resultData;
+                const statisticalData = resultData?.statistical_analysis;
+                const convergingFeatures = resultData?.converging_features;
+                const parsimoniousModelConfigs =
+                  resultData?.parsimonious_model_configs;
 
                 return (
                   <li
@@ -467,6 +461,17 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                             {/* Statistical Analysis */}
                             <StatisticalAnalysisSection
                               data={statisticalData}
+                            />
+                            {/* TreeSHAP Feature Importance */}
+                            <ShapImportanceSection
+                              modelConfigs={modelConfigs}
+                            />
+                            {/* Parsimonious Re-run */}
+                            <ParsimoniousResultsSection
+                              convergingFeatures={convergingFeatures}
+                              parsimoniousModelConfigs={
+                                parsimoniousModelConfigs
+                              }
                             />
                           </>
                         ) : (
