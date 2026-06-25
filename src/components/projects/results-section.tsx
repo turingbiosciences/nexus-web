@@ -17,6 +17,8 @@ import {
   StatisticalAnalysisSection,
   StatisticalAnalysisData,
 } from './statistical-analysis-section';
+import { ShapImportanceSection } from './shap-importance-section';
+import { ParsimoniousResultsSection } from './parsimonious-results-section';
 import { Download } from 'lucide-react';
 import { useAccessToken } from '@/components/providers/token-provider';
 import { authFetch } from '@/lib/auth-fetch';
@@ -269,6 +271,21 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                     };
                   }
                 ).data?.statistical_analysis;
+                const convergingFeatures = (
+                  result as unknown as {
+                    data?: { converging_features?: string[] | null };
+                  }
+                ).data?.converging_features;
+                const parsimoniousModelConfigs = (
+                  result as unknown as {
+                    data?: {
+                      parsimonious_model_configs?: Record<
+                        string,
+                        import('@/types/model-config').ModelConfig
+                      > | null;
+                    };
+                  }
+                ).data?.parsimonious_model_configs;
 
                 return (
                   <li
@@ -467,6 +484,17 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                             {/* Statistical Analysis */}
                             <StatisticalAnalysisSection
                               data={statisticalData}
+                            />
+                            {/* TreeSHAP Feature Importance */}
+                            <ShapImportanceSection
+                              modelConfigs={modelConfigs}
+                            />
+                            {/* Parsimonious Re-run */}
+                            <ParsimoniousResultsSection
+                              convergingFeatures={convergingFeatures}
+                              parsimoniousModelConfigs={
+                                parsimoniousModelConfigs
+                              }
                             />
                           </>
                         ) : (

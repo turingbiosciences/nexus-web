@@ -42,6 +42,7 @@ export interface ModelConfig {
   metrics?: ModelMetrics;
 
   feature_importance?: unknown;
+  shap_importance?: Record<string, number> | null;
 }
 
 /**
