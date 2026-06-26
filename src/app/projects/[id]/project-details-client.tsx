@@ -159,7 +159,8 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
   const handleConfirmRun = async (
     datasetId: string,
     targetColumn: string,
-    excludeColumns: string[]
+    excludeColumns: string[],
+    earlyStop: boolean
   ) => {
     if (!project || !accessToken) return;
 
@@ -180,6 +181,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
             target_column: targetColumn,
             exclude_columns: excludeColumns,
             exclude_rows: [],
+            early_stop_on_perfect_auc: earlyStop,
           }),
         }
       );

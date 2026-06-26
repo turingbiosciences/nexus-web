@@ -13,7 +13,8 @@ interface RunModelModalProps {
   onConfirm: (
     datasetId: string,
     targetColumn: string,
-    excludeColumns: string[]
+    excludeColumns: string[],
+    earlyStop: boolean
   ) => void;
 }
 
@@ -26,6 +27,7 @@ export function RunModelModal({
   const [selectedDatasetId, setSelectedDatasetId] = useState<string>('');
   const [targetColumn, setTargetColumn] = useState<string>('');
   const [excludeColumns, setExcludeColumns] = useState<string>('');
+  const [earlyStop, setEarlyStop] = useState<boolean>(false);
 
   // Fetch latest 3 datasets
   const { data: datasetsData, isLoading } = useDatasets(projectId, {
@@ -48,6 +50,7 @@ export function RunModelModal({
       setSelectedDatasetId('');
       setTargetColumn('');
       setExcludeColumns('');
+      setEarlyStop(false);
     }
   }, [isOpen]);
 
@@ -59,7 +62,12 @@ export function RunModelModal({
         .map((col) => col.trim())
         .filter((col) => col.length > 0);
 
-      onConfirm(selectedDatasetId, targetColumn, excludeColumnsArray);
+      onConfirm(
+        selectedDatasetId,
+        targetColumn,
+        excludeColumnsArray,
+        earlyStop
+      );
       onClose();
     }
   };
@@ -151,6 +159,24 @@ export function RunModelModal({
           <p className="mt-1 text-xs text-gray-500">
             Comma-separated list of column names to exclude from training
           </p>
+        </div>
+
+        {/* Quick Test Toggle */}
+        <div className="flex items-start gap-3 pt-2">
+          <input
+            id="early-stop"
+            type="checkbox"
+            checked={earlyStop}
+            onChange={(e) => setEarlyStop(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <label htmlFor="early-stop" className="text-sm cursor-pointer">
+            <span className="font-medium text-gray-700">Quick Test</span>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Stop early when ROC AUC reaches 1.0. Faster but skips full ECE /
+              pMad comparison across all configurations.
+            </p>
+          </label>
         </div>
 
         {/* Action Buttons */}

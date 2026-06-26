@@ -252,10 +252,12 @@ describe('RunModelModal', () => {
       // Click confirm
       fireEvent.click(screen.getByRole('button', { name: /confirm/i }));
 
-      expect(mockOnConfirm).toHaveBeenCalledWith('ds-1', 'outcome', [
-        'id',
-        'timestamp',
-      ]);
+      expect(mockOnConfirm).toHaveBeenCalledWith(
+        'ds-1',
+        'outcome',
+        ['id', 'timestamp'],
+        false
+      );
       expect(mockOnClose).toHaveBeenCalled();
     });
 
