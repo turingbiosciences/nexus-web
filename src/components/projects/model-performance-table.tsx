@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
 import { ModelParametersModal } from './model-parameters-modal';
 import { ModelConfig } from '@/types/model-config';
 
@@ -9,7 +8,6 @@ interface ModelPerformanceTableProps {
   modelConfigs: Record<string, ModelConfig>;
 }
 
-// Helper function to get ROC AUC score
 const getRocAuc = (config: ModelConfig): number | undefined => {
   return (
     config.best_config_metrics?.roc_auc ??
@@ -21,7 +19,6 @@ const getRocAuc = (config: ModelConfig): number | undefined => {
   );
 };
 
-// Helper function to get model parameters
 const getModelParameters = (
   config: ModelConfig
 ): Record<string, unknown> | null => {
@@ -44,7 +41,6 @@ export function ModelPerformanceTable({
     parameters: Record<string, unknown>;
   } | null>(null);
 
-  // Memoize the expensive data transformation separately from rendering
   const tableData = useMemo(() => {
     return Object.entries(modelConfigs)
       .map(([modelName, config]) => ({
@@ -95,7 +91,6 @@ export function ModelPerformanceTable({
               <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900 border-b">
                 Best Configuration
               </th>
-              <th className="px-4 py-2 text-center text-sm font-semibold text-gray-900 border-b"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -120,14 +115,10 @@ export function ModelPerformanceTable({
                     {Number(row.rocAuc).toFixed(4)}
                   </span>
                 </td>
-                <td className="px-4 py-1.5 text-sm text-gray-600 font-mono">
-                  {row.bestConfig}
-                </td>
-                <td className="px-4 py-1.5 text-center">
-                  {row.modelParameters && (
-                    <Button
-                      size="xs"
-                      variant="outline"
+                <td className="px-4 py-1.5 text-sm">
+                  {row.modelParameters ? (
+                    <button
+                      type="button"
                       onClick={() =>
                         setSelectedModel({
                           name: row.formattedModelName,
@@ -135,9 +126,15 @@ export function ModelPerformanceTable({
                           parameters: row.modelParameters!,
                         })
                       }
+                      className="font-mono text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                      title="Click to view hyperparameters"
                     >
-                      Details
-                    </Button>
+                      {row.bestConfig}
+                    </button>
+                  ) : (
+                    <span className="font-mono text-gray-600">
+                      {row.bestConfig}
+                    </span>
                   )}
                 </td>
               </tr>
@@ -146,7 +143,6 @@ export function ModelPerformanceTable({
         </table>
       </div>
 
-      {/* Model Parameters Modal */}
       {selectedModel && (
         <ModelParametersModal
           isOpen={!!selectedModel}
