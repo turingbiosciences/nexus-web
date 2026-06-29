@@ -326,7 +326,9 @@ describe('ResultsSection', () => {
 
     expect(screen.getByText('Xgboost')).toBeInTheDocument();
     expect(screen.getByText('0.9000')).toBeInTheDocument();
-    expect(screen.getByText('Details')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'config_1' })
+    ).toBeInTheDocument();
   });
 
   it('renders model performance from flattened metrics structure', async () => {
@@ -355,7 +357,9 @@ describe('ResultsSection', () => {
     screen.getByText('Flattened Result').click();
 
     expect(screen.getByText('0.7500')).toBeInTheDocument();
-    expect(screen.getByText('Details')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Optimized' })
+    ).toBeInTheDocument();
     expect(screen.getAllByText('N/A').length).toBeGreaterThan(0);
   });
 

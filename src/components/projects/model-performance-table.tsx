@@ -118,6 +118,7 @@ export function ModelPerformanceTable({
                 <td className="px-4 py-1.5 text-sm">
                   {row.modelParameters ? (
                     <button
+                      type="button"
                       onClick={() =>
                         setSelectedModel({
                           name: row.formattedModelName,
