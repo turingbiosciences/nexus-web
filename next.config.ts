@@ -8,20 +8,6 @@ const nextConfig: NextConfig = {
   output: 'standalone',
 
   async headers() {
-    // Parse the Turing API origin to include in CSP
-    const turingApi = process.env.NEXT_PUBLIC_TURING_API;
-    let turingApiOrigin = '';
-    if (turingApi) {
-      try {
-        turingApiOrigin = new URL(turingApi).origin;
-      } catch {
-        // Invalid URL, ignore but log warning
-        console.warn(
-          '⚠️ Invalid NEXT_PUBLIC_TURING_API URL in next.config.ts, CSP might block API calls'
-        );
-      }
-    }
-
     const cspHeader = [
       "default-src 'self'",
       // unsafe-eval and unsafe-inline needed for Next.js dev and runtime
@@ -29,8 +15,11 @@ const nextConfig: NextConfig = {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self'",
-      // Allow connections to Logto, API, and Sentry
-      `connect-src 'self' https://*.logto.io https://*.logto.app https://*.ondigitalocean.app https://*.digitaloceanspaces.com https://*.sentry.io${turingApiOrigin ? ` ${turingApiOrigin}` : ''}`,
+      // API traffic is same-origin now ('self'), because the browser calls
+      // /api/turing/* instead of an absolute API URL. The ondigitalocean.app
+      // entry is only still here for the App Platform apps during cutover;
+      // drop it once those are retired.
+      "connect-src 'self' https://*.logto.io https://*.logto.app https://*.ondigitalocean.app https://*.digitaloceanspaces.com https://*.sentry.io",
       // Allow workers for Sentry
       "worker-src 'self' blob:",
       "frame-ancestors 'none'",

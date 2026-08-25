@@ -5,16 +5,15 @@ import {
   useProjects,
 } from '@/components/providers/projects-provider';
 
-// Mock TokenProvider - initially return default mock
-const mockUseAccessToken = jest.fn(() => ({
-  accessToken: 'test-token' as string | null,
-  isLoading: false,
-  error: null,
-  refreshToken: jest.fn(),
+// Mock the auth-state provider. It carries no token: the provider now gates on
+// isAuthenticated alone, because the client holds no API credential.
+const mockUseAuthState = jest.fn(() => ({
+  isAuthenticated: true,
+  authLoading: false,
 }));
 
-jest.mock('../token-provider', () => ({
-  useAccessToken: () => mockUseAccessToken(),
+jest.mock('../auth-state-provider', () => ({
+  useAuthState: () => mockUseAuthState(),
 }));
 
 // Mock API
@@ -142,16 +141,14 @@ describe('ProjectsProvider', () => {
     });
   });
 
-  it('refetches projects when accessToken changes (new user session)', async () => {
+  it('refetches projects when the signed-in user changes', async () => {
     const { fetchProjects } = await import('@/lib/api/projects');
     const mockFetchProjects = fetchProjects as jest.Mock;
 
-    // User A signs in with token-a
-    mockUseAccessToken.mockReturnValue({
-      accessToken: 'token-a',
-      isLoading: false,
-      error: null,
-      refreshToken: jest.fn(),
+    // User A signs in
+    mockUseAuthState.mockReturnValue({
+      isAuthenticated: true,
+      authLoading: false,
     });
     mockFetchProjects.mockResolvedValue([
       {
@@ -177,12 +174,10 @@ describe('ProjectsProvider', () => {
       expect(screen.getByTestId('project-user-a-project')).toBeInTheDocument();
     });
 
-    // User A signs out (token becomes null)
-    mockUseAccessToken.mockReturnValue({
-      accessToken: null as string | null,
-      isLoading: false,
-      error: null,
-      refreshToken: jest.fn(),
+    // User A signs out
+    mockUseAuthState.mockReturnValue({
+      isAuthenticated: false,
+      authLoading: false,
     });
 
     // Force re-render to trigger sign-out
@@ -199,12 +194,10 @@ describe('ProjectsProvider', () => {
       ).not.toBeInTheDocument();
     });
 
-    // User B signs in with token-b
-    mockUseAccessToken.mockReturnValue({
-      accessToken: 'token-b',
-      isLoading: false,
-      error: null,
-      refreshToken: jest.fn(),
+    // User B signs in
+    mockUseAuthState.mockReturnValue({
+      isAuthenticated: true,
+      authLoading: false,
     });
     mockFetchProjects.mockResolvedValue([
       {
@@ -219,7 +212,7 @@ describe('ProjectsProvider', () => {
       },
     ]);
 
-    // Force re-render to trigger the accessToken change effect
+    // Force re-render to trigger the auth-state change effect
     rerender(
       <ProjectsProvider>
         <Consumer />

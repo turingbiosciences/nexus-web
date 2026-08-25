@@ -52,10 +52,12 @@ interface ErrorResponse {
 }
 
 async function testTokenExchange() {
+  // These are the same four values src/lib/api/m2m-token.ts uses, so a pass
+  // here means the proxy can obtain a token too.
   const endpoint = process.env.LOGTO_ENDPOINT;
-  const appId = process.env.LOGTO_APP_ID;
-  const appSecret = process.env.LOGTO_APP_SECRET;
-  const apiResource = process.env.NEXT_PUBLIC_TURING_API;
+  const appId = process.env.LOGTO_M2M_APP_ID;
+  const appSecret = process.env.LOGTO_M2M_APP_SECRET;
+  const apiResource = process.env.LOGTO_M2M_ENDPOINT;
 
   console.log('=== Logto Token Exchange Test ===\n');
   console.log('Configuration:');
@@ -68,7 +70,7 @@ async function testTokenExchange() {
   if (!endpoint || !appId || !appSecret || !apiResource) {
     console.error('❌ ERROR: Missing required environment variables');
     console.error(
-      '   Required: LOGTO_ENDPOINT, LOGTO_APP_ID, LOGTO_APP_SECRET, NEXT_PUBLIC_TURING_API'
+      '   Required: LOGTO_ENDPOINT, LOGTO_M2M_APP_ID, LOGTO_M2M_APP_SECRET, LOGTO_M2M_ENDPOINT'
     );
     process.exit(1);
   }

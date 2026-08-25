@@ -6,14 +6,13 @@ import {
 } from '../dataset-mutations';
 import React from 'react';
 
-// Mock useAccessToken with mutable implementation
-const mockUseAccessToken = jest.fn(() => ({
-  accessToken: null as string | null,
+// Mock useAuthState with mutable implementation
+const mockUseAuthState = jest.fn(() => ({
   isLoading: false,
 }));
 
-jest.mock('@/components/providers/token-provider', () => ({
-  useAccessToken: () => mockUseAccessToken(),
+jest.mock('@/components/providers/auth-state-provider', () => ({
+  useAuthState: () => mockUseAuthState(),
 }));
 
 const originalEnv = process.env;
@@ -32,14 +31,7 @@ global.fetch = mockFetch;
 
 beforeEach(() => {
   mockFetch.mockReset();
-  // Default mock for token fetch
   mockFetch.mockImplementation((url: string, options: any) => {
-    if (url === '/api/logto/token') {
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ accessToken: 'test-token' }),
-      });
-    }
     // Default mock for file upload
     if (url.includes('/files') && !url.includes('DELETE')) {
       // Extract filename from FormData if possible
@@ -92,7 +84,6 @@ function createWrapper() {
 describe('useUploadDatasetMutation', () => {
   beforeEach(() => {
     // Ensure default mock state (no token from hook)
-    mockUseAccessToken.mockReturnValue({ accessToken: null, isLoading: false });
   });
 
   it('successfully uploads a dataset', async () => {
@@ -228,7 +219,6 @@ describe('useUploadDatasetMutation', () => {
 describe('useDeleteDatasetMutation', () => {
   beforeEach(() => {
     // Ensure default mock state (no token from hook)
-    mockUseAccessToken.mockReturnValue({ accessToken: null, isLoading: false });
   });
 
   it('successfully deletes a dataset', async () => {
@@ -336,7 +326,6 @@ describe('useDeleteDatasetMutation', () => {
 describe('Mutation Interactions', () => {
   beforeEach(() => {
     // Ensure default mock state (no token from hook)
-    mockUseAccessToken.mockReturnValue({ accessToken: null, isLoading: false });
   });
 
   it('can use both upload and delete mutations together', async () => {
@@ -396,14 +385,11 @@ describe('Mutation Interactions', () => {
   });
 });
 
-describe('Dataset Mutation Performance', () => {
-  it('skips token fetch when token is available from hook (optimized behavior)', async () => {
-    // Configure mock to return a token
-    mockUseAccessToken.mockReturnValue({
-      accessToken: 'test-token-from-hook',
-      isLoading: false,
-    });
-
+describe('Dataset Mutations', () => {
+  it('never calls a token endpoint — credentials come from the proxy', async () => {
+    // The mutations used to fall back to GET /api/logto/token when the caller
+    // had no token. That route is gone; requests now carry the session cookie
+    // and the proxy attaches API credentials server-side.
     const { result } = renderHook(() => useUploadDatasetMutation('project-1'), {
       wrapper: createWrapper(),
     });
@@ -414,15 +400,12 @@ describe('Dataset Mutation Performance', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    // Check calls to /api/logto/token
-    const tokenCalls = mockFetch.mock.calls.filter(
-      (call) => call[0] === '/api/logto/token'
-    );
+    const calledUrls = mockFetch.mock.calls.map((call) => String(call[0]));
+    expect(calledUrls).not.toContain('/api/logto/token');
+    expect(calledUrls).toContain('/api/turing/projects/project-1/files');
 
-    // Should NOT fetch token as it is provided by the hook
-    expect(tokenCalls.length).toBe(0);
-
-    // Reset mock
-    mockUseAccessToken.mockReturnValue({ accessToken: null, isLoading: false });
+    const [, init] = mockFetch.mock.calls[0];
+    expect(init.credentials).toBe('include');
+    expect(init.headers?.Authorization).toBeUndefined();
   });
 });

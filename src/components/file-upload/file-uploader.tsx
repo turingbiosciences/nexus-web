@@ -6,7 +6,7 @@ import * as tus from 'tus-js-client';
 import { Upload, X, CheckCircle, AlertCircle, Pause, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn, formatBytes, formatUploadProgress } from '@/lib/utils';
-import { useAccessToken } from '@/components/providers/token-provider';
+import { useAuthState } from '@/components/providers/auth-state-provider';
 import { logger } from '@/lib/logger';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
 import { sanitizeFilename } from '@/lib/security';
@@ -41,7 +41,7 @@ export function FileUploader({
   onUploadProgress,
 }: FileUploaderProps) {
   const [uploads, setUploads] = useState<FileUploadItem[]>([]);
-  const { isAuthenticated, authLoading, accessToken } = useAccessToken();
+  const { isAuthenticated, authLoading } = useAuthState();
   const [authError, setAuthError] = useState<string | null>(null);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -71,7 +71,6 @@ export function FileUploader({
 
   const startUploadWithXHR = async (
     upload: FileUploadItem,
-    currentAccessToken: string,
     currentProjectId: string
   ) => {
     const apiEndpoint = getApiBaseUrl();
@@ -192,7 +191,7 @@ export function FileUploader({
 
     // Start the upload
     xhr.open('POST', `${apiEndpoint}/projects/${currentProjectId}/files`);
-    xhr.setRequestHeader('Authorization', `Bearer ${currentAccessToken}`);
+    xhr.withCredentials = true;
     xhr.send(formData);
   };
 
@@ -209,13 +208,6 @@ export function FileUploader({
 
     try {
       const apiEndpoint = getApiBaseUrl();
-
-      // Use M2M access token from TokenProvider
-      if (!accessToken) {
-        throw new Error(
-          'Failed to obtain access token. Try signing out and back in.'
-        );
-      }
 
       // Validate projectId is provided
       if (!projectId) {
@@ -235,7 +227,7 @@ export function FileUploader({
           { uploadId: upload.id, filename: upload.file.name },
           'TUS disabled, using XHR upload'
         );
-        startUploadWithXHR(upload, accessToken, projectId!);
+        startUploadWithXHR(upload, projectId!);
         return;
       }
 
@@ -251,9 +243,11 @@ export function FileUploader({
           filename: upload.sanitizedName,
           filetype: upload.file.type,
         },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        // No Authorization header and nothing to configure for credentials:
+        // the endpoint is a same-origin path, so the browser attaches the Logto
+        // session cookie itself, and the proxy exchanges it for API
+        // credentials. (tus-js-client has no withCredentials option; it would
+        // only matter cross-origin anyway.)
         onError: (error) => {
           logger.error({ uploadId: upload.id, error }, 'TUS upload error');
 
@@ -286,7 +280,7 @@ export function FileUploader({
               'TUS not supported (422 error), falling back to XHR upload'
             );
             // Fallback to standard XHR upload - pass current values to avoid stale closure
-            startUploadWithXHR(upload, accessToken, projectId!);
+            startUploadWithXHR(upload, projectId!);
           } else {
             // Other errors - mark as failed
             setUploads((prev) =>
@@ -343,13 +337,6 @@ export function FileUploader({
       );
       if (!isAuthenticated) {
         setAuthError('Not authenticated. Please sign in.');
-      } else if (
-        error instanceof Error &&
-        /access token/i.test(error.message)
-      ) {
-        setAuthError(
-          'Access token unavailable. Re-authenticate if problem persists.'
-        );
       }
       setUploads((prev) =>
         prev.map((u) =>
@@ -379,15 +366,13 @@ export function FileUploader({
 
   // Auto-start uploads as soon as files enter the queue and auth is ready.
   // Using the ref avoids including startUpload in deps (it is recreated every
-  // render) while still calling the version that has the latest token/auth state.
-  // accessToken is guarded explicitly because fetchToken() is async: isAuthenticated
-  // and authLoading can both be settled while the token is still null.
+  // render) while still calling the version that has the latest auth state.
   useEffect(() => {
-    if (!isAuthenticated || authLoading || !accessToken) return;
+    if (!isAuthenticated || authLoading) return;
     const pending = uploads.filter((u) => u.status === 'pending');
     if (pending.length === 0) return;
     pending.forEach((u) => startUploadRef.current(u));
-  }, [pendingIds, isAuthenticated, authLoading, accessToken]);
+  }, [pendingIds, isAuthenticated, authLoading]);
 
   // When auth becomes available, clear transient auth errors and revert auth-related error statuses back to pending
   useEffect(() => {

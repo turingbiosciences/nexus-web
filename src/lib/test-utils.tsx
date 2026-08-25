@@ -49,20 +49,13 @@ export function createQueryClientWrapper() {
 }
 
 /**
- * Mock return value for useAccessToken hook
+ * Mock return value for the useAuthState hook
  */
-export function createMockAccessToken(overrides?: {
-  accessToken?: string | null;
-  isLoading?: boolean;
-  error?: Error | null;
+export function createMockAuthState(overrides?: {
   isAuthenticated?: boolean;
   authLoading?: boolean;
 }) {
   return {
-    accessToken: 'mock-token',
-    isLoading: false,
-    error: null,
-    refreshToken: jest.fn().mockResolvedValue('new-token'),
     isAuthenticated: true,
     authLoading: false,
     ...overrides,

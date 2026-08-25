@@ -2,25 +2,21 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { datasetsKey } from '@/lib/queries/keys';
 import { ProjectDataset } from '@/types/project';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
-import { useAccessToken } from '@/components/providers/token-provider';
 import { sanitizeFilename } from '@/lib/security';
 
 interface UploadArgs {
   projectId: string;
   file: File;
-  token?: string | null;
 }
 
 interface DeleteArgs {
   projectId: string;
   datasetId: string;
-  token?: string | null;
 }
 
 interface DownloadArgs {
   projectId: string;
   datasetId: string;
-  token?: string | null;
 }
 
 interface DownloadUrlResponse {
@@ -30,30 +26,14 @@ interface DownloadUrlResponse {
 }
 
 /**
- * Helper to get access token from args or fetch it
- */
-async function ensureAccessToken(token?: string | null): Promise<string> {
-  if (token) return token;
-
-  const tokenResponse = await fetch('/api/logto/token');
-  if (!tokenResponse.ok) {
-    throw new Error('Failed to obtain access token');
-  }
-  const data = await tokenResponse.json();
-  return data.accessToken;
-}
-
-/**
  * Upload file to the backend
  * NOTE: This uploads the actual file using multipart/form-data
  */
 async function apiUploadDataset({
   file,
   projectId,
-  token,
 }: UploadArgs): Promise<ProjectDataset> {
   const apiEndpoint = getApiBaseUrl();
-  const accessToken = await ensureAccessToken(token);
 
   // Upload the file using FormData
   const formData = new FormData();
@@ -61,10 +41,8 @@ async function apiUploadDataset({
 
   const response = await fetch(`${apiEndpoint}/projects/${projectId}/files`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      // Don't set Content-Type - browser will set it with boundary for multipart/form-data
-    },
+    credentials: 'include',
+    // No Content-Type - the browser sets it with the multipart boundary.
     body: formData,
   });
 
@@ -90,18 +68,14 @@ async function apiUploadDataset({
 async function apiDeleteDataset({
   projectId,
   datasetId,
-  token,
 }: DeleteArgs): Promise<{ success: boolean }> {
   const apiEndpoint = getApiBaseUrl();
-  const accessToken = await ensureAccessToken(token);
 
   const response = await fetch(
     `${apiEndpoint}/projects/${projectId}/files/${datasetId}`,
     {
       method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      credentials: 'include',
     }
   );
 
@@ -117,12 +91,10 @@ async function apiDeleteDataset({
 
 export function useUploadDatasetMutation(projectId: string) {
   const qc = useQueryClient();
-  const { accessToken } = useAccessToken();
 
   return useMutation({
     mutationKey: ['upload', projectId],
-    mutationFn: (file: File) =>
-      apiUploadDataset({ projectId, file, token: accessToken }),
+    mutationFn: (file: File) => apiUploadDataset({ projectId, file }),
     onMutate: async () => {
       // Cancel in-flight queries to prevent race conditions
       await qc.cancelQueries({ queryKey: datasetsKey(projectId) });
@@ -142,12 +114,11 @@ export function useUploadDatasetMutation(projectId: string) {
 
 export function useDeleteDatasetMutation(projectId: string) {
   const qc = useQueryClient();
-  const { accessToken } = useAccessToken();
 
   return useMutation({
     mutationKey: ['delete', projectId],
     mutationFn: (datasetId: string) =>
-      apiDeleteDataset({ projectId, datasetId, token: accessToken }),
+      apiDeleteDataset({ projectId, datasetId }),
     onMutate: async () => {
       // Cancel in-flight queries to prevent race conditions
       await qc.cancelQueries({ queryKey: datasetsKey(projectId) });
@@ -169,18 +140,14 @@ export function useDeleteDatasetMutation(projectId: string) {
 async function apiGetDatasetDownloadUrl({
   projectId,
   datasetId,
-  token,
 }: DownloadArgs): Promise<DownloadUrlResponse> {
   const apiEndpoint = getApiBaseUrl();
-  const accessToken = await ensureAccessToken(token);
 
   const response = await fetch(
     `${apiEndpoint}/projects/${projectId}/files/${datasetId}/download`,
     {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      credentials: 'include',
     }
   );
 
@@ -195,12 +162,10 @@ async function apiGetDatasetDownloadUrl({
 }
 
 export function useDownloadDatasetMutation(projectId: string) {
-  const { accessToken } = useAccessToken();
-
   return useMutation({
     mutationKey: ['download', projectId],
     mutationFn: (datasetId: string) =>
-      apiGetDatasetDownloadUrl({ projectId, datasetId, token: accessToken }),
+      apiGetDatasetDownloadUrl({ projectId, datasetId }),
     onSuccess: ({ download_url, filename }) => {
       try {
         const parsed = new URL(download_url);

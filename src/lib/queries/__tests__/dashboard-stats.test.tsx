@@ -1,16 +1,16 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { useDashboardStats } from '../dashboard-stats';
 import { getDashboardStats } from '@/lib/api/projects';
-import { useAccessToken } from '@/components/providers/token-provider';
+import { useAuthState } from '@/components/providers/auth-state-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 
 // Mock dependencies
 jest.mock('@/lib/api/projects');
-jest.mock('@/components/providers/token-provider');
+jest.mock('@/components/providers/auth-state-provider');
 
 const mockedGetDashboardStats = getDashboardStats as jest.Mock;
-const mockedUseAccessToken = useAccessToken as jest.Mock;
+const mockedUseAuthState = useAuthState as jest.Mock;
 
 describe('useDashboardStats hook', () => {
   let queryClient: QueryClient;
@@ -32,7 +32,7 @@ describe('useDashboardStats hook', () => {
   });
 
   it('fetches dashboard stats when authenticated', async () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       isAuthenticated: true,
       accessToken: 'test-token',
     });
@@ -53,11 +53,11 @@ describe('useDashboardStats hook', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data).toEqual(mockStats);
-    expect(mockedGetDashboardStats).toHaveBeenCalledWith('test-token');
+    expect(mockedGetDashboardStats).toHaveBeenCalledWith();
   });
 
   it('does not fetch when not authenticated', async () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       isAuthenticated: false,
       accessToken: null,
     });
@@ -70,7 +70,7 @@ describe('useDashboardStats hook', () => {
   });
 
   it('handles error state', async () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       isAuthenticated: true,
       accessToken: 'test-token',
     });

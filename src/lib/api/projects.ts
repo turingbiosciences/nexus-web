@@ -23,10 +23,9 @@ function parseDate(dateValue: string | Date | null | undefined): Date {
 
 /**
  * Fetch projects list from the backend API or mock data
- * @param accessToken - Logto access token for authentication
  * @returns Promise resolving to array of projects
  */
-export async function fetchProjects(accessToken: string): Promise<Project[]> {
+export async function fetchProjects(): Promise<Project[]> {
   // Check if mock mode is enabled
   const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
 
@@ -43,8 +42,8 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
 
   const response = await fetch(`${apiUrl}/projects`, {
     method: 'GET',
+    credentials: 'include',
     headers: {
-      Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
   });
@@ -113,14 +112,10 @@ export async function fetchProjects(accessToken: string): Promise<Project[]> {
 
 /**
  * Delete a project via the backend API
- * @param accessToken - Logto access token for authentication
  * @param projectId - ID of the project to delete
  * @returns Promise resolving when deletion is complete
  */
-export async function deleteProject(
-  accessToken: string,
-  projectId: string
-): Promise<void> {
+export async function deleteProject(projectId: string): Promise<void> {
   // Check if mock mode is enabled
   const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
 
@@ -140,8 +135,8 @@ export async function deleteProject(
 
   const response = await fetch(`${apiUrl}/projects/${projectId}`, {
     method: 'DELETE',
+    credentials: 'include',
     headers: {
-      Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
   });
@@ -158,14 +153,13 @@ export async function deleteProject(
 
 /**
  * Create a new project via the backend API or mock
- * @param accessToken - Logto access token for authentication
  * @param data - Project creation data
  * @returns Promise resolving to created project
  */
-export async function createProject(
-  accessToken: string,
-  data: { name: string; description: string }
-): Promise<Project> {
+export async function createProject(data: {
+  name: string;
+  description: string;
+}): Promise<Project> {
   // Check if mock mode is enabled
   const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
 
@@ -199,8 +193,8 @@ export async function createProject(
 
   const response = await fetch(`${apiUrl}/projects`, {
     method: 'POST',
+    credentials: 'include',
     headers: {
-      Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
@@ -242,12 +236,9 @@ export async function createProject(
 
 /**
  * Fetch dashboard statistics from the backend API or mock data
- * @param accessToken - Logto access token for authentication
  * @returns Promise resolving to dashboard statistics
  */
-export async function getDashboardStats(
-  accessToken: string
-): Promise<DashboardStats> {
+export async function getDashboardStats(): Promise<DashboardStats> {
   // Check if mock mode is enabled
   const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
 
@@ -267,8 +258,8 @@ export async function getDashboardStats(
 
   const response = await fetch(`${apiUrl}/dashboard/stats`, {
     method: 'GET',
+    credentials: 'include',
     headers: {
-      Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
   });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { ProjectResultsTab } from '../project-results-tab';
-import { useAccessToken } from '@/components/providers/token-provider';
+import { useAuthState } from '@/components/providers/auth-state-provider';
 import { useResults } from '@/lib/queries/results';
 import { useDatasets } from '@/lib/queries/datasets';
 
@@ -12,12 +12,12 @@ jest.mock('@/components/ui/toast-provider', () => ({
     dismiss: jest.fn(),
   })),
 }));
-jest.mock('@/components/providers/token-provider');
+jest.mock('@/components/providers/auth-state-provider');
 jest.mock('@/lib/queries/results');
 jest.mock('@/lib/queries/datasets');
 
-const mockUseAccessToken = useAccessToken as jest.MockedFunction<
-  typeof useAccessToken
+const mockUseAuthState = useAuthState as jest.MockedFunction<
+  typeof useAuthState
 >;
 const mockUseResults = useResults as jest.MockedFunction<typeof useResults>;
 const mockUseDatasets = useDatasets as jest.MockedFunction<typeof useDatasets>;
@@ -27,9 +27,7 @@ const emptyResultsReturn = {
     pages: [{ results: [], totalCount: 0, offset: 0, hasMore: false }],
     pageParams: [0],
   },
-  isLoading: false,
   isError: false,
-  error: null,
   hasNextPage: false,
   isFetchingNextPage: false,
   fetchNextPage: jest.fn(),
@@ -44,11 +42,7 @@ const emptyResultsReturn = {
 describe('ProjectResultsTab', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseAccessToken.mockReturnValue({
-      accessToken: 'mock-token',
-      isLoading: false,
-      error: null,
-      refreshToken: jest.fn(),
+    mockUseAuthState.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
     });

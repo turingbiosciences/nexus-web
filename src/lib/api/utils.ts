@@ -18,11 +18,16 @@ export function getApiUrl(): string {
 }
 
 /**
- * Get error message for missing/invalid access token
- * @param tokenError - Optional token error to include in message
+ * Get the error message shown when a request is attempted without a valid
+ * session.
+ *
+ * The client holds no API credential of its own any more — the proxy supplies
+ * one — so the only thing that can be missing here is the Logto session.
+ *
+ * @param authError - Optional underlying error to include in the message
  */
-export function getTokenErrorMessage(tokenError?: Error | null): string {
-  return tokenError
-    ? `Authentication error: ${tokenError.message}`
-    : 'Authentication token unavailable. Please sign out and sign back in to obtain an access token.';
+export function getTokenErrorMessage(authError?: Error | null): string {
+  return authError
+    ? `Authentication error: ${authError.message}`
+    : 'You are not signed in. Please sign in again to continue.';
 }

@@ -1,155 +1,42 @@
 /**
- * Global authentication-aware fetch wrapper that handles token expiration.
+ * Fetch wrapper for calls to the API, with session-expiry handling.
  *
- * This wrapper:
- * 1. Adds Authorization header automatically
- * 2. Detects 401 errors with expired token messages
- * 3. Attempts to refresh the token once
- * 4. If refresh fails, redirects to sign-out
- * 5. Throws descriptive errors that React Query can catch globally
+ * These requests go to the same-origin /api/turing/* proxy, which attaches
+ * credentials server-side. There is no token to pass in and none to refresh
+ * here — the proxy obtains a fresh one per request. What the client still has
+ * to handle is its own Logto *session* expiring, which surfaces as a 401 from
+ * the proxy's authentication check; the only recovery is to sign in again.
  */
 
 import { logger } from './logger';
 
-interface AuthFetchOptions extends RequestInit {
-  token: string;
-  onTokenRefresh?: () => Promise<string | null>;
-}
-
-export class TokenExpiredError extends Error {
+export class SessionExpiredError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'TokenExpiredError';
+    this.name = 'SessionExpiredError';
   }
 }
 
 /**
- * Check if an error or response indicates an expired token
- */
-function isTokenExpiredError(status: number, body: string): boolean {
-  if (status !== 401) return false;
-
-  return (
-    body.includes('Signature has expired') ||
-    body.includes('token expired') ||
-    body.includes('Invalid token') ||
-    body.includes('Unauthorized')
-  );
-}
-
-/**
- * Helper to safely merge Authorization header with existing headers
- * Handles plain objects, Headers instances, and array of arrays
- */
-function getHeadersWithAuth(
-  headers: HeadersInit | undefined,
-  token: string
-): HeadersInit {
-  if (headers instanceof Headers) {
-    const newHeaders = new Headers(headers);
-    newHeaders.set('Authorization', `Bearer ${token}`);
-    return newHeaders;
-  }
-
-  if (Array.isArray(headers)) {
-    const newHeaders = new Headers(headers);
-    newHeaders.set('Authorization', `Bearer ${token}`);
-    return newHeaders;
-  }
-
-  return {
-    ...(headers as Record<string, string>),
-    Authorization: `Bearer ${token}`,
-  };
-}
-
-/**
- * Authentication-aware fetch that automatically handles token expiration.
- * Use this for all authenticated API calls.
+ * Fetch an API path through the proxy, redirecting to sign-out if the session
+ * is no longer valid.
+ *
+ * `credentials: 'include'` is what carries the Logto session cookie to the
+ * proxy. Without it the proxy sees an anonymous request and rejects every call.
  */
 export async function authFetch(
   url: string,
-  options: AuthFetchOptions
-): Promise<Response> {
-  const { token, onTokenRefresh, ...fetchOptions } = options;
-
-  // First attempt with current token
-  let response = await fetch(url, {
-    ...fetchOptions,
-    headers: getHeadersWithAuth(fetchOptions.headers, token),
-  });
-
-  // Check if token expired
-  if (response.status === 401) {
-    const errorText = await response.clone().text();
-    const isExpired = isTokenExpiredError(response.status, errorText);
-
-    if (isExpired) {
-      logger.info('Token expired, attempting refresh...');
-
-      // Try to refresh token if handler provided
-      if (onTokenRefresh) {
-        try {
-          const newToken = await onTokenRefresh();
-
-          if (newToken) {
-            logger.info('Token refreshed, retrying request');
-            // Retry with new token
-            response = await fetch(url, {
-              ...fetchOptions,
-              headers: getHeadersWithAuth(fetchOptions.headers, newToken),
-            });
-
-            // If still 401 after refresh, give up and redirect
-            if (response.status === 401) {
-              logger.error('Still unauthorized after token refresh');
-              window.location.href = '/api/logto/sign-out';
-              throw new TokenExpiredError(
-                'Session expired. Please sign in again.'
-              );
-            }
-
-            return response;
-          }
-        } catch (refreshError) {
-          logger.error({ error: refreshError }, 'Token refresh error');
-          window.location.href = '/api/logto/sign-out';
-          throw new TokenExpiredError('Session expired. Please sign in again.');
-        }
-      }
-
-      // If no refresh handler or refresh failed, redirect to sign out
-      logger.error('Token expired and no refresh available, signing out');
-      window.location.href = '/api/logto/sign-out';
-      throw new TokenExpiredError('Session expired. Please sign in again.');
-    }
-  }
-
-  return response;
-}
-
-/**
- * Simplified fetch for authenticated requests without token refresh.
- * Useful for one-off requests where you just want to detect expiration.
- */
-export async function simpleFetch(
-  url: string,
-  token: string,
   options?: RequestInit
 ): Promise<Response> {
   const response = await fetch(url, {
     ...options,
-    headers: getHeadersWithAuth(options?.headers, token),
+    credentials: 'include',
   });
 
-  // Check for token expiration
   if (response.status === 401) {
-    const errorText = await response.clone().text();
-    if (isTokenExpiredError(response.status, errorText)) {
-      logger.error('Token expired, signing out');
-      window.location.href = '/api/logto/sign-out';
-      throw new TokenExpiredError('Session expired. Please sign in again.');
-    }
+    logger.error({ url }, 'Session rejected by API proxy, signing out');
+    window.location.href = '/api/logto/sign-out';
+    throw new SessionExpiredError('Session expired. Please sign in again.');
   }
 
   return response;

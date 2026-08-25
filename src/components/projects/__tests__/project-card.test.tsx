@@ -18,8 +18,8 @@ jest.mock('next/link', () => {
 });
 
 // Mock providers
-jest.mock('@/components/providers/token-provider', () => ({
-  useAccessToken: () => ({
+jest.mock('@/components/providers/auth-state-provider', () => ({
+  useAuthState: () => ({
     accessToken: 'mock-token',
     isLoading: false,
     error: null,

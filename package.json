@@ -10,7 +10,6 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "test": "jest",
-    "test:token": "node --import tsx scripts/test-user-token.ts",
     "test:token:m2m": "node --import tsx scripts/test-token-exchange.ts",
     "prepare": "husky"
   },

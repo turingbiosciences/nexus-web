@@ -19,7 +19,7 @@ describe('projects API', () => {
     it('returns mock data when in mock mode', async () => {
       process.env.NEXT_PUBLIC_DATA_MODE = 'mock';
 
-      const result = await fetchProjects('fake-token');
+      const result = await fetchProjects();
 
       expect(result).toEqual(mockProjects);
       expect(global.fetch).not.toHaveBeenCalled();
@@ -48,7 +48,7 @@ describe('projects API', () => {
         json: async () => mockResponse,
       });
 
-      const result = await fetchProjects('test-token');
+      const result = await fetchProjects();
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
@@ -63,8 +63,8 @@ describe('projects API', () => {
       expect(typeof result[0].lastActivity).toBe('string');
       expect(global.fetch).toHaveBeenCalledWith('/api/turing/projects', {
         method: 'GET',
+        credentials: 'include',
         headers: {
-          Authorization: 'Bearer test-token',
           'Content-Type': 'application/json',
         },
       });
@@ -80,7 +80,7 @@ describe('projects API', () => {
         text: async () => 'Server error details',
       });
 
-      await expect(fetchProjects('test-token')).rejects.toThrow(
+      await expect(fetchProjects()).rejects.toThrow(
         'Failed to fetch projects: 500 Internal Server Error - Server error details'
       );
     });
@@ -97,7 +97,7 @@ describe('projects API', () => {
         },
       });
 
-      await expect(fetchProjects('test-token')).rejects.toThrow(
+      await expect(fetchProjects()).rejects.toThrow(
         'Failed to fetch projects: 500 Internal Server Error - Unknown error'
       );
     });
@@ -110,7 +110,7 @@ describe('projects API', () => {
         json: async () => ({}),
       });
 
-      const result = await fetchProjects('test-token');
+      const result = await fetchProjects();
 
       expect(result).toEqual([]);
     });
@@ -125,7 +125,7 @@ describe('projects API', () => {
         description: 'Mock description',
       };
 
-      const result = await createProject('fake-token', projectData);
+      const result = await createProject(projectData);
 
       expect(result).toMatchObject({
         name: projectData.name,
@@ -160,7 +160,7 @@ describe('projects API', () => {
         json: async () => mockCreatedProject,
       });
 
-      const result = await createProject('test-token', projectData);
+      const result = await createProject(projectData);
 
       expect(result).toMatchObject({
         id: 'new-123',
@@ -174,8 +174,8 @@ describe('projects API', () => {
       expect(result.updatedAt).toBeInstanceOf(Date);
       expect(global.fetch).toHaveBeenCalledWith('/api/turing/projects', {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          Authorization: 'Bearer test-token',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(projectData),
@@ -193,7 +193,7 @@ describe('projects API', () => {
       });
 
       await expect(
-        createProject('test-token', { name: 'Test', description: 'Test' })
+        createProject({ name: 'Test', description: 'Test' })
       ).rejects.toThrow(
         'Failed to create project: 400 Bad Request - Invalid project data'
       );
@@ -212,7 +212,7 @@ describe('projects API', () => {
       });
 
       await expect(
-        createProject('test-token', { name: 'Test', description: 'Test' })
+        createProject({ name: 'Test', description: 'Test' })
       ).rejects.toThrow(
         'Failed to create project: 500 Internal Server Error - Unknown error'
       );
@@ -223,7 +223,7 @@ describe('projects API', () => {
     it('returns mock data when in mock mode', async () => {
       process.env.NEXT_PUBLIC_DATA_MODE = 'mock';
 
-      const result = await getDashboardStats('fake-token');
+      const result = await getDashboardStats();
 
       expect(result).toEqual(mockDashboardStats);
       expect(global.fetch).not.toHaveBeenCalled();
@@ -244,13 +244,13 @@ describe('projects API', () => {
         json: async () => mockResponse,
       });
 
-      const result = await getDashboardStats('test-token');
+      const result = await getDashboardStats();
 
       expect(result).toEqual(mockResponse);
       expect(global.fetch).toHaveBeenCalledWith('/api/turing/dashboard/stats', {
         method: 'GET',
+        credentials: 'include',
         headers: {
-          Authorization: 'Bearer test-token',
           'Content-Type': 'application/json',
         },
       });
@@ -266,7 +266,7 @@ describe('projects API', () => {
         text: async () => 'Server error',
       });
 
-      await expect(getDashboardStats('test-token')).rejects.toThrow(
+      await expect(getDashboardStats()).rejects.toThrow(
         'Failed to fetch dashboard stats: 500 Internal Server Error - Server error'
       );
     });

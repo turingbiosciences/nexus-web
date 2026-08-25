@@ -4,8 +4,8 @@ import { ProjectSettingsTab } from '@/components/projects/project-settings-tab';
 import { Project } from '@/types/project';
 
 // Mock dependencies
-jest.mock('@/components/providers/token-provider', () => ({
-  useAccessToken: jest.fn(),
+jest.mock('@/components/providers/auth-state-provider', () => ({
+  useAuthState: jest.fn(),
 }));
 
 jest.mock('@/lib/auth-fetch', () => ({
@@ -16,11 +16,11 @@ jest.mock('@/components/ui/toast-provider', () => ({
   useToast: jest.fn(),
 }));
 
-import { useAccessToken } from '@/components/providers/token-provider';
+import { useAuthState } from '@/components/providers/auth-state-provider';
 import { authFetch } from '@/lib/auth-fetch';
 import { useToast } from '@/components/ui/toast-provider';
 
-const mockedUseAccessToken = useAccessToken as jest.Mock;
+const mockedUseAuthState = useAuthState as jest.Mock;
 const mockedAuthFetch = authFetch as jest.Mock;
 const mockedUseToast = useToast as jest.Mock;
 
@@ -46,7 +46,7 @@ describe('ProjectSettingsTab', () => {
     jest.resetModules();
     process.env = { ...originalEnv };
 
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       accessToken: 'mock-token',
       refreshToken: mockRefreshToken,
       isAuthenticated: true,
@@ -166,7 +166,6 @@ describe('ProjectSettingsTab', () => {
         expect.stringContaining('/projects/project-1'),
         expect.objectContaining({
           method: 'PUT',
-          token: 'mock-token',
           headers: {
             'Content-Type': 'application/json',
           },

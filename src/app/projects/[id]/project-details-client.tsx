@@ -6,7 +6,7 @@ import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 // Use projects provider for dynamic state
 import { useProjects } from '@/components/providers/projects-provider';
-import { useAccessToken } from '@/components/providers/token-provider';
+import { useAuthState } from '@/components/providers/auth-state-provider';
 import { SignInPrompt } from '@/components/auth/sign-in-prompt';
 import { LoadingCard } from '@/components/ui/loading-card';
 import { Button } from '@/components/ui/button';
@@ -33,8 +33,7 @@ interface ProjectDetailsClientProps {
 
 export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
   const router = useRouter();
-  const { isAuthenticated, authLoading, accessToken, refreshToken } =
-    useAccessToken();
+  const { isAuthenticated, authLoading } = useAuthState();
   const { push: pushToast } = useToast();
   const [activeTab, setActiveTab] = useState<
     'overview' | 'activity' | 'datasets' | 'settings'
@@ -109,7 +108,6 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     error: jobError,
     disconnect: disconnectJob,
   } = useJobStatus(projectId, activeJobId, {
-    accessToken,
     enabled: !!activeJobId,
     onComplete: handleJobComplete,
     onError: handleJobError,
@@ -162,7 +160,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     excludeColumns: string[],
     earlyStop: boolean
   ) => {
-    if (!project || !accessToken) return;
+    if (!project || !isAuthenticated) return;
 
     setIsRunning(true);
     try {
@@ -171,8 +169,6 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
         `${baseUrl}/projects/${project.id}/training/start`,
         {
           method: 'POST',
-          token: accessToken,
-          onTokenRefresh: refreshToken,
           headers: {
             'Content-Type': 'application/json',
           },

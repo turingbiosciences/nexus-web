@@ -193,3 +193,9 @@ export const PUT = handle;
 export const PATCH = handle;
 export const DELETE = handle;
 export const HEAD = handle;
+// OPTIONS is forwarded rather than answered locally because resumable uploads
+// use it for capability discovery: tus-js-client reads Tus-Resumable,
+// Tus-Version and Tus-Extension off the response. Answering here with a stock
+// CORS preflight would strip those and silently push every upload onto the XHR
+// fallback path.
+export const OPTIONS = handle;

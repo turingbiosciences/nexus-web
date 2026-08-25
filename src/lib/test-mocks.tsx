@@ -146,21 +146,16 @@ export function cleanupTestEnv() {
 }
 
 /**
- * Creates a mock for the useAccessToken hook
- * For use in tests that need to mock the token provider
+ * Creates a mock for the useAuthState hook.
+ *
+ * There is no token here on purpose: the client holds no API credential, so
+ * the whole of auth state is these two booleans.
  */
-export function createAccessTokenMock(overrides?: {
-  accessToken?: string | null;
-  isLoading?: boolean;
-  error?: Error | null;
+export function createAuthStateMock(overrides?: {
   isAuthenticated?: boolean;
   authLoading?: boolean;
 }) {
   return {
-    accessToken: 'mock-token',
-    isLoading: false,
-    error: null,
-    refreshToken: jest.fn().mockResolvedValue('new-token'),
     isAuthenticated: true,
     authLoading: false,
     ...overrides,
@@ -171,8 +166,5 @@ export function createAccessTokenMock(overrides?: {
  * Creates a mock for unauthenticated state
  */
 export function createUnauthenticatedMock() {
-  return createAccessTokenMock({
-    accessToken: null,
-    isAuthenticated: false,
-  });
+  return createAuthStateMock({ isAuthenticated: false });
 }

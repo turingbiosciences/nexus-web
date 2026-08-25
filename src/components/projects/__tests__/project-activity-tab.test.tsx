@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { ProjectActivityTab } from '../project-activity-tab';
 import { useActivities } from '@/lib/queries/activities';
 import { ProjectsProvider } from '@/components/providers/projects-provider';
-import { TokenProvider } from '@/components/providers/token-provider';
+import { AuthStateProvider } from '@/components/providers/auth-state-provider';
 
 // Mock the useActivities hook
 jest.mock('@/lib/queries/activities');
@@ -28,9 +28,9 @@ describe('ProjectActivityTab', () => {
 
   const renderWithProviders = (ui: React.ReactElement) => {
     return render(
-      <TokenProvider>
+      <AuthStateProvider>
         <ProjectsProvider>{ui}</ProjectsProvider>
-      </TokenProvider>
+      </AuthStateProvider>
     );
   };
 

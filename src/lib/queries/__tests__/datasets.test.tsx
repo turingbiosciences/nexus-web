@@ -9,15 +9,15 @@ jest.mock('@/config/flags', () => ({
   IS_MOCK: false,
 }));
 
-jest.mock('@/components/providers/token-provider', () => ({
-  useAccessToken: jest.fn(),
+jest.mock('@/components/providers/auth-state-provider', () => ({
+  useAuthState: jest.fn(),
 }));
 
 jest.mock('@/lib/auth-fetch');
 
-const mockedUseAccessToken = jest.requireMock(
-  '@/components/providers/token-provider'
-).useAccessToken;
+const mockedUseAuthState = jest.requireMock(
+  '@/components/providers/auth-state-provider'
+).useAuthState;
 const mockedAuthFetch = jest.requireMock('@/lib/auth-fetch').authFetch;
 
 // Test wrapper with React Query
@@ -54,7 +54,7 @@ describe('useDatasets', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Set up default mock responses
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       accessToken: 'mock-token',
       isAuthenticated: true,
       refreshToken: jest.fn().mockResolvedValue('new-token'),
@@ -106,7 +106,6 @@ describe('useDatasets', () => {
         expect.stringContaining('/projects/project-1/files'),
         expect.objectContaining({
           method: 'GET',
-          token: 'mock-token',
           headers: { 'Content-Type': 'application/json' },
         })
       );
@@ -184,7 +183,7 @@ describe('useDatasets', () => {
     });
 
     it('is disabled when not authenticated', () => {
-      mockedUseAccessToken.mockReturnValue({
+      mockedUseAuthState.mockReturnValue({
         accessToken: null,
         isAuthenticated: false,
         refreshToken: jest.fn(),
@@ -199,11 +198,11 @@ describe('useDatasets', () => {
       expect(mockedAuthFetch).not.toHaveBeenCalled();
     });
 
-    it('is disabled when accessToken is missing', () => {
-      mockedUseAccessToken.mockReturnValue({
-        accessToken: null,
-        isAuthenticated: true,
-        refreshToken: jest.fn(),
+    it('is disabled when the user is not signed in', () => {
+      // There is no separate "authenticated but tokenless" state any more —
+      // the client holds no token at all — so signed-out is the only gate.
+      mockedUseAuthState.mockReturnValue({
+        isAuthenticated: false,
         authLoading: false,
       });
 
