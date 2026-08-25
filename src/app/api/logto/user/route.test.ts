@@ -36,6 +36,24 @@ jest.mock('@/lib/rate-limit', () => ({
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { NO_CACHE_HEADERS } from '@/lib/http-headers';
 
+/**
+ * Set NODE_ENV for the duration of a test.
+ *
+ * Plain assignment, not a property definition: as of Node 20+ (verified on
+ * v24) defining NODE_ENV on `process.env` is silently ignored — the descriptor
+ * updates but the value the env store returns does not, so the route under
+ * test kept seeing NODE_ENV='test' and never emitted _debug. Assignment goes
+ * through the setter that actually writes it. The cast is needed because Next
+ * narrows process.env.NODE_ENV to a literal union.
+ */
+const setNodeEnv = (value: string | undefined) => {
+  if (value === undefined) {
+    delete (process.env as Record<string, string | undefined>).NODE_ENV;
+  } else {
+    (process.env as Record<string, string | undefined>).NODE_ENV = value;
+  }
+};
+
 describe('User API Route', () => {
   let originalNodeEnv: string | undefined;
 
@@ -44,12 +62,7 @@ describe('User API Route', () => {
   });
 
   afterAll(() => {
-    if (originalNodeEnv) {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: originalNodeEnv,
-        writable: true,
-      });
-    }
+    setNodeEnv(originalNodeEnv);
   });
 
   beforeEach(() => {
@@ -62,10 +75,7 @@ describe('User API Route', () => {
     environment: 'development' | 'production',
     shouldHaveDebug: boolean
   ) => {
-    Object.defineProperty(process.env, 'NODE_ENV', {
-      value: environment,
-      writable: true,
-    });
+    setNodeEnv(environment);
 
     const mockUser = {
       isAuthenticated: true,
@@ -99,10 +109,7 @@ describe('User API Route', () => {
   });
 
   it('should set Cache-Control headers to prevent caching', async () => {
-    Object.defineProperty(process.env, 'NODE_ENV', {
-      value: 'production',
-      writable: true,
-    });
+    setNodeEnv('production');
 
     const mockUser = {
       isAuthenticated: true,
