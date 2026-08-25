@@ -2,7 +2,10 @@ import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Emits .next/standalone — a self-contained server bundle with only the
+  // node_modules actually reached at runtime. Required by the Docker runtime
+  // stage, which copies that directory instead of installing dependencies.
+  output: 'standalone',
 
   async headers() {
     // Parse the Turing API origin to include in CSP

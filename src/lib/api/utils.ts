@@ -5,9 +5,13 @@ import { getApiBaseUrl } from '@/lib/api/get-api-base';
  */
 
 /**
- * Get the base API URL, validated and normalized
- * @throws {Error} If NEXT_PUBLIC_TURING_API is not set
- * @returns Normalized API URL without trailing slash
+ * Get the base API URL, validated and normalized.
+ *
+ * On the client this is the same-origin proxy path; on the server it is the
+ * internal API address. See get-api-base.ts.
+ *
+ * @throws {Error} On the server, if TURING_API_INTERNAL_URL is not set
+ * @returns Normalized API base without trailing slash
  */
 export function getApiUrl(): string {
   return getApiBaseUrl();
