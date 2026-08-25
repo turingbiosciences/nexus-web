@@ -10,31 +10,19 @@ import React from 'react';
  * Standard beforeEach setup for tests
  * Clears all mocks and sets up environment
  */
-export function setupTestEnvironment(options?: {
-  apiUrl?: string;
-  clearMocks?: boolean;
-}) {
-  const { apiUrl = 'https://api.example.com', clearMocks = true } =
-    options || {};
+export function setupTestEnvironment(options?: { clearMocks?: boolean }) {
+  const { clearMocks = true } = options || {};
 
   if (clearMocks) {
     jest.clearAllMocks();
-  }
-
-  if (apiUrl) {
-    process.env.NEXT_PUBLIC_TURING_API = apiUrl;
   }
 }
 
 /**
  * Standard afterEach cleanup for tests
  */
-export function cleanupTestEnvironment(options?: { removeApiUrl?: boolean }) {
-  const { removeApiUrl = true } = options || {};
-
-  if (removeApiUrl) {
-    delete process.env.NEXT_PUBLIC_TURING_API;
-  }
+export function cleanupTestEnvironment() {
+  jest.restoreAllMocks();
 }
 
 /**

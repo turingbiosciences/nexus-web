@@ -126,13 +126,15 @@ export function createSuccessQueryReturn<T>(data: T) {
 }
 
 /**
- * Sets up common test environment (API URL, clears mocks)
+ * Sets up common test environment
  * Call in beforeEach
+ *
+ * No API URL is configured any more: the browser calls the same-origin
+ * /api/turing/* proxy, so getApiBaseUrl() returns a fixed path and reads no
+ * environment variable.
  */
-export function setupTestEnv(options?: { apiUrl?: string }) {
-  const { apiUrl = 'https://api.example.com' } = options || {};
+export function setupTestEnv() {
   jest.clearAllMocks();
-  process.env.NEXT_PUBLIC_TURING_API = apiUrl;
 }
 
 /**
@@ -140,7 +142,7 @@ export function setupTestEnv(options?: { apiUrl?: string }) {
  * Call in afterEach
  */
 export function cleanupTestEnv() {
-  delete process.env.NEXT_PUBLIC_TURING_API;
+  jest.restoreAllMocks();
 }
 
 /**

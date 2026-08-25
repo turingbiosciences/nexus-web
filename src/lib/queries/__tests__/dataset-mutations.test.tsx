@@ -16,14 +16,10 @@ jest.mock('@/components/providers/token-provider', () => ({
   useAccessToken: () => mockUseAccessToken(),
 }));
 
-// Mock environment variable
 const originalEnv = process.env;
 
 beforeEach(() => {
-  process.env = {
-    ...originalEnv,
-    NEXT_PUBLIC_TURING_API: 'http://localhost:8000',
-  };
+  process.env = { ...originalEnv };
 });
 
 afterEach(() => {

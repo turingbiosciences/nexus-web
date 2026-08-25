@@ -34,7 +34,6 @@ const mockUseAccessToken = useAccessToken as jest.Mock;
 
 describe('FileUploader', () => {
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.test';
     mockUseDropzone.mockClear();
     mockUseAccessToken.mockReturnValue({
       accessToken: 'mock-token',

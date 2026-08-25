@@ -36,8 +36,6 @@ function createWrapper() {
 }
 
 describe('useActivities', () => {
-  const originalEnv = process.env.NEXT_PUBLIC_TURING_API;
-
   const mockActivities: ProjectActivity[] = [
     {
       id: 'act-1',
@@ -52,14 +50,6 @@ describe('useActivities', () => {
       at: new Date('2024-06-15T11:00:00'),
     },
   ];
-
-  beforeAll(() => {
-    process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
-  });
-
-  afterAll(() => {
-    process.env.NEXT_PUBLIC_TURING_API = originalEnv;
-  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -359,24 +349,6 @@ describe('useActivities', () => {
   });
 
   describe('Error Handling', () => {
-    it('throws error when NEXT_PUBLIC_TURING_API is missing', async () => {
-      const originalEnv = process.env.NEXT_PUBLIC_TURING_API;
-      delete process.env.NEXT_PUBLIC_TURING_API;
-
-      const { result } = renderHook(() => useActivities('project-1'), {
-        wrapper: createWrapper(),
-      });
-
-      await waitFor(() => expect(result.current.isError).toBe(true));
-
-      expect(result.current.error).toBeDefined();
-      expect(String(result.current.error)).toContain(
-        'Missing NEXT_PUBLIC_TURING_API'
-      );
-
-      process.env.NEXT_PUBLIC_TURING_API = originalEnv;
-    });
-
     it('throws error when accessToken is not available during fetch', async () => {
       mockedUseAccessToken.mockReturnValue({
         accessToken: null,

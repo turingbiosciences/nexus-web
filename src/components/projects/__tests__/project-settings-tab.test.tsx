@@ -44,10 +44,7 @@ describe('ProjectSettingsTab', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetModules();
-    process.env = {
-      ...originalEnv,
-      NEXT_PUBLIC_TURING_API: 'https://api.example.com',
-    };
+    process.env = { ...originalEnv };
 
     mockedUseAccessToken.mockReturnValue({
       accessToken: 'mock-token',
