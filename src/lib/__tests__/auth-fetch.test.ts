@@ -1,4 +1,14 @@
-import { authFetch, SessionExpiredError } from '@/lib/auth-fetch';
+import {
+  authFetch,
+  SessionExpiredError,
+  resetSignOutLatch,
+} from '@/lib/auth-fetch';
+
+/** Queues the /api/logto/user reply that authFetch makes after a 401. */
+const sessionCheck = (isAuthenticated: boolean) => ({
+  ok: true,
+  json: async () => ({ isAuthenticated }),
+});
 
 // Mock the logger so the tests do not emit noise
 jest.mock('@/lib/logger', () => ({
@@ -15,6 +25,7 @@ describe('auth-fetch', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    resetSignOutLatch();
     global.fetch = jest.fn();
     // jsdom's location is not writable; replace it so we can observe redirects.
     Object.defineProperty(window, 'location', {
@@ -82,15 +93,76 @@ describe('auth-fetch', () => {
       });
     });
 
-    it('throws SessionExpiredError and redirects to sign-out on 401', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        status: 401,
-      });
+    it('signs out on 401 once the server confirms the session is gone', async () => {
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({ ok: false, status: 401 })
+        .mockResolvedValueOnce(sessionCheck(false));
 
       await expect(authFetch('/api/turing/projects')).rejects.toThrow(
         SessionExpiredError
       );
+      expect(window.location.href).toBe('/api/logto/sign-out');
+    });
+
+    it('does NOT sign out when the session is still valid', async () => {
+      // The sign-out loop: a transient proxy 401 ended a live session, the user
+      // signed back in, and the next blip did it again.
+      const unauthorized = { ok: false, status: 401 };
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce(unauthorized)
+        .mockResolvedValueOnce(sessionCheck(true));
+
+      const response = await authFetch('/api/turing/projects');
+
+      expect(response).toBe(unauthorized);
+      expect(window.location.href).toBe('');
+    });
+
+    it('does NOT sign out when the session check itself fails', async () => {
+      // Being unable to reach /api/logto/user is not evidence of a dead
+      // session, and signing out is the destructive reading.
+      const unauthorized = { ok: false, status: 401 };
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce(unauthorized)
+        .mockRejectedValueOnce(new Error('network down'));
+
+      const response = await authFetch('/api/turing/projects');
+
+      expect(response).toBe(unauthorized);
+      expect(window.location.href).toBe('');
+    });
+
+    it('checks the session against the server, with credentials', async () => {
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({ ok: false, status: 401 })
+        .mockResolvedValueOnce(sessionCheck(true));
+
+      await authFetch('/api/turing/projects');
+
+      expect(global.fetch).toHaveBeenLastCalledWith('/api/logto/user', {
+        credentials: 'include',
+      });
+    });
+
+    it('only redirects once when concurrent requests all 401', async () => {
+      (global.fetch as jest.Mock).mockImplementation(async (url: string) =>
+        url === '/api/logto/user'
+          ? sessionCheck(false)
+          : { ok: false, status: 401 }
+      );
+
+      const results = await Promise.allSettled([
+        authFetch('/api/turing/a'),
+        authFetch('/api/turing/b'),
+        authFetch('/api/turing/c'),
+      ]);
+
+      expect(results.every((r) => r.status === 'rejected')).toBe(true);
+      const signOutChecks = (global.fetch as jest.Mock).mock.calls.filter(
+        ([u]) => u === '/api/logto/user'
+      );
+      // The latch stops later 401s from re-running the check and re-navigating.
+      expect(signOutChecks.length).toBeLessThanOrEqual(3);
       expect(window.location.href).toBe('/api/logto/sign-out');
     });
 

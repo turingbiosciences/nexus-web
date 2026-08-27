@@ -6,7 +6,6 @@ import { AuthProvider } from '@/components/auth/auth-provider';
 import { ToastProvider } from '@/components/ui/toast-provider';
 import { ProjectsProvider } from '@/components/providers/projects-provider';
 import { AuthStateProvider } from '@/components/providers/auth-state-provider';
-import { GlobalFetchInterceptor } from '@/components/providers/global-fetch-interceptor';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -26,7 +25,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <GlobalFetchInterceptor />
         <ToastProvider>
           <AuthProvider>
             <AuthStateProvider>

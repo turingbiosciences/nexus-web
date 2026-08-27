@@ -93,6 +93,19 @@ async function handle(
   try {
     const { isAuthenticated } = await logto.getLogtoContext(req);
     if (!isAuthenticated) {
+      // Logged because this branch is otherwise invisible: it returns 401
+      // without touching the API, so nothing appears in either app's logs and
+      // the failure looks like it came from nowhere. Path and cookie presence
+      // are enough to tell "no session" apart from "session not readable here"
+      // without putting anything sensitive in the log.
+      logger.warn(
+        {
+          path: req.nextUrl.pathname,
+          method: req.method,
+          hasCookie: req.headers.has('cookie'),
+        },
+        'API proxy rejected request: no authenticated Logto session'
+      );
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
   } catch (err) {
