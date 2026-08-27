@@ -24,6 +24,7 @@ import {
   ConvergenceTableData,
 } from './convergence-table-section';
 import { Download } from 'lucide-react';
+import { ComputeBadge, type ComputeInfo } from './compute-badge';
 import { useAuthState } from '@/components/providers/auth-state-provider';
 import { authFetch } from '@/lib/auth-fetch';
 import { getApiUrl } from '@/lib/api/utils';
@@ -38,6 +39,7 @@ interface AnalysisResult {
     };
     training_started_at?: string;
     training_completed_at?: string;
+    compute?: ComputeInfo | null;
     all_model_configs?: Record<string, ModelConfig>;
     graph_svg_url?: string | null;
     analysis_report_url?: string | null;
@@ -48,11 +50,17 @@ interface AnalysisResult {
   };
 }
 
-function formatDuration(startIso: string, endIso: string): string | null {
+/** Training duration in seconds, or null if either timestamp is unusable. */
+function durationSeconds(startIso: string, endIso: string): number | null {
   const start = new Date(startIso).getTime();
   const end = new Date(endIso).getTime();
   if (isNaN(start) || isNaN(end)) return null;
-  const secs = Math.max(0, Math.round((end - start) / 1000));
+  return Math.max(0, Math.round((end - start) / 1000));
+}
+
+function formatDuration(startIso: string, endIso: string): string | null {
+  const secs = durationSeconds(startIso, endIso);
+  if (secs === null) return null;
   if (secs < 60) return `${secs}s`;
   const m = Math.floor(secs / 60);
   const s = secs % 60;
@@ -245,14 +253,22 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                 const isExpanded = expandedResults.has(resultKey);
                 const resultData = (result as unknown as AnalysisResult).data;
                 const runParams = resultData?.run_parameters;
-                const trainingDuration =
+                const hasTrainingWindow = Boolean(
                   resultData?.training_started_at &&
                   resultData?.training_completed_at
-                    ? formatDuration(
-                        resultData.training_started_at,
-                        resultData.training_completed_at
-                      )
-                    : null;
+                );
+                const trainingDuration = hasTrainingWindow
+                  ? formatDuration(
+                      resultData!.training_started_at!,
+                      resultData!.training_completed_at!
+                    )
+                  : null;
+                const trainingSeconds = hasTrainingWindow
+                  ? durationSeconds(
+                      resultData!.training_started_at!,
+                      resultData!.training_completed_at!
+                    )
+                  : null;
                 const datasetFilename = runParams?.file_id
                   ? (datasetMap.get(runParams.file_id) ?? runParams.file_id)
                   : result.name;
@@ -327,6 +343,10 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                               Runtime: {trainingDuration}
                             </div>
                           )}
+                          <ComputeBadge
+                            compute={resultData?.compute}
+                            durationSeconds={trainingSeconds}
+                          />
                         </div>
                         <svg
                           className={`w-5 h-5 text-gray-400 transition-transform ${
