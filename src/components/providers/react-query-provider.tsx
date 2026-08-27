@@ -10,24 +10,18 @@ interface ReactQueryProviderProps {
 
 /**
  * Global error handler for React Query.
- * Checks for 401 errors with expired token messages and redirects to sign-out.
+ *
+ * This used to redirect to sign-out whenever an error message merely mentioned
+ * 401 or "Unauthorized". That is a string match on arbitrary error text, and it
+ * was one of three separate places that could independently end the session —
+ * which is how a single transient 401 turned into a sign-out loop.
+ *
+ * Sign-out now belongs to authFetch alone, which confirms with the server that
+ * the session is actually gone before acting. Here we only record the error.
  */
 function handleQueryError(error: unknown) {
   if (error instanceof Error) {
-    const is401Error =
-      error.message.includes('401') ||
-      error.message.includes('Unauthorized') ||
-      error.message.includes('Signature has expired') ||
-      error.message.includes('token expired') ||
-      error.message.includes('Invalid token');
-
-    if (is401Error) {
-      logger.error(
-        { error: error.message },
-        'ReactQuery: Token expired, redirecting to sign out'
-      );
-      window.location.href = '/api/logto/sign-out';
-    }
+    logger.error({ error: error.message }, 'ReactQuery: query error');
   }
 }
 
