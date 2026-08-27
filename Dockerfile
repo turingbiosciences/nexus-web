@@ -26,7 +26,12 @@ FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+# --ignore-scripts blocks dependency lifecycle scripts during install
+# (docker:S6505). Safe here: npm already withholds every install script in this
+# tree by default -- @sentry/cli, esbuild, sharp, unrs-resolver -- and
+# `next build` succeeds without them, because the native binaries those scripts
+# would fetch ship as ordinary optional dependencies instead.
+RUN npm ci --ignore-scripts
 
 # ---------- builder ----------
 FROM node:22-alpine AS builder

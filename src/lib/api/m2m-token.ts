@@ -13,7 +13,7 @@
 import { readSecret } from '@/lib/secret';
 
 if (typeof window !== 'undefined') {
-  throw new Error(
+  throw new TypeError(
     'm2m-token.ts is server-only and must not be imported by client code'
   );
 }

@@ -75,7 +75,14 @@ function internalBaseUrl(): string {
   if (!base) {
     throw new Error('Missing TURING_API_INTERNAL_URL environment variable');
   }
-  return base.replace(/\/+$/, '');
+  // Loop rather than /\/+$/: that pattern backtracks super-linearly on input
+  // that is mostly slashes, and getApiBaseUrl already strips trailing slashes
+  // this way.
+  let url = base;
+  while (url.endsWith('/')) {
+    url = url.slice(0, -1);
+  }
+  return url;
 }
 
 async function handle(

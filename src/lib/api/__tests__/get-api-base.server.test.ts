@@ -22,20 +22,12 @@ describe('getApiBaseUrl (server)', () => {
     process.env = originalEnv;
   });
 
-  it('returns the internal API URL', () => {
-    process.env.TURING_API_INTERNAL_URL = 'http://api:8080';
-
-    expect(getApiBaseUrl()).toBe('http://api:8080');
-  });
-
-  it('removes a trailing slash', () => {
-    process.env.TURING_API_INTERNAL_URL = 'http://api:8080/';
-
-    expect(getApiBaseUrl()).toBe('http://api:8080');
-  });
-
-  it('removes multiple trailing slashes', () => {
-    process.env.TURING_API_INTERNAL_URL = 'http://api:8080///';
+  it.each([
+    ['no trailing slash', 'http://api:8080'],
+    ['one trailing slash', 'http://api:8080/'],
+    ['several trailing slashes', 'http://api:8080///'],
+  ])('returns the internal API URL with %s', (_label, configured) => {
+    process.env.TURING_API_INTERNAL_URL = configured;
 
     expect(getApiBaseUrl()).toBe('http://api:8080');
   });

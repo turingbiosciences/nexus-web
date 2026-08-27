@@ -14,7 +14,7 @@
 import { readFileSync } from 'node:fs';
 
 if (typeof window !== 'undefined') {
-  throw new Error(
+  throw new TypeError(
     'secret.ts is server-only and must not be imported by client code'
   );
 }

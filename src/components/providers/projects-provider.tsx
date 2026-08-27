@@ -37,6 +37,13 @@ const ProjectsContext = createContext<ProjectsContextValue | undefined>(
   undefined
 );
 
+/** Why the initial fetch was skipped, for the debug log. */
+function skipReason(isAuthenticated: boolean, authLoading: boolean): string {
+  if (!isAuthenticated) return 'not authenticated';
+  if (authLoading) return 'auth loading';
+  return 'already fetched';
+}
+
 export function ProjectsProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   // Start with loading=true to prevent empty state flash during initial render
@@ -87,11 +94,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     if (!isAuthenticated || authLoading || hasFetched) {
       logger.debug(
         {
-          reason: !isAuthenticated
-            ? 'not authenticated'
-            : authLoading
-              ? 'auth loading'
-              : 'already fetched',
+          reason: skipReason(isAuthenticated, authLoading),
         },
         'ProjectsProvider skipping fetch'
       );

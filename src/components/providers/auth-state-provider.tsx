@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useMemo,
   ReactNode,
 } from 'react';
 import { logger } from '@/lib/logger';
@@ -72,8 +73,15 @@ export const AuthStateProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []); // Run once on mount
 
+  // Memoised: a fresh object literal here would be a new value on every render,
+  // re-rendering every consumer of the context even when neither flag changed.
+  const value = useMemo(
+    () => ({ isAuthenticated, authLoading }),
+    [isAuthenticated, authLoading]
+  );
+
   return (
-    <AuthStateContext.Provider value={{ isAuthenticated, authLoading }}>
+    <AuthStateContext.Provider value={value}>
       {children}
     </AuthStateContext.Provider>
   );
