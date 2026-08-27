@@ -24,7 +24,7 @@ import {
   ConvergenceTableData,
 } from './convergence-table-section';
 import { Download } from 'lucide-react';
-import { useAccessToken } from '@/components/providers/token-provider';
+import { useAuthState } from '@/components/providers/auth-state-provider';
 import { authFetch } from '@/lib/auth-fetch';
 import { getApiUrl } from '@/lib/api/utils';
 import { useToast } from '@/components/ui/toast-provider';
@@ -88,7 +88,7 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
     new Set()
   );
   const [isDownloading, setIsDownloading] = useState(false);
-  const { accessToken, refreshToken } = useAccessToken();
+  const { isAuthenticated } = useAuthState();
   const { push: pushToast } = useToast();
 
   // Reset expansion state when project changes
@@ -117,7 +117,7 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
   };
 
   const handleDownload = async () => {
-    if (!accessToken) {
+    if (!isAuthenticated) {
       pushToast({
         title: 'Sign in Required',
         description: 'You must be signed in to download results.',
@@ -130,11 +130,7 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
     try {
       const apiUrl = getApiUrl();
       const response = await authFetch(
-        `${apiUrl}/projects/${projectId}/download`,
-        {
-          token: accessToken,
-          onTokenRefresh: refreshToken,
-        }
+        `${apiUrl}/projects/${projectId}/download`
       );
 
       if (!response.ok) {

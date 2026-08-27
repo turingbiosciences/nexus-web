@@ -3,16 +3,16 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { AuthButton } from '@/components/auth/auth-button';
 
 // Mock the token provider hook used by AuthButton
-jest.mock('@/components/providers/token-provider', () => ({
-  useAccessToken: jest.fn(),
+jest.mock('@/components/providers/auth-state-provider', () => ({
+  useAuthState: jest.fn(),
 }));
 
-import { useAccessToken } from '@/components/providers/token-provider';
-const mockedUseAccessToken = useAccessToken as jest.Mock;
+import { useAuthState } from '@/components/providers/auth-state-provider';
+const mockedUseAuthState = useAuthState as jest.Mock;
 
 describe('AuthButton', () => {
   beforeEach(() => {
-    mockedUseAccessToken.mockReset();
+    mockedUseAuthState.mockReset();
     // Make window.location.href writable for redirect tests
     Object.defineProperty(window, 'location', {
       value: { href: 'http://localhost/', reload: jest.fn() },
@@ -21,7 +21,7 @@ describe('AuthButton', () => {
   });
 
   it('renders loading state when isLoading', () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       authLoading: true,
       isAuthenticated: false,
       accessToken: null,
@@ -32,7 +32,7 @@ describe('AuthButton', () => {
   });
 
   it('renders sign in when unauthenticated', () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       authLoading: false,
       isAuthenticated: false,
       accessToken: null,
@@ -45,7 +45,7 @@ describe('AuthButton', () => {
   });
 
   it('redirects to sign-in route on click when unauthenticated', () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       authLoading: false,
       isAuthenticated: false,
       accessToken: null,
@@ -58,7 +58,7 @@ describe('AuthButton', () => {
   });
 
   it('renders sign out when authenticated', () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       authLoading: false,
       isAuthenticated: true,
       accessToken: 'mock-token',
@@ -71,7 +71,7 @@ describe('AuthButton', () => {
   });
 
   it('redirects to sign-out route on click when authenticated', () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       authLoading: false,
       isAuthenticated: true,
       accessToken: 'mock-token',

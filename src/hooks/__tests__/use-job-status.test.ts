@@ -27,7 +27,6 @@ describe('useJobStatus', () => {
     it('should return initial state when disabled', () => {
       const { result } = renderHook(() =>
         useJobStatus(null, null, {
-          accessToken: null,
           enabled: false,
         })
       );
@@ -41,7 +40,6 @@ describe('useJobStatus', () => {
     it('should not connect without projectId', () => {
       const { result } = renderHook(() =>
         useJobStatus(null, 'job-123', {
-          accessToken: 'token',
           enabled: true,
         })
       );
@@ -53,19 +51,6 @@ describe('useJobStatus', () => {
     it('should not connect without jobId', () => {
       const { result } = renderHook(() =>
         useJobStatus('project-123', null, {
-          accessToken: 'token',
-          enabled: true,
-        })
-      );
-
-      expect(result.current.isConnected).toBe(false);
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    it('should not connect without accessToken', () => {
-      const { result } = renderHook(() =>
-        useJobStatus('project-123', 'job-123', {
-          accessToken: null,
           enabled: true,
         })
       );
@@ -81,7 +66,6 @@ describe('useJobStatus', () => {
 
       const { result } = renderHook(() =>
         useJobStatus('project-123', 'job-123', {
-          accessToken: 'token',
           enabled: true,
           useMock: true,
           onComplete,
@@ -102,7 +86,6 @@ describe('useJobStatus', () => {
     it('should provide disconnect function', () => {
       const { result } = renderHook(() =>
         useJobStatus('project-123', 'job-123', {
-          accessToken: 'token',
           enabled: true,
           useMock: true,
         })
@@ -122,7 +105,6 @@ describe('useJobStatus', () => {
     it('should disconnect on unmount', async () => {
       const { result, unmount } = renderHook(() =>
         useJobStatus('project-123', 'job-123', {
-          accessToken: 'token',
           enabled: true,
           useMock: true,
         })

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Project } from '@/types/project';
-import { useAccessToken } from '@/components/providers/token-provider';
+import { useAuthState } from '@/components/providers/auth-state-provider';
 import { authFetch } from '@/lib/auth-fetch';
 import { useToast } from '@/components/ui/toast-provider';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
@@ -25,7 +25,7 @@ export function ProjectSettingsTab({
   const [name, setName] = useState(project.name || '');
   const [description, setDescription] = useState(project.description || '');
   const [isSaving, setIsSaving] = useState(false);
-  const { accessToken, refreshToken } = useAccessToken();
+  const { isAuthenticated } = useAuthState();
   const { push: pushToast } = useToast();
 
   // Check if there are unsaved changes
@@ -34,15 +34,13 @@ export function ProjectSettingsTab({
     description !== (project.description || '');
 
   const handleSave = async () => {
-    if (!accessToken || !hasChanges) return;
+    if (!isAuthenticated || !hasChanges) return;
 
     setIsSaving(true);
     try {
       const baseUrl = getApiBaseUrl();
       const response = await authFetch(`${baseUrl}/projects/${project.id}`, {
         method: 'PUT',
-        token: accessToken,
-        onTokenRefresh: refreshToken,
         headers: {
           'Content-Type': 'application/json',
         },

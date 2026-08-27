@@ -1,53 +1,36 @@
+/**
+ * Server-side Logto configuration.
+ *
+ * SERVER ONLY. Reads secrets via src/lib/secret.ts, which imports node:fs.
+ * Client components must import from '@/lib/auth-client' instead — importing
+ * this module from the browser bundle will fail the build.
+ */
+
 import { LogtoNextConfig } from '@logto/next';
-import { logger } from '@/lib/logger';
+import { readSecret } from '@/lib/secret';
+import { logtoScopes } from '@/lib/auth-client';
 
-export const logtoScopes = [
-  'openid',
-  'profile',
-  'email',
-  'offline_access',
-  'all',
-];
+export { logtoScopes };
 
-// Determine resource from environment variables
-const turingApiResource =
-  process.env.NEXT_PUBLIC_TURING_API || process.env.TURING_API;
-
-// Build resources array - only include if resource is configured
-export const logtoResources = turingApiResource ? [turingApiResource] : [];
-
-// Log configuration state for debugging
-if (typeof window === 'undefined' && process.env.NODE_ENV === 'development') {
-  // Server-side only logging in development
-  logger.debug(
-    {
-      hasResource: !!turingApiResource,
-      resourceValue: turingApiResource || '(not set)',
-      resourcesArray: logtoResources,
-      nodeEnv: process.env.NODE_ENV,
-    },
-    'Auth configuration'
-  );
-}
-
+/**
+ * Secrets are read through getters rather than at module scope on purpose.
+ * Next.js evaluates route modules during `next build`, where /run/secrets does
+ * not exist — eager reads would fail the build. Getters defer the read to the
+ * first request, when the secret is mounted.
+ */
 export const logtoConfig: LogtoNextConfig = {
   appId: process.env.LOGTO_APP_ID!,
-  appSecret: process.env.LOGTO_APP_SECRET!,
   endpoint: process.env.LOGTO_ENDPOINT!,
   baseUrl: process.env.NEXTAUTH_URL!,
-  cookieSecret: process.env.NEXTAUTH_SECRET!,
   cookieSecure: process.env.NODE_ENV === 'production',
   scopes: logtoScopes,
+  get appSecret() {
+    return readSecret('LOGTO_APP_SECRET');
+  },
+  get cookieSecret() {
+    return readSecret('NEXTAUTH_SECRET');
+  },
   // NOTE: Do NOT include resources in user authentication config
-  // Resources are only for M2M token exchange (see /api/logto/token)
+  // Resources are only for M2M token exchange (see src/lib/api/m2m-token.ts)
   // Including resources here causes "invalid_target" errors in production
-};
-
-export const logtoClientConfig = {
-  endpoint: process.env.NEXT_PUBLIC_LOGTO_ENDPOINT!,
-  appId: process.env.NEXT_PUBLIC_LOGTO_APP_ID!,
-  scopes: logtoScopes,
-  // NOTE: Do NOT include resources in client auth config
-  // Client uses this only for auth state, not for API tokens
-  // API tokens are obtained server-side via M2M flow (see /api/logto/token)
-};
+} as LogtoNextConfig;

@@ -126,13 +126,15 @@ export function createSuccessQueryReturn<T>(data: T) {
 }
 
 /**
- * Sets up common test environment (API URL, clears mocks)
+ * Sets up common test environment
  * Call in beforeEach
+ *
+ * No API URL is configured any more: the browser calls the same-origin
+ * /api/turing/* proxy, so getApiBaseUrl() returns a fixed path and reads no
+ * environment variable.
  */
-export function setupTestEnv(options?: { apiUrl?: string }) {
-  const { apiUrl = 'https://api.example.com' } = options || {};
+export function setupTestEnv() {
   jest.clearAllMocks();
-  process.env.NEXT_PUBLIC_TURING_API = apiUrl;
 }
 
 /**
@@ -140,25 +142,20 @@ export function setupTestEnv(options?: { apiUrl?: string }) {
  * Call in afterEach
  */
 export function cleanupTestEnv() {
-  delete process.env.NEXT_PUBLIC_TURING_API;
+  jest.restoreAllMocks();
 }
 
 /**
- * Creates a mock for the useAccessToken hook
- * For use in tests that need to mock the token provider
+ * Creates a mock for the useAuthState hook.
+ *
+ * There is no token here on purpose: the client holds no API credential, so
+ * the whole of auth state is these two booleans.
  */
-export function createAccessTokenMock(overrides?: {
-  accessToken?: string | null;
-  isLoading?: boolean;
-  error?: Error | null;
+export function createAuthStateMock(overrides?: {
   isAuthenticated?: boolean;
   authLoading?: boolean;
 }) {
   return {
-    accessToken: 'mock-token',
-    isLoading: false,
-    error: null,
-    refreshToken: jest.fn().mockResolvedValue('new-token'),
     isAuthenticated: true,
     authLoading: false,
     ...overrides,
@@ -169,8 +166,5 @@ export function createAccessTokenMock(overrides?: {
  * Creates a mock for unauthenticated state
  */
 export function createUnauthenticatedMock() {
-  return createAccessTokenMock({
-    accessToken: null,
-    isAuthenticated: false,
-  });
+  return createAuthStateMock({ isAuthenticated: false });
 }

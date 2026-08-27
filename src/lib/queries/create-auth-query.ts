@@ -8,7 +8,7 @@ import {
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
-import { useAccessToken } from '@/components/providers/token-provider';
+import { useAuthState } from '@/components/providers/auth-state-provider';
 import { authFetch } from '@/lib/auth-fetch';
 import { logger } from '@/lib/logger';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
@@ -48,12 +48,11 @@ export interface BaseQueryOptions {
 }
 
 /**
- * Fetch data from the API with authentication
+ * Fetch data from the API through the same-origin proxy, which authenticates
+ * the request server-side.
  */
 async function fetchFromApi<TApiResponse>(
   endpoint: string,
-  accessToken: string,
-  onTokenRefresh: () => Promise<string | null>,
   params?: URLSearchParams
 ): Promise<TApiResponse> {
   const base = getApiBaseUrl();
@@ -63,8 +62,6 @@ async function fetchFromApi<TApiResponse>(
 
   const res = await authFetch(url, {
     method: 'GET',
-    token: accessToken,
-    onTokenRefresh,
     headers: {
       'Content-Type': 'application/json',
     },
@@ -111,7 +108,7 @@ export function createAuthQuery<
     projectId: string,
     options?: TOptions
   ): UseQueryResult<TResult, Error> {
-    const { accessToken, isAuthenticated, refreshToken } = useAccessToken();
+    const { isAuthenticated } = useAuthState();
     const { enabled = true, ...restOptions } = options || ({} as TOptions);
 
     // Build query key including relevant options
@@ -120,10 +117,6 @@ export function createAuthQuery<
     return useQuery({
       queryKey,
       queryFn: async (): Promise<TResult> => {
-        if (!accessToken) {
-          throw new Error('Access token not available');
-        }
-
         if (IS_MOCK) {
           logger.debug({ projectId, queryKeyPrefix }, 'Using mock data');
           return fetchMock(projectId, options);
@@ -133,16 +126,11 @@ export function createAuthQuery<
         const endpoint = getEndpoint(projectId, options);
         const params = buildParams?.(options);
 
-        const response = await fetchFromApi<TApiResponse>(
-          endpoint,
-          accessToken,
-          refreshToken,
-          params
-        );
+        const response = await fetchFromApi<TApiResponse>(endpoint, params);
 
         return transformResponse(response, projectId);
       },
-      enabled: enabled && !!projectId && isAuthenticated && !!accessToken,
+      enabled: enabled && !!projectId && isAuthenticated,
       staleTime,
       refetchOnMount,
     } as UseQueryOptions<TResult, Error>);

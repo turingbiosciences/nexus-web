@@ -1,18 +1,18 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { ResultsSection } from '../results-section';
-import { useAccessToken } from '@/components/providers/token-provider';
+import { useAuthState } from '@/components/providers/auth-state-provider';
 import { useResults } from '@/lib/queries/results';
 import { useDatasets } from '@/lib/queries/datasets';
 import {
-  createAccessTokenMock,
+  createAuthStateMock,
   createUnauthenticatedMock,
   setupTestEnv,
   cleanupTestEnv,
 } from '@/lib/test-mocks';
 import { useToast } from '@/components/ui/toast-provider';
 
-jest.mock('@/components/providers/token-provider');
+jest.mock('@/components/providers/auth-state-provider');
 jest.mock('@/lib/queries/results');
 jest.mock('@/lib/queries/datasets');
 jest.mock('@/components/ui/toast-provider', () => ({
@@ -21,8 +21,8 @@ jest.mock('@/components/ui/toast-provider', () => ({
 
 const mockPushToast = jest.fn();
 const mockUseToast = useToast as jest.MockedFunction<typeof useToast>;
-const mockUseAccessToken = useAccessToken as jest.MockedFunction<
-  typeof useAccessToken
+const mockUseAuthState = useAuthState as jest.MockedFunction<
+  typeof useAuthState
 >;
 const mockUseResults = useResults as jest.MockedFunction<typeof useResults>;
 const mockUseDatasets = useDatasets as jest.MockedFunction<typeof useDatasets>;
@@ -61,7 +61,7 @@ function makeResultsReturn(
 describe('ResultsSection', () => {
   beforeEach(() => {
     setupTestEnv();
-    mockUseAccessToken.mockReturnValue(createAccessTokenMock());
+    mockUseAuthState.mockReturnValue(createAuthStateMock());
     mockUseToast.mockReturnValue({
       push: mockPushToast,
       toasts: [],
@@ -269,8 +269,8 @@ describe('ResultsSection', () => {
   it('shows error toast when downloading without access token', async () => {
     const results = [{ id: '1', name: 'R1', type: 'T', createdAt: new Date() }];
     mockUseResults.mockReturnValue(makeResultsReturn(results));
-    mockUseAccessToken.mockReturnValue(
-      createAccessTokenMock({ accessToken: null, isAuthenticated: true })
+    mockUseAuthState.mockReturnValue(
+      createAuthStateMock({ isAuthenticated: false })
     );
 
     render(<ResultsSection projectId="p1" />);
@@ -286,7 +286,7 @@ describe('ResultsSection', () => {
   });
 
   it('renders empty state when not authenticated', () => {
-    mockUseAccessToken.mockReturnValue(createUnauthenticatedMock());
+    mockUseAuthState.mockReturnValue(createUnauthenticatedMock());
 
     render(<ResultsSection projectId="test-project-id" />);
 

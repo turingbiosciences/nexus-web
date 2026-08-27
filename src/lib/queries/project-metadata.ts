@@ -4,7 +4,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useAccessToken } from '@/components/providers/token-provider';
+import { useAuthState } from '@/components/providers/auth-state-provider';
 import { logger } from '@/lib/logger';
 import { getRelativeTime } from '@/lib/utils/date-utils';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
@@ -22,8 +22,7 @@ const IS_MOCK = ['mock', 'live'].includes(
  * Fetch dataset count and last activity for a project
  */
 async function fetchProjectMetadata(
-  projectId: string,
-  accessToken: string
+  projectId: string
 ): Promise<ProjectMetadata> {
   if (IS_MOCK) {
     // Return mock data
@@ -39,8 +38,8 @@ async function fetchProjectMetadata(
   // Shared request configuration
   const requestConfig = {
     method: 'GET',
+    credentials: 'include' as const,
     headers: {
-      Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
   };
@@ -102,17 +101,12 @@ async function fetchProjectMetadata(
  * Hook to fetch and cache project metadata
  */
 export function useProjectMetadata(projectId: string) {
-  const { accessToken } = useAccessToken();
+  const { isAuthenticated } = useAuthState();
 
   return useQuery({
     queryKey: ['project-metadata', projectId],
-    queryFn: () => {
-      if (!accessToken) {
-        throw new Error('No access token available');
-      }
-      return fetchProjectMetadata(projectId, accessToken);
-    },
-    enabled: !!accessToken,
+    queryFn: () => fetchProjectMetadata(projectId),
+    enabled: isAuthenticated,
     staleTime: 30_000, // 30 seconds
     refetchOnMount: false,
     refetchOnWindowFocus: false,

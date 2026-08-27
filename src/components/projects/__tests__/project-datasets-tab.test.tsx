@@ -3,12 +3,12 @@ import { render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ProjectDatasetsTab } from '../project-datasets-tab';
 import { useDatasets } from '@/lib/queries/datasets';
-import { useAccessToken } from '@/components/providers/token-provider';
+import { useAuthState } from '@/components/providers/auth-state-provider';
 import { useProjects } from '@/components/providers/projects-provider';
 
 // Mock dependencies
 jest.mock('@/lib/queries/datasets');
-jest.mock('@/components/providers/token-provider');
+jest.mock('@/components/providers/auth-state-provider');
 jest.mock('@/components/providers/projects-provider');
 jest.mock('@/lib/queries/dataset-mutations', () => ({
   useUploadDatasetMutation: jest.fn(() => ({
@@ -31,19 +31,15 @@ jest.mock('@/components/ui/toast-provider', () => ({
 }));
 
 const mockUseDatasets = useDatasets as jest.MockedFunction<typeof useDatasets>;
-const mockUseAccessToken = useAccessToken as jest.MockedFunction<
-  typeof useAccessToken
+const mockUseAuthState = useAuthState as jest.MockedFunction<
+  typeof useAuthState
 >;
 const mockUseProjects = useProjects as jest.MockedFunction<typeof useProjects>;
 
 describe('ProjectDatasetsTab', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseAccessToken.mockReturnValue({
-      accessToken: 'mock-token',
-      isLoading: false,
-      error: null,
-      refreshToken: jest.fn(),
+    mockUseAuthState.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
     });
@@ -59,9 +55,7 @@ describe('ProjectDatasetsTab', () => {
     });
     mockUseDatasets.mockReturnValue({
       data: [],
-      isLoading: false,
       isError: false,
-      error: null,
       refetch: jest.fn(),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);

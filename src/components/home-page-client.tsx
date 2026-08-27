@@ -4,7 +4,7 @@ import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { DebugPanel } from '@/components/debug/debug-panel';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useAccessToken } from '@/components/providers/token-provider';
+import { useAuthState } from '@/components/providers/auth-state-provider';
 import { LoadingCard } from '@/components/ui/loading-card';
 import { SignInPrompt } from '@/components/auth/sign-in-prompt';
 import { useProjects } from '@/components/providers/projects-provider';
@@ -77,7 +77,7 @@ export function HomePageClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const authError = searchParams.get('error');
-  const { isAuthenticated, authLoading } = useAccessToken();
+  const { isAuthenticated, authLoading } = useAuthState();
 
   const {
     projects,

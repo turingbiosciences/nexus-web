@@ -10,31 +10,19 @@ import React from 'react';
  * Standard beforeEach setup for tests
  * Clears all mocks and sets up environment
  */
-export function setupTestEnvironment(options?: {
-  apiUrl?: string;
-  clearMocks?: boolean;
-}) {
-  const { apiUrl = 'https://api.example.com', clearMocks = true } =
-    options || {};
+export function setupTestEnvironment(options?: { clearMocks?: boolean }) {
+  const { clearMocks = true } = options || {};
 
   if (clearMocks) {
     jest.clearAllMocks();
-  }
-
-  if (apiUrl) {
-    process.env.NEXT_PUBLIC_TURING_API = apiUrl;
   }
 }
 
 /**
  * Standard afterEach cleanup for tests
  */
-export function cleanupTestEnvironment(options?: { removeApiUrl?: boolean }) {
-  const { removeApiUrl = true } = options || {};
-
-  if (removeApiUrl) {
-    delete process.env.NEXT_PUBLIC_TURING_API;
-  }
+export function cleanupTestEnvironment() {
+  jest.restoreAllMocks();
 }
 
 /**
@@ -61,20 +49,13 @@ export function createQueryClientWrapper() {
 }
 
 /**
- * Mock return value for useAccessToken hook
+ * Mock return value for the useAuthState hook
  */
-export function createMockAccessToken(overrides?: {
-  accessToken?: string | null;
-  isLoading?: boolean;
-  error?: Error | null;
+export function createMockAuthState(overrides?: {
   isAuthenticated?: boolean;
   authLoading?: boolean;
 }) {
   return {
-    accessToken: 'mock-token',
-    isLoading: false,
-    error: null,
-    refreshToken: jest.fn().mockResolvedValue('new-token'),
     isAuthenticated: true,
     authLoading: false,
     ...overrides,

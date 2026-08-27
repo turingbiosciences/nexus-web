@@ -7,16 +7,19 @@ interface MockConfig {
   endpoint: string;
   appId: string;
   scopes: string[];
-  resources?: string[];
 }
 
-// Mock the auth config
-jest.mock('@/lib/auth', () => ({
+// Mock the auth config. This is '@/lib/auth-client', not '@/lib/auth':
+// auth.ts became server-only when it started reading secrets via node:fs, so
+// the client-safe config moved here. Mocking the old path would silently do
+// nothing — the component no longer imports it.
+jest.mock('@/lib/auth-client', () => ({
   logtoClientConfig: {
     endpoint: 'https://logto.example.com',
     appId: 'app_123',
     scopes: ['openid', 'profile', 'email', 'offline_access', 'all'],
-    resources: ['https://api.example.com'],
+    // No `resources` key: API tokens are attached server-side by the
+    // /api/turing/* proxy, so the client config must not request them.
   },
 }));
 

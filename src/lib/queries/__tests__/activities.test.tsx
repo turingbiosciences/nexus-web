@@ -9,15 +9,15 @@ jest.mock('@/config/flags', () => ({
   IS_MOCK: false,
 }));
 
-jest.mock('@/components/providers/token-provider', () => ({
-  useAccessToken: jest.fn(),
+jest.mock('@/components/providers/auth-state-provider', () => ({
+  useAuthState: jest.fn(),
 }));
 
 jest.mock('@/lib/auth-fetch');
 
-const mockedUseAccessToken = jest.requireMock(
-  '@/components/providers/token-provider'
-).useAccessToken;
+const mockedUseAuthState = jest.requireMock(
+  '@/components/providers/auth-state-provider'
+).useAuthState;
 const mockedAuthFetch = jest.requireMock('@/lib/auth-fetch').authFetch;
 
 // Test wrapper with React Query
@@ -36,8 +36,6 @@ function createWrapper() {
 }
 
 describe('useActivities', () => {
-  const originalEnv = process.env.NEXT_PUBLIC_TURING_API;
-
   const mockActivities: ProjectActivity[] = [
     {
       id: 'act-1',
@@ -53,18 +51,10 @@ describe('useActivities', () => {
     },
   ];
 
-  beforeAll(() => {
-    process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
-  });
-
-  afterAll(() => {
-    process.env.NEXT_PUBLIC_TURING_API = originalEnv;
-  });
-
   beforeEach(() => {
     jest.clearAllMocks();
     // Set up default mock responses
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       accessToken: 'mock-token',
       isAuthenticated: true,
       refreshToken: jest.fn().mockResolvedValue('new-token'),
@@ -103,7 +93,6 @@ describe('useActivities', () => {
         expect.stringContaining('/projects/project-1/activities'),
         expect.objectContaining({
           method: 'GET',
-          token: 'mock-token',
           headers: { 'Content-Type': 'application/json' },
         })
       );
@@ -159,7 +148,7 @@ describe('useActivities', () => {
     });
 
     it('is disabled when not authenticated', () => {
-      mockedUseAccessToken.mockReturnValue({
+      mockedUseAuthState.mockReturnValue({
         accessToken: null,
         isAuthenticated: false,
         refreshToken: jest.fn(),
@@ -174,11 +163,11 @@ describe('useActivities', () => {
       expect(mockedAuthFetch).not.toHaveBeenCalled();
     });
 
-    it('is disabled when accessToken is missing', () => {
-      mockedUseAccessToken.mockReturnValue({
-        accessToken: null,
-        isAuthenticated: true,
-        refreshToken: jest.fn(),
+    it('is disabled when the user is not signed in', () => {
+      // There is no separate "authenticated but tokenless" state any more —
+      // the client holds no token at all — so signed-out is the only gate.
+      mockedUseAuthState.mockReturnValue({
+        isAuthenticated: false,
         authLoading: false,
       });
 
@@ -355,43 +344,6 @@ describe('useActivities', () => {
       // Query key should include projectId and limit
       // This is implicit in the implementation but we can verify behavior
       expect(result.current.data).toBeDefined();
-    });
-  });
-
-  describe('Error Handling', () => {
-    it('throws error when NEXT_PUBLIC_TURING_API is missing', async () => {
-      const originalEnv = process.env.NEXT_PUBLIC_TURING_API;
-      delete process.env.NEXT_PUBLIC_TURING_API;
-
-      const { result } = renderHook(() => useActivities('project-1'), {
-        wrapper: createWrapper(),
-      });
-
-      await waitFor(() => expect(result.current.isError).toBe(true));
-
-      expect(result.current.error).toBeDefined();
-      expect(String(result.current.error)).toContain(
-        'Missing NEXT_PUBLIC_TURING_API'
-      );
-
-      process.env.NEXT_PUBLIC_TURING_API = originalEnv;
-    });
-
-    it('throws error when accessToken is not available during fetch', async () => {
-      mockedUseAccessToken.mockReturnValue({
-        accessToken: null,
-        isAuthenticated: true,
-        refreshToken: jest.fn(),
-        authLoading: false,
-      });
-
-      const { result } = renderHook(
-        () => useActivities('project-1', { enabled: true }),
-        { wrapper: createWrapper() }
-      );
-
-      // Query should be disabled, so it won't fetch
-      expect(result.current.fetchStatus).toBe('idle');
     });
   });
 

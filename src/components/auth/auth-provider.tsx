@@ -2,7 +2,9 @@
 
 import { LogtoProvider } from '@logto/react';
 import { ReactNode } from 'react';
-import { logtoClientConfig } from '@/lib/auth';
+// Imports from auth-client, not auth: auth.ts is server-only (it reads secrets
+// via node:fs) and importing it here would fail the browser bundle.
+import { logtoClientConfig } from '@/lib/auth-client';
 
 interface AuthProviderProps {
   children: ReactNode;

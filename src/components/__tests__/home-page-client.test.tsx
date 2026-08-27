@@ -37,8 +37,8 @@ jest.mock('@/components/debug/debug-panel', () => ({
   DebugPanel: () => <div>Debug Panel</div>,
 }));
 
-jest.mock('@/components/providers/token-provider', () => ({
-  useAccessToken: jest.fn(),
+jest.mock('@/components/providers/auth-state-provider', () => ({
+  useAuthState: jest.fn(),
 }));
 
 jest.mock('@/components/providers/projects-provider', () => ({
@@ -49,11 +49,11 @@ jest.mock('@/lib/queries/dashboard-stats', () => ({
   useDashboardStats: jest.fn(),
 }));
 
-import { useAccessToken } from '@/components/providers/token-provider';
+import { useAuthState } from '@/components/providers/auth-state-provider';
 import { useProjects } from '@/components/providers/projects-provider';
 import { useDashboardStats } from '@/lib/queries/dashboard-stats';
 
-const mockedUseAccessToken = useAccessToken as jest.Mock;
+const mockedUseAuthState = useAuthState as jest.Mock;
 const mockedUseProjects = useProjects as jest.Mock;
 const mockedUseDashboardStats = useDashboardStats as jest.Mock;
 
@@ -62,7 +62,7 @@ describe('HomePageClient', () => {
     jest.clearAllMocks();
 
     // Default mocks
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       isAuthenticated: false,
       authLoading: false,
       accessToken: null,
@@ -102,7 +102,7 @@ describe('HomePageClient', () => {
   });
 
   it('shows sign-in prompt when not authenticated', () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       isAuthenticated: false,
       authLoading: false,
       accessToken: null,
@@ -115,7 +115,7 @@ describe('HomePageClient', () => {
   });
 
   it('shows projects dashboard when authenticated', () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
       accessToken: 'mock-token',
@@ -132,7 +132,7 @@ describe('HomePageClient', () => {
   });
 
   it('renders project list section when authenticated', () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
       accessToken: 'mock-token',
@@ -146,7 +146,7 @@ describe('HomePageClient', () => {
   });
 
   it('renders stat blocks when authenticated', () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
       accessToken: 'mock-token',
@@ -162,7 +162,7 @@ describe('HomePageClient', () => {
   });
 
   it('renders recent ML runs section when authenticated', () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
       accessToken: 'mock-token',
@@ -175,7 +175,7 @@ describe('HomePageClient', () => {
   });
 
   it('renders new project dialog when authenticated', () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
       accessToken: 'mock-token',
@@ -194,7 +194,7 @@ describe('HomePageClient', () => {
   });
 
   it('handles loading state', () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       isAuthenticated: false,
       authLoading: true,
       accessToken: null,
@@ -208,7 +208,7 @@ describe('HomePageClient', () => {
   });
 
   it('shows projects error when projects fail to load', () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
       accessToken: 'mock-token',
@@ -234,7 +234,7 @@ describe('HomePageClient', () => {
   });
 
   it('sorts projects by updated date (descending)', () => {
-    mockedUseAccessToken.mockReturnValue({
+    mockedUseAuthState.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
       accessToken: 'mock-token',

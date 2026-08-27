@@ -12,7 +12,7 @@ import {
   InfiniteData,
   UseInfiniteQueryResult,
 } from '@tanstack/react-query';
-import { useAccessToken } from '@/components/providers/token-provider';
+import { useAuthState } from '@/components/providers/auth-state-provider';
 import { authFetch } from '@/lib/auth-fetch';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
 import { ProjectResult } from '@/types/project';
@@ -53,12 +53,8 @@ export function useResults(
   projectId: string,
   options?: UseResultsOptions
 ): ResultsQueryResult {
-  const { accessToken, isAuthenticated, refreshToken } = useAccessToken();
-  const enabled =
-    (options?.enabled ?? true) &&
-    !!projectId &&
-    isAuthenticated &&
-    !!accessToken;
+  const { isAuthenticated } = useAuthState();
+  const enabled = (options?.enabled ?? true) && !!projectId && isAuthenticated;
 
   return useInfiniteQuery<
     ResultsPage,
@@ -73,8 +69,6 @@ export function useResults(
       const url = `${base}/projects/${projectId}/results?limit=${PAGE_SIZE}&offset=${pageParam}`;
       const res = await authFetch(url, {
         method: 'GET',
-        token: accessToken!,
-        onTokenRefresh: refreshToken,
         headers: { 'Content-Type': 'application/json' },
       });
       if (!res.ok) throw new Error(`API request failed (${res.status})`);

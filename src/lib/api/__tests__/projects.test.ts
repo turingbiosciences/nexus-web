@@ -19,24 +19,14 @@ describe('projects API', () => {
     it('returns mock data when in mock mode', async () => {
       process.env.NEXT_PUBLIC_DATA_MODE = 'mock';
 
-      const result = await fetchProjects('fake-token');
+      const result = await fetchProjects();
 
       expect(result).toEqual(mockProjects);
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
-    it('throws error when NEXT_PUBLIC_TURING_API is missing', async () => {
-      process.env.NEXT_PUBLIC_DATA_MODE = 'api';
-      delete process.env.NEXT_PUBLIC_TURING_API;
-
-      await expect(fetchProjects('test-token')).rejects.toThrow(
-        'Missing NEXT_PUBLIC_TURING_API environment variable'
-      );
-    });
-
     it('fetches projects from API successfully', async () => {
       process.env.NEXT_PUBLIC_DATA_MODE = 'api';
-      process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
 
       const now = new Date();
       const mockResponse = {
@@ -58,7 +48,7 @@ describe('projects API', () => {
         json: async () => mockResponse,
       });
 
-      const result = await fetchProjects('test-token');
+      const result = await fetchProjects();
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
@@ -71,38 +61,17 @@ describe('projects API', () => {
       // lastActivity is calculated from updatedAt, so just verify it exists
       expect(result[0].lastActivity).toBeDefined();
       expect(typeof result[0].lastActivity).toBe('string');
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.example.com/projects',
-        {
-          method: 'GET',
-          headers: {
-            Authorization: 'Bearer test-token',
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-    });
-
-    it('handles trailing slash in API URL', async () => {
-      process.env.NEXT_PUBLIC_DATA_MODE = 'api';
-      process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com/';
-
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ projects: [] }),
+      expect(global.fetch).toHaveBeenCalledWith('/api/turing/projects', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
-
-      await fetchProjects('test-token');
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.example.com/projects',
-        expect.any(Object)
-      );
     });
 
     it('throws error when API request fails', async () => {
       process.env.NEXT_PUBLIC_DATA_MODE = 'api';
-      process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
@@ -111,14 +80,13 @@ describe('projects API', () => {
         text: async () => 'Server error details',
       });
 
-      await expect(fetchProjects('test-token')).rejects.toThrow(
+      await expect(fetchProjects()).rejects.toThrow(
         'Failed to fetch projects: 500 Internal Server Error - Server error details'
       );
     });
 
     it('handles error when response text fails', async () => {
       process.env.NEXT_PUBLIC_DATA_MODE = 'api';
-      process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
@@ -129,21 +97,20 @@ describe('projects API', () => {
         },
       });
 
-      await expect(fetchProjects('test-token')).rejects.toThrow(
+      await expect(fetchProjects()).rejects.toThrow(
         'Failed to fetch projects: 500 Internal Server Error - Unknown error'
       );
     });
 
     it('returns empty array when projects field is missing', async () => {
       process.env.NEXT_PUBLIC_DATA_MODE = 'api';
-      process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => ({}),
       });
 
-      const result = await fetchProjects('test-token');
+      const result = await fetchProjects();
 
       expect(result).toEqual([]);
     });
@@ -158,7 +125,7 @@ describe('projects API', () => {
         description: 'Mock description',
       };
 
-      const result = await createProject('fake-token', projectData);
+      const result = await createProject(projectData);
 
       expect(result).toMatchObject({
         name: projectData.name,
@@ -170,18 +137,8 @@ describe('projects API', () => {
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
-    it('throws error when NEXT_PUBLIC_TURING_API is missing', async () => {
-      process.env.NEXT_PUBLIC_DATA_MODE = 'api';
-      delete process.env.NEXT_PUBLIC_TURING_API;
-
-      await expect(
-        createProject('test-token', { name: 'Test', description: 'Test' })
-      ).rejects.toThrow('Missing NEXT_PUBLIC_TURING_API environment variable');
-    });
-
     it('creates project via API successfully', async () => {
       process.env.NEXT_PUBLIC_DATA_MODE = 'api';
-      process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
 
       const projectData = {
         name: 'New Project',
@@ -203,7 +160,7 @@ describe('projects API', () => {
         json: async () => mockCreatedProject,
       });
 
-      const result = await createProject('test-token', projectData);
+      const result = await createProject(projectData);
 
       expect(result).toMatchObject({
         id: 'new-123',
@@ -215,42 +172,18 @@ describe('projects API', () => {
       });
       expect(result.createdAt).toBeInstanceOf(Date);
       expect(result.updatedAt).toBeInstanceOf(Date);
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.example.com/projects',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: 'Bearer test-token',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(projectData),
-        }
-      );
-    });
-
-    it('handles trailing slash in API URL for create', async () => {
-      process.env.NEXT_PUBLIC_DATA_MODE = 'api';
-      process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com/';
-
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: '1', name: 'Test', description: 'Test' }),
+      expect(global.fetch).toHaveBeenCalledWith('/api/turing/projects', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(projectData),
       });
-
-      await createProject('test-token', {
-        name: 'Test',
-        description: 'Test',
-      });
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.example.com/projects',
-        expect.any(Object)
-      );
     });
 
     it('throws error when create API request fails', async () => {
       process.env.NEXT_PUBLIC_DATA_MODE = 'api';
-      process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
@@ -260,7 +193,7 @@ describe('projects API', () => {
       });
 
       await expect(
-        createProject('test-token', { name: 'Test', description: 'Test' })
+        createProject({ name: 'Test', description: 'Test' })
       ).rejects.toThrow(
         'Failed to create project: 400 Bad Request - Invalid project data'
       );
@@ -268,7 +201,6 @@ describe('projects API', () => {
 
     it('handles error when create response text fails', async () => {
       process.env.NEXT_PUBLIC_DATA_MODE = 'api';
-      process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
@@ -280,7 +212,7 @@ describe('projects API', () => {
       });
 
       await expect(
-        createProject('test-token', { name: 'Test', description: 'Test' })
+        createProject({ name: 'Test', description: 'Test' })
       ).rejects.toThrow(
         'Failed to create project: 500 Internal Server Error - Unknown error'
       );
@@ -291,24 +223,14 @@ describe('projects API', () => {
     it('returns mock data when in mock mode', async () => {
       process.env.NEXT_PUBLIC_DATA_MODE = 'mock';
 
-      const result = await getDashboardStats('fake-token');
+      const result = await getDashboardStats();
 
       expect(result).toEqual(mockDashboardStats);
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
-    it('throws error when NEXT_PUBLIC_TURING_API is missing', async () => {
-      process.env.NEXT_PUBLIC_DATA_MODE = 'api';
-      delete process.env.NEXT_PUBLIC_TURING_API;
-
-      await expect(getDashboardStats('test-token')).rejects.toThrow(
-        'Missing NEXT_PUBLIC_TURING_API environment variable'
-      );
-    });
-
     it('fetches dashboard stats from API successfully', async () => {
       process.env.NEXT_PUBLIC_DATA_MODE = 'api';
-      process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
 
       const mockResponse = {
         total_projects: 5,
@@ -322,24 +244,20 @@ describe('projects API', () => {
         json: async () => mockResponse,
       });
 
-      const result = await getDashboardStats('test-token');
+      const result = await getDashboardStats();
 
       expect(result).toEqual(mockResponse);
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.example.com/dashboard/stats',
-        {
-          method: 'GET',
-          headers: {
-            Authorization: 'Bearer test-token',
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      expect(global.fetch).toHaveBeenCalledWith('/api/turing/dashboard/stats', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
     });
 
     it('throws error when API request fails', async () => {
       process.env.NEXT_PUBLIC_DATA_MODE = 'api';
-      process.env.NEXT_PUBLIC_TURING_API = 'https://api.example.com';
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
@@ -348,7 +266,7 @@ describe('projects API', () => {
         text: async () => 'Server error',
       });
 
-      await expect(getDashboardStats('test-token')).rejects.toThrow(
+      await expect(getDashboardStats()).rejects.toThrow(
         'Failed to fetch dashboard stats: 500 Internal Server Error - Server error'
       );
     });

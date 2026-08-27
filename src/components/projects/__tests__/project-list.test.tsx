@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { ProjectList } from '../project-list';
 import { Project } from '@/types/project';
-import { TokenProvider } from '@/components/providers/token-provider';
+import { AuthStateProvider } from '@/components/providers/auth-state-provider';
 import { ProjectsProvider } from '@/components/providers/projects-provider';
 import { useProjectMetadata } from '@/lib/queries/project-metadata';
 
@@ -71,9 +71,9 @@ describe('ProjectList', () => {
 
   const renderWithProviders = (ui: React.ReactElement) => {
     return render(
-      <TokenProvider>
+      <AuthStateProvider>
         <ProjectsProvider>{ui}</ProjectsProvider>
-      </TokenProvider>
+      </AuthStateProvider>
     );
   };
 

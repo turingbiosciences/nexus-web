@@ -1,345 +1,129 @@
-import { authFetch, simpleFetch, TokenExpiredError } from '@/lib/auth-fetch';
+import { authFetch, SessionExpiredError } from '@/lib/auth-fetch';
+
+// Mock the logger so the tests do not emit noise
+jest.mock('@/lib/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+    warn: jest.fn(),
+  },
+}));
 
 describe('auth-fetch', () => {
-  let originalFetch: typeof global.fetch;
-  let mockFetch: jest.Mock;
+  const originalLocation = window.location;
 
   beforeEach(() => {
-    originalFetch = global.fetch;
-    mockFetch = jest.fn();
-    global.fetch = mockFetch;
-
-    // Mock window.location.href
+    jest.clearAllMocks();
+    global.fetch = jest.fn();
+    // jsdom's location is not writable; replace it so we can observe redirects.
     Object.defineProperty(window, 'location', {
-      value: { href: '' },
+      configurable: true,
       writable: true,
+      value: { href: '' },
     });
   });
 
-  afterEach(() => {
-    global.fetch = originalFetch;
-    jest.clearAllMocks();
+  afterAll(() => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: originalLocation,
+    });
   });
 
   describe('authFetch', () => {
-    it('should add Authorization header and return successful response', async () => {
-      const mockResponse = {
-        ok: true,
-        status: 200,
-        json: async () => ({ data: 'test' }),
-      } as Response;
+    it('returns a successful response unchanged', async () => {
+      const mockResponse = { ok: true, status: 200 };
+      (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
 
-      mockFetch.mockResolvedValueOnce(mockResponse);
+      const response = await authFetch('/api/turing/projects');
 
-      const response = await authFetch('https://api.example.com/test', {
-        token: 'test-token',
-        method: 'GET',
-      });
-
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/test', {
-        method: 'GET',
-        headers: {
-          Authorization: 'Bearer test-token',
-        },
-      });
       expect(response).toBe(mockResponse);
     });
 
-    it('should detect expired token and redirect to sign-out', async () => {
-      const mockResponse = {
-        ok: false,
-        status: 401,
-        text: async () => '{"detail":"Invalid token: Signature has expired."}',
-        clone: function () {
-          return this;
-        },
-      } as Response;
+    it('sends credentials so the session cookie reaches the proxy', async () => {
+      // Without this the proxy sees an anonymous request and rejects every call.
+      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true });
 
-      mockFetch.mockResolvedValueOnce(mockResponse);
+      await authFetch('/api/turing/projects', { method: 'GET' });
 
-      await expect(
-        authFetch('https://api.example.com/test', {
-          token: 'expired-token',
-          method: 'GET',
-        })
-      ).rejects.toThrow(TokenExpiredError);
-
-      expect(window.location.href).toBe('/api/logto/sign-out');
-    });
-
-    it('should attempt token refresh on 401 with expired token', async () => {
-      const expired401Response = {
-        ok: false,
-        status: 401,
-        text: async () => '{"detail":"token expired"}',
-        clone: function () {
-          return this;
-        },
-      } as Response;
-
-      const successResponse = {
-        ok: true,
-        status: 200,
-        json: async () => ({ data: 'success' }),
-      } as Response;
-
-      mockFetch
-        .mockResolvedValueOnce(expired401Response)
-        .mockResolvedValueOnce(successResponse);
-
-      const mockRefresh = jest.fn().mockResolvedValue('new-token');
-
-      const response = await authFetch('https://api.example.com/test', {
-        token: 'old-token',
+      expect(global.fetch).toHaveBeenCalledWith('/api/turing/projects', {
         method: 'GET',
-        onTokenRefresh: mockRefresh,
+        credentials: 'include',
       });
-
-      expect(mockRefresh).toHaveBeenCalled();
-      expect(mockFetch).toHaveBeenCalledTimes(2);
-      expect(mockFetch).toHaveBeenNthCalledWith(
-        2,
-        'https://api.example.com/test',
-        {
-          method: 'GET',
-          headers: {
-            Authorization: 'Bearer new-token',
-          },
-        }
-      );
-      expect(response.ok).toBe(true);
     });
 
-    it('should redirect if still 401 after token refresh', async () => {
-      const expired401Response = {
-        ok: false,
-        status: 401,
-        text: async () => '{"detail":"Signature has expired"}',
-        clone: function () {
-          return this;
-        },
-      } as Response;
+    it('does not attach an Authorization header', async () => {
+      // The whole point of the proxy: no credential exists on the client to
+      // attach, and anything sent here would be stripped upstream anyway.
+      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true });
 
-      mockFetch
-        .mockResolvedValueOnce(expired401Response)
-        .mockResolvedValueOnce(expired401Response);
+      await authFetch('/api/turing/projects');
 
-      const mockRefresh = jest.fn().mockResolvedValue('new-token');
-
-      await expect(
-        authFetch('https://api.example.com/test', {
-          token: 'old-token',
-          method: 'GET',
-          onTokenRefresh: mockRefresh,
-        })
-      ).rejects.toThrow(TokenExpiredError);
-
-      expect(window.location.href).toBe('/api/logto/sign-out');
+      const [, init] = (global.fetch as jest.Mock).mock.calls[0];
+      expect(init.headers).toBeUndefined();
     });
 
-    it('should redirect if token refresh fails', async () => {
-      const expired401Response = {
-        ok: false,
-        status: 401,
-        text: async () => '{"detail":"Invalid token"}',
-        clone: function () {
-          return this;
-        },
-      } as Response;
+    it('preserves caller-supplied headers and body', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true });
 
-      mockFetch.mockResolvedValueOnce(expired401Response);
-
-      const mockRefresh = jest
-        .fn()
-        .mockRejectedValue(new Error('Refresh failed'));
-
-      await expect(
-        authFetch('https://api.example.com/test', {
-          token: 'old-token',
-          method: 'GET',
-          onTokenRefresh: mockRefresh,
-        })
-      ).rejects.toThrow(TokenExpiredError);
-
-      expect(window.location.href).toBe('/api/logto/sign-out');
-    });
-
-    it('should not redirect on 401 without expired token message', async () => {
-      const mockResponse = {
-        ok: false,
-        status: 401,
-        text: async () => '{"detail":"Invalid credentials"}',
-        clone: function () {
-          return this;
-        },
-      } as Response;
-
-      mockFetch.mockResolvedValueOnce(mockResponse);
-
-      const response = await authFetch('https://api.example.com/test', {
-        token: 'test-token',
-        method: 'GET',
-      });
-
-      expect(response.status).toBe(401);
-      expect(window.location.href).toBe(''); // Not redirected
-    });
-
-    it('should preserve custom headers', async () => {
-      const mockResponse = {
-        ok: true,
-        status: 200,
-      } as Response;
-
-      mockFetch.mockResolvedValueOnce(mockResponse);
-
-      await authFetch('https://api.example.com/test', {
-        token: 'test-token',
+      await authFetch('/api/turing/projects', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Custom-Header': 'value',
-        },
+        headers: { 'Content-Type': 'application/json' },
+        body: '{"name":"x"}',
       });
 
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/test', {
+      expect(global.fetch).toHaveBeenCalledWith('/api/turing/projects', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Custom-Header': 'value',
-          Authorization: 'Bearer test-token',
-        },
+        headers: { 'Content-Type': 'application/json' },
+        body: '{"name":"x"}',
+        credentials: 'include',
       });
     });
 
-    it('should preserve headers when passed as Headers object', async () => {
-      const mockResponse = {
-        ok: true,
-        status: 200,
-      } as Response;
-
-      mockFetch.mockResolvedValueOnce(mockResponse);
-
-      const headers = new Headers();
-      headers.append('X-Custom-Header', 'value');
-
-      await authFetch('https://api.example.com/test', {
-        token: 'test-token',
-        method: 'GET',
-        headers,
+    it('throws SessionExpiredError and redirects to sign-out on 401', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 401,
       });
 
-      // When passing Headers object, fetch receives Headers object merged with Authorization
-      // However, our current implementation spreads ...headers which results in {} for Headers object
-      // So this expectation will fail if the bug exists
-      const callArgs = mockFetch.mock.calls[0];
-      const callHeaders = callArgs[1].headers;
-
-      // We need to check if it's a Headers object or plain object
-      if (callHeaders instanceof Headers) {
-        expect(callHeaders.get('Authorization')).toBe('Bearer test-token');
-        expect(callHeaders.get('X-Custom-Header')).toBe('value');
-      } else {
-        // Current implementation returns plain object
-        expect(callHeaders).toEqual(
-          expect.objectContaining({
-            Authorization: 'Bearer test-token',
-            'X-Custom-Header': 'value',
-          })
-        );
-      }
-    });
-  });
-
-  describe('simpleFetch', () => {
-    it('should add Authorization header and return successful response', async () => {
-      const mockResponse = {
-        ok: true,
-        status: 200,
-        json: async () => ({ data: 'test' }),
-      } as Response;
-
-      mockFetch.mockResolvedValueOnce(mockResponse);
-
-      const response = await simpleFetch(
-        'https://api.example.com/test',
-        'test-token',
-        { method: 'GET' }
+      await expect(authFetch('/api/turing/projects')).rejects.toThrow(
+        SessionExpiredError
       );
+      expect(window.location.href).toBe('/api/logto/sign-out');
+    });
 
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/test', {
-        method: 'GET',
-        headers: {
-          Authorization: 'Bearer test-token',
-        },
-      });
+    it('does not sign out on non-401 failures', async () => {
+      // A 500 from the API is not a session problem; signing the user out
+      // would turn a transient upstream error into a forced re-login.
+      const mockResponse = { ok: false, status: 500 };
+      (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
+
+      const response = await authFetch('/api/turing/projects');
+
       expect(response).toBe(mockResponse);
+      expect(window.location.href).toBe('');
     });
 
-    it('should detect expired token and redirect to sign-out', async () => {
-      const mockResponse = {
-        ok: false,
-        status: 401,
-        text: async () => '{"detail":"token expired"}',
-        clone: function () {
-          return this;
-        },
-      } as Response;
+    it('does not sign out on 403', async () => {
+      const mockResponse = { ok: false, status: 403 };
+      (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
 
-      mockFetch.mockResolvedValueOnce(mockResponse);
+      const response = await authFetch('/api/turing/projects');
 
-      await expect(
-        simpleFetch('https://api.example.com/test', 'expired-token')
-      ).rejects.toThrow(TokenExpiredError);
-
-      expect(window.location.href).toBe('/api/logto/sign-out');
-    });
-
-    it('should not redirect on 401 without expired token message', async () => {
-      const mockResponse = {
-        ok: false,
-        status: 401,
-        text: async () => '{"detail":"Bad credentials"}',
-        clone: function () {
-          return this;
-        },
-      } as Response;
-
-      mockFetch.mockResolvedValueOnce(mockResponse);
-
-      const response = await simpleFetch(
-        'https://api.example.com/test',
-        'test-token'
-      );
-
-      expect(response.status).toBe(401);
-      expect(window.location.href).toBe(''); // Not redirected
-    });
-
-    it('should work without optional options parameter', async () => {
-      const mockResponse = {
-        ok: true,
-        status: 200,
-      } as Response;
-
-      mockFetch.mockResolvedValueOnce(mockResponse);
-
-      await simpleFetch('https://api.example.com/test', 'test-token');
-
-      expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/test', {
-        headers: {
-          Authorization: 'Bearer test-token',
-        },
-      });
+      expect(response).toBe(mockResponse);
+      expect(window.location.href).toBe('');
     });
   });
 
-  describe('TokenExpiredError', () => {
-    it('should be instanceof Error', () => {
-      const error = new TokenExpiredError('Session expired');
-      expect(error).toBeInstanceOf(Error);
-      expect(error.name).toBe('TokenExpiredError');
+  describe('SessionExpiredError', () => {
+    it('is named so callers can distinguish it', () => {
+      const error = new SessionExpiredError('Session expired');
+
+      expect(error.name).toBe('SessionExpiredError');
       expect(error.message).toBe('Session expired');
+      expect(error).toBeInstanceOf(Error);
     });
   });
 });

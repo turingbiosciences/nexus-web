@@ -6,8 +6,6 @@ import { getApiBaseUrl } from '@/lib/api/get-api-base';
 import { logger } from '@/lib/logger';
 
 interface UseJobStatusOptions {
-  /** Access token for authentication */
-  accessToken: string | null;
   /** Enable/disable the SSE connection */
   enabled?: boolean;
   /** Callback when job completes successfully */
@@ -42,7 +40,6 @@ const MAX_RETRIES = 5;
  * @example
  * ```tsx
  * const { job, isConnected, error } = useJobStatus(projectId, jobId, {
- *   accessToken,
  *   onComplete: (job) => console.log("Job completed:", job),
  *   onError: (error) => console.error("Job failed:", error),
  * });
@@ -51,15 +48,9 @@ const MAX_RETRIES = 5;
 export function useJobStatus(
   projectId: string | null,
   jobId: string | null,
-  options: UseJobStatusOptions
+  options: UseJobStatusOptions = {}
 ): UseJobStatusReturn {
-  const {
-    accessToken,
-    enabled = true,
-    onComplete,
-    onError,
-    useMock = false,
-  } = options;
+  const { enabled = true, onComplete, onError, useMock = false } = options;
 
   const [job, setJob] = useState<Job | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -293,7 +284,7 @@ export function useJobStatus(
 
   // Effect to manage connection lifecycle
   useEffect(() => {
-    if (!enabled || !projectId || !jobId || !accessToken) {
+    if (!enabled || !projectId || !jobId) {
       return;
     }
 
@@ -317,15 +308,21 @@ export function useJobStatus(
     setError(null);
 
     const baseUrl = getApiBaseUrl();
-    // Pass token via query string since EventSource doesn't support headers
-    const url = `${baseUrl}/projects/${projectId}/training/${jobId}/stream?token=${encodeURIComponent(accessToken)}`;
+    // No token in the URL. EventSource cannot set headers, which is why this
+    // endpoint used to take ?token=. The stream is now same-origin through the
+    // /api/turing/* proxy, which attaches the Authorization header server-side,
+    // so the browser sends only its session cookie. Do not reintroduce a token
+    // here — it would put a credential into every access log and Referer.
+    const url = `${baseUrl}/projects/${projectId}/training/${jobId}/stream`;
 
     logger.info(
       { projectId, jobId, retryKey, retryCount: retryCountRef.current },
       'Connecting to job status SSE stream'
     );
 
-    const eventSource = new EventSource(url);
+    // withCredentials so the Logto session cookie reaches the proxy; without it
+    // the proxy sees an anonymous request and closes the stream with a 401.
+    const eventSource = new EventSource(url, { withCredentials: true });
     eventSourceRef.current = eventSource;
 
     eventSource.onopen = () => {
@@ -392,7 +389,6 @@ export function useJobStatus(
     enabled,
     projectId,
     jobId,
-    accessToken,
     useMock,
     startMockSSE,
     handleEvent,

@@ -6,15 +6,15 @@ import {
 } from '@/components/providers/projects-provider';
 
 // Mock TokenProvider
-const mockUseAccessToken = jest.fn(() => ({
+const mockUseAuthState = jest.fn(() => ({
   accessToken: 'test-token',
   isLoading: false,
   error: null,
   refreshToken: jest.fn(),
 }));
 
-jest.mock('../token-provider', () => ({
-  useAccessToken: () => mockUseAccessToken(),
+jest.mock('../auth-state-provider', () => ({
+  useAuthState: () => mockUseAuthState(),
 }));
 
 // Mock API
