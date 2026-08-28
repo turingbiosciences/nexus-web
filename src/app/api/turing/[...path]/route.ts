@@ -30,7 +30,34 @@ export const runtime = 'nodejs';
 // Never cache or statically analyse this route.
 export const dynamic = 'force-dynamic';
 
-const logto = new LogtoClient(logtoConfig);
+/**
+ * A LogtoClient PER REQUEST, not one shared at module scope.
+ *
+ * @logto/next's edge client keeps per-request cookie storage on the instance:
+ *
+ *   async createNodeClientFromEdgeRequest(request) {
+ *     this.storage = new CookieStorage({ ... });   // instance state
+ *     await this.storage.init();                   // async gap
+ *     ... { storage: this.storage }
+ *   }
+ *
+ * Shared across concurrent requests that is a race. Request A assigns its
+ * storage and yields at the await; request B overwrites this.storage with a
+ * freshly constructed, uninitialised one; A resumes and builds its client from
+ * B's storage, finds no session, and returns a bare {isAuthenticated: false}.
+ * The proxy then correctly turns that into a 401.
+ *
+ * It cost about one request per page load -- whichever lost the interleave --
+ * and looked like an authentication failure on a session that was provably
+ * valid: two requests 11ms apart, byte-identical cookie (same SHA-256 digest,
+ * same 1259 bytes), opposite answers. It never reproduced from the console
+ * because requests there do not overlap.
+ *
+ * Constructing one per request is cheap; it only wires config.
+ */
+function createLogtoClient(): LogtoClient {
+  return new LogtoClient(logtoConfig);
+}
 
 /**
  * Headers we must not copy upstream. Hop-by-hop headers are meaningless across
@@ -91,13 +118,21 @@ async function handle(
 ): Promise<Response> {
   // --- 1. Authenticate -----------------------------------------------------
   try {
-    const { isAuthenticated } = await logto.getLogtoContext(req);
+    const { isAuthenticated } = await createLogtoClient().getLogtoContext(req, {
+      // This route needs one fact -- is there a valid session -- which comes
+      // from the cookie. No reason to also fetch userInfo or organization
+      // tokens from Logto on every proxied API request.
+      fetchUserInfo: false,
+      getAccessToken: false,
+      getOrganizationToken: false,
+    });
+
     if (!isAuthenticated) {
       // Logged because this branch is otherwise invisible: it returns 401
       // without touching the API, so nothing appears in either app's logs and
       // the failure looks like it came from nowhere. Path and cookie presence
-      // are enough to tell "no session" apart from "session not readable here"
-      // without putting anything sensitive in the log.
+      // tell "no session" apart from "session not readable here" without
+      // putting anything sensitive in the log.
       logger.warn(
         {
           path: req.nextUrl.pathname,
