@@ -90,14 +90,36 @@ async function handle(
   ctx: { params: Promise<{ path?: string[] }> }
 ): Promise<Response> {
   // --- 1. Authenticate -----------------------------------------------------
+  //
+  // All three flags off deliberately. This route needs one fact -- is there a
+  // valid session -- and that comes from decrypting the cookie. Left at their
+  // defaults, getLogtoContext also calls Logto over the network for userInfo
+  // and organization tokens, on EVERY proxied API request.
+  //
+  // That was not merely wasteful, it was the bug. Two requests 11ms apart with
+  // a byte-identical session cookie (same SHA-256 digest, same 1259 bytes)
+  // returned opposite answers: one got the full context, the other a bare
+  // {isAuthenticated: false} with no claims, no userInfo, no organizationTokens
+  // -- the shape returned when those network calls do not complete, not when a
+  // session is judged invalid. Roughly one request per page load lost that
+  // race, which is why it never reproduced from the console, where requests are
+  // spaced out.
+  //
+  // Decrypting the cookie is local, deterministic, and cannot fail for reasons
+  // unrelated to the session.
   try {
-    const { isAuthenticated } = await logto.getLogtoContext(req);
+    const { isAuthenticated } = await logto.getLogtoContext(req, {
+      fetchUserInfo: false,
+      getAccessToken: false,
+      getOrganizationToken: false,
+    });
+
     if (!isAuthenticated) {
       // Logged because this branch is otherwise invisible: it returns 401
       // without touching the API, so nothing appears in either app's logs and
       // the failure looks like it came from nowhere. Path and cookie presence
-      // are enough to tell "no session" apart from "session not readable here"
-      // without putting anything sensitive in the log.
+      // tell "no session" apart from "session not readable here" without
+      // putting anything sensitive in the log.
       logger.warn(
         {
           path: req.nextUrl.pathname,

@@ -63,6 +63,29 @@ describe('API proxy', () => {
     );
   });
 
+  it('checks the session without calling Logto over the network', async () => {
+    // The whole point: this route needs one fact, "is there a valid session",
+    // which comes from decrypting the cookie. Left at their defaults these
+    // flags make getLogtoContext fetch userInfo and organization tokens from
+    // Logto on EVERY proxied request -- and when one of those calls did not
+    // complete it returned a bare {isAuthenticated: false}, rejecting a caller
+    // whose session was demonstrably valid. Roughly one request per page load
+    // lost that race. If these ever go back to their defaults, that returns.
+    await GET(
+      new NextRequest('http://localhost/api/turing/projects'),
+      ctx(['projects'])
+    );
+
+    expect(mockGetLogtoContext).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        fetchUserInfo: false,
+        getAccessToken: false,
+        getOrganizationToken: false,
+      })
+    );
+  });
+
   it('rejects an unauthenticated caller without calling upstream', async () => {
     // Without this check the route is an open relay onto the internal API —
     // strictly worse than the public API it replaced.
