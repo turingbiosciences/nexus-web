@@ -63,6 +63,24 @@ describe('API proxy', () => {
     );
   });
 
+  it('uses a fresh Logto client per request, not a shared one', async () => {
+    // The edge client stores per-request cookie storage on the instance and
+    // awaits inside the method that sets it. Shared between concurrent
+    // requests, one overwrites the other's storage mid-flight and the loser
+    // sees no session -- a 401 on a provably valid cookie, about one per page
+    // load. A client per request is what makes that impossible.
+    const MockLogtoClient = jest.requireMock('@logto/next/edge') as jest.Mock;
+    const constructedBefore = MockLogtoClient.mock.calls.length;
+
+    await Promise.all([
+      GET(new NextRequest('http://localhost/api/turing/a'), ctx(['a'])),
+      GET(new NextRequest('http://localhost/api/turing/b'), ctx(['b'])),
+      GET(new NextRequest('http://localhost/api/turing/c'), ctx(['c'])),
+    ]);
+
+    expect(MockLogtoClient.mock.calls.length - constructedBefore).toBe(3);
+  });
+
   it('checks the session without calling Logto over the network', async () => {
     // The whole point: this route needs one fact, "is there a valid session",
     // which comes from decrypting the cookie. Left at their defaults these

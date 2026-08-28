@@ -30,7 +30,34 @@ export const runtime = 'nodejs';
 // Never cache or statically analyse this route.
 export const dynamic = 'force-dynamic';
 
-const logto = new LogtoClient(logtoConfig);
+/**
+ * A LogtoClient PER REQUEST, not one shared at module scope.
+ *
+ * @logto/next's edge client keeps per-request cookie storage on the instance:
+ *
+ *   async createNodeClientFromEdgeRequest(request) {
+ *     this.storage = new CookieStorage({ ... });   // instance state
+ *     await this.storage.init();                   // async gap
+ *     ... { storage: this.storage }
+ *   }
+ *
+ * Shared across concurrent requests that is a race. Request A assigns its
+ * storage and yields at the await; request B overwrites this.storage with a
+ * freshly constructed, uninitialised one; A resumes and builds its client from
+ * B's storage, finds no session, and returns a bare {isAuthenticated: false}.
+ * The proxy then correctly turns that into a 401.
+ *
+ * It cost about one request per page load -- whichever lost the interleave --
+ * and looked like an authentication failure on a session that was provably
+ * valid: two requests 11ms apart, byte-identical cookie (same SHA-256 digest,
+ * same 1259 bytes), opposite answers. It never reproduced from the console
+ * because requests there do not overlap.
+ *
+ * Constructing one per request is cheap; it only wires config.
+ */
+function createLogtoClient(): LogtoClient {
+  return new LogtoClient(logtoConfig);
+}
 
 /**
  * Headers we must not copy upstream. Hop-by-hop headers are meaningless across
@@ -90,25 +117,11 @@ async function handle(
   ctx: { params: Promise<{ path?: string[] }> }
 ): Promise<Response> {
   // --- 1. Authenticate -----------------------------------------------------
-  //
-  // All three flags off deliberately. This route needs one fact -- is there a
-  // valid session -- and that comes from decrypting the cookie. Left at their
-  // defaults, getLogtoContext also calls Logto over the network for userInfo
-  // and organization tokens, on EVERY proxied API request.
-  //
-  // That was not merely wasteful, it was the bug. Two requests 11ms apart with
-  // a byte-identical session cookie (same SHA-256 digest, same 1259 bytes)
-  // returned opposite answers: one got the full context, the other a bare
-  // {isAuthenticated: false} with no claims, no userInfo, no organizationTokens
-  // -- the shape returned when those network calls do not complete, not when a
-  // session is judged invalid. Roughly one request per page load lost that
-  // race, which is why it never reproduced from the console, where requests are
-  // spaced out.
-  //
-  // Decrypting the cookie is local, deterministic, and cannot fail for reasons
-  // unrelated to the session.
   try {
-    const { isAuthenticated } = await logto.getLogtoContext(req, {
+    const { isAuthenticated } = await createLogtoClient().getLogtoContext(req, {
+      // This route needs one fact -- is there a valid session -- which comes
+      // from the cookie. No reason to also fetch userInfo or organization
+      // tokens from Logto on every proxied API request.
       fetchUserInfo: false,
       getAccessToken: false,
       getOrganizationToken: false,
