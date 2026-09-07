@@ -241,18 +241,12 @@ describe('FileUploader', () => {
   it('sends the upload with cookies and no Authorization header', async () => {
     // The proxy attaches API credentials server-side. A bearer header here
     // would mean the browser had a token again, which is the thing this
-    // migration removes. USE_TUS_UPLOADS is currently false, so this exercises
-    // the XHR path that actually runs.
+    // migration removes. TUS is the path that runs now, so assert the property
+    // on the TUS options; the XHR fallback is covered separately below.
     mockUseAuthState.mockReturnValue({
       isAuthenticated: true,
       authLoading: false,
     });
-
-    const openSpy = jest.spyOn(XMLHttpRequest.prototype, 'open');
-    const setHeaderSpy = jest.spyOn(
-      XMLHttpRequest.prototype,
-      'setRequestHeader'
-    );
 
     let capturedOnDrop: ((files: File[]) => void) | undefined;
     mockUseDropzone.mockImplementation((config) => {
@@ -272,20 +266,24 @@ describe('FileUploader', () => {
     startBtn.click();
 
     await waitFor(() => {
-      expect(openSpy).toHaveBeenCalled();
+      expect(TusUpload).toHaveBeenCalled();
     });
 
-    expect(openSpy).toHaveBeenCalledWith(
-      'POST',
-      '/api/turing/projects/test-project/files'
-    );
-    const headerNames = setHeaderSpy.mock.calls.map(([name]) =>
-      String(name).toLowerCase()
+    const [, options] = (TusUpload as unknown as jest.Mock).mock.calls[0];
+
+    // The TUS router is mounted at /tus, not on the direct-upload endpoint.
+    expect(options.endpoint).toBe('/api/turing/tus/test-project');
+
+    // Chunked, and at or above the 5MB S3 multipart minimum the API enforces.
+    // tus-js-client defaults this to Infinity, which would send the whole file
+    // as a single PATCH and defeat the point of using TUS at all.
+    expect(options.chunkSize).toBeGreaterThanOrEqual(5 * 1024 * 1024);
+    expect(Number.isFinite(options.chunkSize)).toBe(true);
+
+    const headerNames = Object.keys(options.headers ?? {}).map((name) =>
+      name.toLowerCase()
     );
     expect(headerNames).not.toContain('authorization');
-
-    openSpy.mockRestore();
-    setHeaderSpy.mockRestore();
   });
 
   it('shows auth banner disabled state for dropzone when unauthenticated', () => {

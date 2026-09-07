@@ -11,9 +11,23 @@ import { logger } from '@/lib/logger';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
 import { sanitizeFilename } from '@/lib/security';
 
-// Feature flag: Set to false to use traditional XHR uploads instead of TUS
-// TODO: Re-enable when API supports TUS protocol
-const USE_TUS_UPLOADS = false;
+// Feature flag: set to false to force traditional XHR uploads.
+//
+// TUS is the path for anything large. The XHR endpoint reads the whole file
+// into memory server-side and is capped by the API's MAX_UPLOAD_SIZE (100MB);
+// TUS streams in parts and is capped by TUS_MAX_SIZE (1GB). The 422 handler
+// below still falls back to XHR if the API turns out not to speak TUS, so
+// small uploads keep working either way.
+const USE_TUS_UPLOADS = true;
+
+// Size of each PATCH request. Two hard constraints:
+//   - at least 5MB, the S3 multipart minimum the API enforces per part
+//     (TUS_MIN_CHUNK_SIZE / MIN_PART_SIZE) for every part but the last;
+//   - bounded, because the API buffers each chunk with `await request.body()`
+//     on a 1GB instance. tus-js-client defaults chunkSize to Infinity, which
+//     would send the entire file as one PATCH and reintroduce exactly the
+//     memory problem TUS is here to avoid.
+const TUS_CHUNK_SIZE = 8 * 1024 * 1024;
 
 interface FileUploadItem {
   file: File;
@@ -237,7 +251,11 @@ export function FileUploader({
         'Attempting TUS upload'
       );
       const tusUpload = new tus.Upload(upload.file, {
-        endpoint: `${apiEndpoint}/projects/${projectId}/files`,
+        // The TUS router is mounted at /tus, not on the direct-upload
+        // endpoint. Pointing at /projects/:id/files was why TUS never worked:
+        // that route does not speak the protocol and 422s on the create.
+        endpoint: `${apiEndpoint}/tus/${projectId}`,
+        chunkSize: TUS_CHUNK_SIZE,
         retryDelays: [0, 1000, 3000], // Shorter delays for fallback
         metadata: {
           filename: upload.sanitizedName,

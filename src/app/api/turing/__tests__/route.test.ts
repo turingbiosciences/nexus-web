@@ -286,4 +286,60 @@ describe('API proxy', () => {
 
     expect(res.status).toBe(500);
   });
+  // The TUS create returns a Location the browser must call next. The API is
+  // unaware it sits behind this proxy, so the path it emits is rooted at its
+  // own origin and has to be re-prefixed or the upload 404s on its first PATCH.
+  describe('Location header rewriting', () => {
+    const respondWithLocation = (location: string, status = 201) => {
+      global.fetch = jest
+        .fn()
+        .mockResolvedValue(
+          new Response(null, { status, headers: { location } })
+        );
+    };
+
+    it('prefixes an upstream absolute path with the proxy mount', async () => {
+      respondWithLocation('/tus/proj-1/upload-abc');
+
+      const res = await POST(
+        new NextRequest('http://localhost/api/turing/tus/proj-1', {
+          method: 'POST',
+        }),
+        ctx(['tus', 'proj-1'])
+      );
+
+      expect(res.headers.get('location')).toBe(
+        '/api/turing/tus/proj-1/upload-abc'
+      );
+    });
+
+    it('leaves an absolute URL alone', async () => {
+      const presigned = 'https://nyc3.digitaloceanspaces.com/bucket/key?sig=x';
+      respondWithLocation(presigned, 302);
+
+      const res = await POST(
+        new NextRequest('http://localhost/api/turing/projects/p/files/f', {
+          method: 'POST',
+        }),
+        ctx(['projects', 'p', 'files', 'f'])
+      );
+
+      expect(res.headers.get('location')).toBe(presigned);
+    });
+
+    it('does not double-prefix a path already under the proxy', async () => {
+      respondWithLocation('/api/turing/tus/proj-1/upload-abc');
+
+      const res = await POST(
+        new NextRequest('http://localhost/api/turing/tus/proj-1', {
+          method: 'POST',
+        }),
+        ctx(['tus', 'proj-1'])
+      );
+
+      expect(res.headers.get('location')).toBe(
+        '/api/turing/tus/proj-1/upload-abc'
+      );
+    });
+  });
 });
