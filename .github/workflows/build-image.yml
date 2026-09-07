@@ -45,10 +45,13 @@ jobs:
       # one does not fail the build -- it ships a broken sign-in to production
       # instead. Fail here, where the cause is obvious.
       - name: Check required build configuration
+        env:
+          LOGTO_ENDPOINT: ${{ vars.NEXT_PUBLIC_LOGTO_ENDPOINT }}
+          LOGTO_APP_ID: ${{ vars.NEXT_PUBLIC_LOGTO_APP_ID }}
         run: |
           MISSING=""
-          [ -n "${{ vars.NEXT_PUBLIC_LOGTO_ENDPOINT }}" ] || MISSING="$MISSING NEXT_PUBLIC_LOGTO_ENDPOINT"
-          [ -n "${{ vars.NEXT_PUBLIC_LOGTO_APP_ID }}" ]   || MISSING="$MISSING NEXT_PUBLIC_LOGTO_APP_ID"
+          [ -n "$LOGTO_ENDPOINT" ] || MISSING="$MISSING NEXT_PUBLIC_LOGTO_ENDPOINT"
+          [ -n "$LOGTO_APP_ID" ]   || MISSING="$MISSING NEXT_PUBLIC_LOGTO_APP_ID"
           if [ -n "$MISSING" ]; then
             echo "::error::Missing repository variable(s):$MISSING"
             echo "::error::These are baked into the client bundle at build time; without them the image would ship a broken sign-in."
@@ -68,7 +71,14 @@ jobs:
       # A BuildKit secret, not a build arg: an ARG lands in the image history
       # and this token can write to the Sentry org.
       - name: Stage the Sentry token
-        run: printf '%s' "${{ secrets.SENTRY_AUTH_TOKEN }}" > /tmp/sentry.token
+        # Via env, not "${{ secrets.* }}" inline: an inline expansion is pasted
+        # into the shell command text before the shell ever runs, so it can
+        # surface in a trace or be broken out of by the value itself
+        # (githubactions:S7636). As an env var the shell only ever sees a
+        # reference.
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: printf '%s' "$SENTRY_AUTH_TOKEN" > /tmp/sentry.token
 
       - name: Build and push
         id: push
@@ -99,13 +109,19 @@ jobs:
         run: rm -f /tmp/sentry.token
 
       - name: Report the digest the droplet will pick up
+        # Contexts come in as env rather than being expanded inline: an inline
+        # ${{ }} is pasted into the command text before the shell parses it,
+        # which is the code-injection shape Sonar flags (githubactions:S7636).
+        env:
+          IMAGE_DIGEST: ${{ steps.push.outputs.digest }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
           echo "### Image published" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| | |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| digest | \`${{ steps.push.outputs.digest }}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| sha tag | \`sha-${{ github.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| digest | \`$IMAGE_DIGEST\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| sha tag | \`sha-$COMMIT_SHA\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "The droplet polls every 2 minutes and will move \`WEB_DIGEST\` in \`/opt/nexus/.env\` to this digest." >> "$GITHUB_STEP_SUMMARY"
 
