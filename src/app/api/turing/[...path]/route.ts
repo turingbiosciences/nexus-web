@@ -84,6 +84,10 @@ const STRIPPED_REQUEST_HEADERS = new Set([
   'accept-encoding',
 ]);
 
+// Mount path of this proxy. Upstream path-absolute Location headers are
+// rewritten under it; see the response handling below.
+const PROXY_PREFIX = '/api/turing';
+
 const STRIPPED_RESPONSE_HEADERS = new Set([
   'connection',
   'keep-alive',
@@ -215,6 +219,20 @@ async function handle(
         responseHeaders.set(key, value);
       }
     });
+
+    // Rewrite upstream absolute-path redirects back under this proxy.
+    //
+    // The API has no idea it is being proxied -- its ASGI root_path is empty --
+    // so it emits Location headers rooted at its own origin, e.g. the TUS
+    // create returning `/tus/<project>/<upload>`. A browser resolves that
+    // against THIS origin and lands on /tus/... , which the Next.js app does
+    // not serve, so the upload 404s on its first PATCH. Prefixing restores the
+    // path the client must actually call. Absolute URLs are left alone: those
+    // point somewhere else on purpose (Spaces presigned links, for instance).
+    const location = responseHeaders.get('location');
+    if (location?.startsWith('/') && !location.startsWith(`${PROXY_PREFIX}/`)) {
+      responseHeaders.set('location', `${PROXY_PREFIX}${location}`);
+    }
 
     // Server-sent events: make sure nothing downstream buffers this. Caddy is
     // already configured with flush_interval -1; this covers the Next.js side.
