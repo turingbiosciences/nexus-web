@@ -1,0 +1,7 @@
+# Line endings. The Dockerfile and any shell here are authored on Windows but
+# only ever execute on Linux; a CRLF checkout turns a shebang into
+# `bad interpreter: ^M` and can break Docker RUN lines in subtle ways.
+*.sh            text eol=lf
+*.yaml          text eol=lf
+*.yml           text eol=lf
+Dockerfile*     text eol=lf
