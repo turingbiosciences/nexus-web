@@ -7,7 +7,7 @@ name: Build and Publish Image
 # deploy; the droplet picks it up within a couple of minutes.
 #
 # Requires, in this repo's settings:
-#   secret DIGITALOCEAN_ACCESS_TOKEN  registry push + prune
+#   secret DIGITALOCEAN_ACCESS_TOKEN  registry push
 #   secret SENTRY_AUTH_TOKEN          optional; without it the build still
 #                                     succeeds, it just uploads no source maps
 #   var    NEXT_PUBLIC_LOGTO_ENDPOINT baked into the client bundle at build time
@@ -124,40 +124,3 @@ jobs:
           echo "| sha tag | \`sha-$COMMIT_SHA\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "The droplet polls every 2 minutes and will move \`WEB_DIGEST\` in \`/opt/nexus/.env\` to this digest." >> "$GITHUB_STEP_SUMMARY"
-
-  prune:
-    name: Prune old manifests
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      # The Basic tier includes 5GiB and the pair of images stores at roughly
-      # 1GB per deploy, so this fills up in a handful of merges. Deleting a
-      # manifest does not reclaim blobs; garbage collection does.
-      - name: Install doctl
-        uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-
-      - name: Delete untagged manifests
-        run: |
-          set -euo pipefail
-          UNTAGGED=$(doctl registry repository list-manifests nexus-web \
-            --format Tags,ManifestDigest --no-header 2>/dev/null \
-            | awk '$1 == "" || $1 == "<nil>" { print $NF }' || true)
-
-          if [ -z "$UNTAGGED" ]; then
-            echo "Nothing untagged to remove."
-          else
-            echo "$UNTAGGED" | while read -r digest; do
-              [ -n "$digest" ] || continue
-              echo "Deleting $digest"
-              doctl registry repository delete-manifest nexus-web "$digest" --force || true
-            done
-          fi
-
-      - name: Run garbage collection
-        run: |
-          # Only one GC runs at a time across the registry; if the API repo's
-          # build is already collecting, skip rather than fail.
-          doctl registry garbage-collection start --include-untagged-manifests --force \
-            || echo "GC already running or nothing to collect; skipping."
