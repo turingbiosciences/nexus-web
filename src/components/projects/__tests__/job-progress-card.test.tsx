@@ -266,12 +266,14 @@ describe('JobProgressCard', () => {
         label: 'Random Forest',
         state: 'completed',
         progress: null,
+        stoppedEarly: false,
       },
       {
         key: 'xgboost',
         label: 'XGBoost',
         state: 'running',
         progress: { done: 190, total: 648 },
+        stoppedEarly: false,
       },
     ];
 
@@ -291,6 +293,29 @@ describe('JobProgressCard', () => {
       expect(
         screen.getByText('Algorithms (1/2 complete):')
       ).toBeInTheDocument();
+    });
+
+    it('marks an early-stopped algorithm and keeps its counts visible', () => {
+      render(
+        <JobProgressCard
+          job={baseJob}
+          isConnected={true}
+          isLoading={false}
+          error={null}
+          algorithms={[
+            {
+              key: 'xgboost',
+              label: 'XGBoost',
+              state: 'completed',
+              progress: { done: 190, total: 648 },
+              stoppedEarly: true,
+            },
+          ]}
+        />
+      );
+
+      expect(screen.getByText('190/648')).toBeInTheDocument();
+      expect(screen.getByText('(stopped early)')).toBeInTheDocument();
     });
 
     it('shows work counts on a running algorithm', () => {

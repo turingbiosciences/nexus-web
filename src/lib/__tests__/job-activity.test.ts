@@ -4,6 +4,7 @@ import {
   detectAlgorithms,
   parseAlgorithmTag,
   parseWorkCounts,
+  isEarlyStop,
   humanizeJobEvent,
   reduceAlgorithms,
 } from '../job-activity';
@@ -149,12 +150,14 @@ describe('reduceAlgorithms with real stream messages', () => {
         label: 'XGBoost',
         state: 'running',
         progress: { done: 230, total: 648 },
+        stoppedEarly: false,
       },
       {
         key: 'catboost',
         label: 'CatBoost',
         state: 'running',
         progress: { done: 30, total: 150 },
+        stoppedEarly: false,
       },
     ]);
   });
@@ -173,6 +176,7 @@ describe('reduceAlgorithms with real stream messages', () => {
       label: 'CatBoost',
       state: 'running',
       progress: { done: 30, total: 150 },
+      stoppedEarly: false,
     });
   });
 
@@ -228,6 +232,125 @@ describe('humanizeJobEvent with real stream messages', () => {
   });
 });
 
+describe('overfit_warning (early stop on perfect ROC AUC)', () => {
+  const warning = (message: string) => ({
+    type: 'overfit_warning' as const,
+    status: 'running' as const,
+    message,
+  });
+
+  it('completes the tagged algorithm short of its total', () => {
+    let state = reduceAlgorithms([], {
+      status: 'running',
+      message: '[xgboost] Trained 190/648 configs. Best ROC: 1.0000',
+    });
+    state = reduceAlgorithms(
+      state,
+      warning('[xgboost] Perfect ROC AUC reached, stopping early')
+    );
+
+    expect(state[0]).toEqual({
+      key: 'xgboost',
+      label: 'XGBoost',
+      state: 'completed',
+      progress: { done: 190, total: 648 },
+      stoppedEarly: true,
+    });
+  });
+
+  it('leaves the other algorithms running, since early stop is per-algorithm', () => {
+    let state = reduceAlgorithms([], {
+      status: 'running',
+      message: '[xgboost] Trained 190/648 configs.',
+    });
+    state = reduceAlgorithms(state, {
+      status: 'running',
+      message: '[catboost] Completed 30/150 trials.',
+    });
+    state = reduceAlgorithms(state, warning('[xgboost] Perfect ROC AUC'));
+
+    expect(state.map((a) => [a.key, a.state])).toEqual([
+      ['xgboost', 'completed'],
+      ['catboost', 'running'],
+    ]);
+  });
+
+  it('walks back to running when training carries on (early stop disabled)', () => {
+    let state = reduceAlgorithms([], {
+      status: 'running',
+      message: '[xgboost] Trained 190/648 configs.',
+    });
+    state = reduceAlgorithms(state, warning('[xgboost] Perfect ROC AUC'));
+    expect(state[0].state).toBe('completed');
+
+    // Early stop was off, so the sweep continues.
+    state = reduceAlgorithms(state, {
+      status: 'running',
+      message: '[xgboost] Trained 210/648 configs.',
+    });
+
+    expect(state[0]).toEqual({
+      key: 'xgboost',
+      label: 'XGBoost',
+      state: 'running',
+      progress: { done: 210, total: 648 },
+      stoppedEarly: false,
+    });
+  });
+
+  it('does not resurrect an algorithm that completed normally', () => {
+    let state = reduceAlgorithms([], {
+      status: 'running',
+      message: '[xgboost] Trained 648/648 configs.',
+    });
+    expect(state[0].state).toBe('completed');
+
+    state = reduceAlgorithms(state, {
+      status: 'running',
+      message: '[xgboost] Trained 648/648 configs.',
+    });
+
+    expect(state[0].state).toBe('completed');
+  });
+
+  it('renders a warning line in the activity log', () => {
+    expect(
+      humanizeJobEvent(
+        {
+          type: 'overfit_warning',
+          status: 'running',
+          message: '[xgboost] Perfect ROC AUC reached',
+        },
+        'overfit_warning'
+      )
+    ).toBe('Overfit warning - XGBoost - Perfect ROC AUC reached');
+  });
+
+  it('falls back to a default line when the warning carries no message', () => {
+    expect(
+      humanizeJobEvent({ type: 'overfit_warning' }, 'overfit_warning')
+    ).toBe('Overfit warning: perfect ROC AUC reached.');
+  });
+});
+
+describe('isEarlyStop', () => {
+  it.each([
+    '[xgboost] Stopped early: perfect ROC AUC reached',
+    '[xgboost] Stopping early on perfect AUC',
+    '[xgboost] Early stop triggered',
+  ])('treats %s as an early stop', (message) => {
+    expect(isEarlyStop(message)).toBe(true);
+  });
+
+  it.each([
+    '[xgboost] Training with early stopping',
+    '[xgboost] Early stopping enabled',
+    '[xgboost] Trained 190/648 configs.',
+  ])('does not treat %s as an early stop', (message) => {
+    expect(isEarlyStop(message)).toBe(false);
+  });
+});
+
 describe('reduceAlgorithms', () => {
   it('marks a detected algorithm as running', () => {
     const result = reduceAlgorithms([], {
@@ -241,6 +364,7 @@ describe('reduceAlgorithms', () => {
         label: 'Random Forest',
         state: 'running',
         progress: null,
+        stoppedEarly: false,
       },
     ]);
   });
@@ -262,8 +386,15 @@ describe('reduceAlgorithms', () => {
         label: 'Random Forest',
         state: 'completed',
         progress: null,
+        stoppedEarly: false,
       },
-      { key: 'xgboost', label: 'XGBoost', state: 'running', progress: null },
+      {
+        key: 'xgboost',
+        label: 'XGBoost',
+        state: 'running',
+        progress: null,
+        stoppedEarly: false,
+      },
     ]);
   });
 
@@ -274,7 +405,13 @@ describe('reduceAlgorithms', () => {
     });
 
     expect(state).toEqual([
-      { key: 'xgboost', label: 'XGBoost', state: 'completed', progress: null },
+      {
+        key: 'xgboost',
+        label: 'XGBoost',
+        state: 'completed',
+        progress: null,
+        stoppedEarly: false,
+      },
     ]);
   });
 
@@ -294,6 +431,7 @@ describe('reduceAlgorithms', () => {
         label: 'CatBoost',
         state: 'completed',
         progress: null,
+        stoppedEarly: false,
       },
     ]);
   });
@@ -326,8 +464,15 @@ describe('reduceAlgorithms', () => {
         label: 'Random Forest',
         state: 'completed',
         progress: null,
+        stoppedEarly: false,
       },
-      { key: 'xgboost', label: 'XGBoost', state: 'running', progress: null },
+      {
+        key: 'xgboost',
+        label: 'XGBoost',
+        state: 'running',
+        progress: null,
+        stoppedEarly: false,
+      },
     ]);
   });
 
@@ -355,7 +500,13 @@ describe('reduceAlgorithms', () => {
       }
 
       expect(state).toEqual([
-        { key: 'xgboost', label: 'XGBoost', state: 'running', progress: null },
+        {
+          key: 'xgboost',
+          label: 'XGBoost',
+          state: 'running',
+          progress: null,
+          stoppedEarly: false,
+        },
       ]);
     });
 
@@ -387,6 +538,7 @@ describe('reduceAlgorithms', () => {
         label: 'Random Forest',
         state: 'running',
         progress: null,
+        stoppedEarly: false,
       });
     });
   });

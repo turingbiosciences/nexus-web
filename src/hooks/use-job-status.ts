@@ -222,11 +222,16 @@ export function useJobStatus(
             } as Job;
           }
 
+          // An overfit_warning carries the warning, not a full status
+          // snapshot, so only overwrite the fields it actually sends.
           const updated = {
             ...prev,
-            status: jobData.status,
-            progress_percent: jobData.progress_percent,
-            message: jobData.message,
+            status: jobData.status ?? prev.status,
+            progress_percent:
+              typeof jobData.progress_percent === 'number'
+                ? jobData.progress_percent
+                : prev.progress_percent,
+            message: jobData.message ?? prev.message,
             error: jobData.error || null,
           };
           return updated;
@@ -236,11 +241,14 @@ export function useJobStatus(
         const line = humanizeJobEvent(jobData, eventType);
         if (line) {
           const level: JobActivityEntry['level'] =
-            jobData.status === 'completed'
-              ? 'success'
-              : jobData.status === 'failed' || jobData.status === 'cancelled'
-                ? 'error'
-                : 'info';
+            eventType === 'overfit_warning' ||
+            jobData.type === 'overfit_warning'
+              ? 'warning'
+              : jobData.status === 'completed'
+                ? 'success'
+                : jobData.status === 'failed' || jobData.status === 'cancelled'
+                  ? 'error'
+                  : 'info';
           appendActivity(
             line,
             level,
@@ -441,6 +449,9 @@ export function useJobStatus(
     eventSource.addEventListener('status', handleEvent);
     eventSource.addEventListener('progress', handleEvent);
     eventSource.addEventListener('complete', handleEvent);
+    // onmessage only fires for unnamed events, so a named one must be
+    // registered explicitly or it is dropped without a trace.
+    eventSource.addEventListener('overfit_warning', handleEvent);
 
     eventSource.addEventListener('error', (event: Event) => {
       if ((event as MessageEvent).data) {

@@ -151,6 +151,7 @@ describe('useJobStatus', () => {
             label: 'Random Forest',
             state: 'running',
             progress: null,
+            stoppedEarly: false,
           },
         ]);
 
@@ -164,6 +165,7 @@ describe('useJobStatus', () => {
           label: 'Random Forest',
           state: 'completed',
           progress: null,
+          stoppedEarly: false,
         });
       } finally {
         jest.useRealTimers();

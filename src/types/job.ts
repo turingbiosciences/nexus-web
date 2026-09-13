@@ -37,7 +37,17 @@ export interface Job {
  * SSE event payload for job status updates
  */
 export interface JobStatusEvent {
-  type: 'status' | 'progress' | 'complete' | 'error' | 'heartbeat';
+  type:
+    | 'status'
+    | 'progress'
+    | 'complete'
+    | 'error'
+    | 'heartbeat'
+    /**
+     * A perfect ROC AUC was reached. With early-stop-on-perfect-AUC enabled
+     * the tagged algorithm finishes here, short of its configured total.
+     */
+    | 'overfit_warning';
   job_id: string;
   status: JobStatus;
   progress_percent: number;
@@ -66,7 +76,7 @@ export interface JobActivityEntry {
   progress_percent: number | null;
   /** Human-readable description of what happened. */
   text: string;
-  level: 'info' | 'success' | 'error';
+  level: 'info' | 'success' | 'warning' | 'error';
 }
 
 /**
@@ -83,6 +93,11 @@ export interface AlgorithmProgress {
    * reports them (e.g. "Trained 190/648 configs"). Null when unknown.
    */
   progress: { done: number; total: number } | null;
+  /**
+   * True when the algorithm finished without exhausting its search, e.g. it
+   * hit a perfect ROC AUC and early-stopped at 190 of 648 configs.
+   */
+  stoppedEarly: boolean;
 }
 
 /**

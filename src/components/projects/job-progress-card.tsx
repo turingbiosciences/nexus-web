@@ -51,11 +51,15 @@ function AlgorithmChips({ algorithms }: { algorithms: AlgorithmProgress[] }) {
           <span
             key={algo.key}
             className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${styles}`}
-            title={
+            title={[
+              `${algo.label}: ${algo.state}`,
               algo.progress
-                ? `${algo.label}: ${algo.state} (${algo.progress.done}/${algo.progress.total})`
-                : `${algo.label}: ${algo.state}`
-            }
+                ? `(${algo.progress.done}/${algo.progress.total})`
+                : '',
+              algo.stoppedEarly ? '- stopped early on perfect ROC AUC' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
           >
             {algo.state === 'completed' && <Check className="h-3 w-3" />}
             {algo.state === 'failed' && <XCircle className="h-3 w-3" />}
@@ -63,10 +67,14 @@ function AlgorithmChips({ algorithms }: { algorithms: AlgorithmProgress[] }) {
               <Loader2 className="h-3 w-3 animate-spin" />
             )}
             {algo.label}
-            {algo.state === 'running' && algo.progress && (
-              <span className="tabular-nums font-normal opacity-75">
-                {algo.progress.done}/{algo.progress.total}
-              </span>
+            {algo.progress &&
+              (algo.state === 'running' || algo.stoppedEarly) && (
+                <span className="tabular-nums font-normal opacity-75">
+                  {algo.progress.done}/{algo.progress.total}
+                </span>
+              )}
+            {algo.stoppedEarly && (
+              <span className="font-normal opacity-75">(stopped early)</span>
             )}
           </span>
         );
@@ -124,9 +132,11 @@ function ActivityLog({ entries }: { entries: JobActivityEntry[] }) {
           className={`flex gap-2 whitespace-pre-wrap break-words ${
             entry.level === 'error'
               ? 'text-red-700'
-              : entry.level === 'success'
-                ? 'text-green-700'
-                : 'text-gray-600'
+              : entry.level === 'warning'
+                ? 'text-amber-700'
+                : entry.level === 'success'
+                  ? 'text-green-700'
+                  : 'text-gray-600'
           }`}
         >
           <span className="shrink-0 text-gray-400">

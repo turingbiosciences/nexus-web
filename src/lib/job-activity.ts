@@ -81,6 +81,25 @@ const ALGORITHM_TAG = /^\s*\[([A-Za-z0-9_-]+)\]/;
 const WORK_COUNTS = /\b(\d+)\s*\/\s*(\d+)\b/;
 
 /**
+ * A message saying this algorithm finished without exhausting its search --
+ * the early-stop-on-perfect-AUC option. Checked BEFORE the counts, because
+ * such a run ends at something like 190/648 and would otherwise read as still
+ * working.
+ *
+ * Early stop is per-algorithm: the others keep training to their own totals.
+ */
+const EARLY_STOP_PHRASE =
+  /\b(?:stopp?(?:ed|ing)\s+early|early[\s-]stop(?:ped|ping)?)\b/i;
+
+/**
+ * Wording that shows the early-stop phrase names a configured option rather
+ * than something that just happened ("training with early stopping enabled"),
+ * so it is not read as completion.
+ */
+const EARLY_STOP_AS_OPTION =
+  /\b(?:with|using|enable[ds]?|enabling|configured?|option|flag|setting)\b/i;
+
+/**
  * A quantity in the message means work is still under way, even when the word
  * "complete" appears: "[catboost] Completed 30/150 trials" is progress, not
  * completion. This check runs before DONE_PHRASE for that reason.
@@ -192,10 +211,22 @@ export function parseWorkCounts(
 }
 
 /**
+ * Does this message say the algorithm stopped before exhausting its search?
+ */
+export function isEarlyStop(message: string | undefined): boolean {
+  if (!message) return false;
+  return EARLY_STOP_PHRASE.test(message) && !EARLY_STOP_AS_OPTION.test(message);
+}
+
+/**
  * Decide whether a message describes an algorithm that is still working or one
  * that has finished.
  */
 function inferState(message: string): AlgorithmProgress['state'] {
+  // An early stop finishes the algorithm short of its total, so this has to
+  // win over the counts below.
+  if (isEarlyStop(message)) return 'completed';
+
   // Real counts beat any wording: 190 of 648 is running however it is phrased.
   const counts = parseWorkCounts(message);
   if (counts) {
@@ -241,6 +272,13 @@ export function humanizeJobEvent(
     return `Error: ${event.error || 'Unknown streaming error'}`;
   }
 
+  if (eventType === 'overfit_warning' || event.type === 'overfit_warning') {
+    const detail = prettifyTag(event.message?.trim());
+    return detail
+      ? `Overfit warning - ${detail}`
+      : 'Overfit warning: perfect ROC AUC reached.';
+  }
+
   const message = prettifyTag(event.message?.trim());
 
   if (event.status === 'completed') {
@@ -283,20 +321,42 @@ export function reduceAlgorithms(
   const upsert = (
     key: string,
     state: AlgorithmProgress['state'],
-    progress: AlgorithmProgress['progress'] = null
+    progress: AlgorithmProgress['progress'] = null,
+    stoppedEarly = false
   ) => {
     const existing = next.find((algo) => algo.key === key);
     if (!existing) {
-      next.push({ key, label: algorithmLabel(key), state, progress });
+      next.push({
+        key,
+        label: algorithmLabel(key),
+        state,
+        progress,
+        stoppedEarly,
+      });
       changed = true;
       return;
     }
 
-    // Never walk an algorithm backwards out of a terminal state.
-    if (existing.state === 'running' && existing.state !== state) {
+    // An overfit warning only ends the algorithm when early stop is enabled.
+    // If it is not, training carries on and more progress arrives -- so this
+    // is the one terminal state that may be walked back.
+    const resumingAfterEarlyStop =
+      existing.stoppedEarly && state === 'running' && progress !== null;
+
+    if (resumingAfterEarlyStop) {
+      existing.state = 'running';
+      existing.stoppedEarly = false;
+      changed = true;
+    } else if (existing.state === 'running' && existing.state !== state) {
       existing.state = state;
       changed = true;
     }
+
+    if (stoppedEarly && !existing.stoppedEarly) {
+      existing.stoppedEarly = true;
+      changed = true;
+    }
+
     // Counts only ever move forward, so ignore a stale out-of-order message.
     if (
       progress &&
@@ -314,6 +374,21 @@ export function reduceAlgorithms(
 
   const message = event.message ?? '';
   const tagged = parseAlgorithmTag(message);
+
+  if (event.type === 'overfit_warning') {
+    // Perfect ROC AUC. With early stop enabled the tagged algorithm ends here,
+    // short of its total, so the counts will never reach it. If early stop is
+    // off and training carries on, the next progress message for this
+    // algorithm walks it back to running (see upsert).
+    const key = event.current_algorithm
+      ? toKey(event.current_algorithm)
+      : (tagged ?? detectAlgorithms(message)[0]);
+
+    if (key) {
+      upsert(key, 'completed', parseWorkCounts(message), true);
+    }
+    return changed ? next : previous;
+  }
 
   if (event.current_algorithm) {
     // The backend told us exactly what is running; trust it.
