@@ -1,0 +1,22 @@
+{
+  "name": "Claude Code Dev Environment",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "remoteEnv": {
+    // Uses your Pro/Max subscription (not separate API billing).
+    // Generate this once with `claude setup-token`, then add it as a
+    // Codespaces secret named CLAUDE_CODE_OAUTH_TOKEN
+    // (repo Settings > Secrets and variables > Codespaces).
+    "CLAUDE_CODE_OAUTH_TOKEN": "${localEnv:CLAUDE_CODE_OAUTH_TOKEN}"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["Anthropic.claude-code"]
+    }
+  }
+}
