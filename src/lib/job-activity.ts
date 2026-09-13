@@ -67,8 +67,25 @@ const ALGORITHMS: AlgorithmDefinition[] = [
 
 const ALGORITHM_BY_KEY = new Map(ALGORITHMS.map((a) => [a.key, a]));
 
-/** Phrases that mean "this algorithm is done", not "this algorithm started". */
-const DONE_PHRASE = /\b(complete[d]?|finished|done|trained|evaluated)\b/i;
+/**
+ * A quantity in the message means work is still under way, even when the word
+ * "complete" appears: "Training XGBoost - 45% complete" and "Random Forest:
+ * 300/500 trees trained" are both progress, not completion. This check runs
+ * before DONE_PHRASE for that reason.
+ */
+const PROGRESS_QUANTITY = /\d+\s*%|\b\d+\s*(?:\/|of)\s*\d+\b/i;
+
+/**
+ * Words that mean the named algorithm has finished. Deliberately narrow:
+ * falsely showing a chip as complete is worse than showing it as still
+ * running, since a missed completion self-corrects when the next algorithm
+ * starts or the job ends.
+ */
+const DONE_PHRASE = /\b(complete|completed|finished)\b/i;
+
+/** Words that mean work on the named algorithm has actually begun. */
+const STARTED_PHRASE =
+  /\b(training|fitting|running|starting|begin|beginning|tuning|searching|optimizing|optimising|cross[\s-]?validating)\b/i;
 
 /**
  * Turn an arbitrary algorithm identifier into its snake_case key.
@@ -94,19 +111,52 @@ export function algorithmLabel(key: string): string {
 }
 
 /**
- * Find the algorithm mentioned in a status message, if any.
+ * Find every algorithm mentioned in a status message, ordered by where it
+ * appears in the text.
+ *
+ * Ordering by position rather than by catalog order matters: "Training XGBoost
+ * (Random Forest done)" is about XGBoost, and iterating the catalog would
+ * wrongly pick Random Forest just because it is defined first.
+ */
+export function detectAlgorithms(message: string | undefined): string[] {
+  if (!message) return [];
+
+  const hits: { key: string; index: number }[] = [];
+
+  for (const algo of ALGORITHMS) {
+    let earliest = -1;
+    for (const pattern of algo.patterns) {
+      const match = pattern.exec(message);
+      if (match && (earliest === -1 || match.index < earliest)) {
+        earliest = match.index;
+      }
+    }
+    if (earliest !== -1) {
+      hits.push({ key: algo.key, index: earliest });
+    }
+  }
+
+  return hits.sort((a, b) => a.index - b.index).map((hit) => hit.key);
+}
+
+/**
+ * Find the algorithm a status message is about, if any.
  *
  * @returns the algorithm key, or null when no known algorithm is mentioned
  */
 export function detectAlgorithm(message: string | undefined): string | null {
-  if (!message) return null;
+  return detectAlgorithms(message)[0] ?? null;
+}
 
-  for (const algo of ALGORITHMS) {
-    if (algo.patterns.some((pattern) => pattern.test(message))) {
-      return algo.key;
-    }
-  }
-  return null;
+/**
+ * Decide whether a message describes an algorithm that is still working or one
+ * that has finished.
+ */
+function inferState(message: string): AlgorithmProgress['state'] {
+  // A progress quantity outranks any "complete" wording in the same message.
+  if (PROGRESS_QUANTITY.test(message)) return 'running';
+  if (DONE_PHRASE.test(message)) return 'completed';
+  return 'running';
 }
 
 /**
@@ -185,26 +235,38 @@ export function reduceAlgorithms(
     upsert(toKey(name), 'completed');
   }
 
-  const current = event.current_algorithm
-    ? toKey(event.current_algorithm)
-    : detectAlgorithm(event.message);
+  const message = event.message ?? '';
 
-  if (current) {
-    const isDone =
-      !event.current_algorithm && DONE_PHRASE.test(event.message ?? '');
+  if (event.current_algorithm) {
+    // The backend told us exactly what is running; trust it.
+    upsert(toKey(event.current_algorithm), 'running');
+  } else {
+    const mentioned = detectAlgorithms(message);
 
-    if (isDone) {
-      upsert(current, 'completed');
-    } else {
-      // Anything still marked running that is not the current algorithm has
-      // been left behind by the pipeline, so treat it as finished.
-      for (const algo of next) {
-        if (algo.state === 'running' && algo.key !== current) {
-          algo.state = 'completed';
-          changed = true;
+    // A message naming several algorithms ("Comparing Random Forest, XGBoost")
+    // is a summary, not a statement about one algorithm's state. Guessing which
+    // it refers to is how chips end up marked complete while still training,
+    // so leave the list alone.
+    if (mentioned.length === 1) {
+      const current = mentioned[0];
+      const state = inferState(message);
+
+      if (state === 'completed') {
+        upsert(current, 'completed');
+      } else {
+        // Only conclude the pipeline moved on when this message actually says
+        // work on the new algorithm began. A passing mention is not evidence
+        // that anything else finished.
+        if (STARTED_PHRASE.test(message)) {
+          for (const algo of next) {
+            if (algo.state === 'running' && algo.key !== current) {
+              algo.state = 'completed';
+              changed = true;
+            }
+          }
         }
+        upsert(current, 'running');
       }
-      upsert(current, 'running');
     }
   }
 
