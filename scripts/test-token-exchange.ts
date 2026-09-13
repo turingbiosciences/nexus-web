@@ -34,6 +34,28 @@ function loadEnv(path: string) {
   }
 }
 
+/**
+ * Strip control characters from remote-controlled values before logging.
+ *
+ * Everything in the token endpoint's response is outside our control, and a
+ * newline or ANSI escape sequence in it could forge log lines or garble the
+ * terminal. Newlines are allowed only where we add them ourselves, such as the
+ * pretty-printed response body.
+ */
+function sanitizeForLog(
+  value: unknown,
+  { allowNewlines = false }: { allowNewlines?: boolean } = {}
+): string {
+  return Array.from(String(value))
+    .map((char) => {
+      if (allowNewlines && char === '\n') return char;
+      const code = char.codePointAt(0) ?? 0;
+      const isControl = code < 0x20 || (code >= 0x7f && code <= 0x9f);
+      return isControl ? ' ' : char;
+    })
+    .join('');
+}
+
 // Load environment variables
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -110,7 +132,9 @@ async function testTokenExchange() {
       body: body.toString(),
     });
 
-    console.log(`Response Status: ${response.status} ${response.statusText}\n`);
+    console.log(
+      `Response Status: ${response.status} ${sanitizeForLog(response.statusText)}\n`
+    );
 
     const data = await response.json();
 
@@ -118,15 +142,19 @@ async function testTokenExchange() {
       const tokenData = data as TokenResponse;
       console.log('✅ SUCCESS! Token obtained:\n');
       console.log('Response:');
-      console.log(`  access_token: ${tokenData.access_token.slice(0, 50)}...`);
-      console.log(`  token_type: ${tokenData.token_type}`);
       console.log(
-        `  expires_in: ${tokenData.expires_in} seconds (${Math.floor(
-          tokenData.expires_in / 60
+        `  access_token: ${sanitizeForLog(tokenData.access_token.slice(0, 50))}...`
+      );
+      console.log(`  token_type: ${sanitizeForLog(tokenData.token_type)}`);
+      // Coerced to a number so nothing from the response reaches the log as text.
+      const expiresIn = Number(tokenData.expires_in) || 0;
+      console.log(
+        `  expires_in: ${expiresIn} seconds (${Math.floor(
+          expiresIn / 60
         )} minutes)`
       );
       if (tokenData.scope) {
-        console.log(`  scope: ${tokenData.scope}`);
+        console.log(`  scope: ${sanitizeForLog(tokenData.scope)}`);
       }
       console.log('\n');
 
@@ -175,13 +203,17 @@ async function testTokenExchange() {
       const errorData = data as ErrorResponse;
       console.log('❌ ERROR: Token exchange failed\n');
       console.log('Error Response:');
-      console.log(`  error: ${errorData.error}`);
+      console.log(`  error: ${sanitizeForLog(errorData.error)}`);
       if (errorData.error_description) {
-        console.log(`  error_description: ${errorData.error_description}`);
+        console.log(
+          `  error_description: ${sanitizeForLog(errorData.error_description)}`
+        );
       }
       console.log('\n');
       console.log('Full Response:');
-      console.log(JSON.stringify(data, null, 2));
+      console.log(
+        sanitizeForLog(JSON.stringify(data, null, 2), { allowNewlines: true })
+      );
       console.log('\n');
 
       console.log('Common Issues:');

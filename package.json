@@ -9,6 +9,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:token:m2m": "node --import tsx scripts/test-token-exchange.ts",
     "prepare": "husky"
