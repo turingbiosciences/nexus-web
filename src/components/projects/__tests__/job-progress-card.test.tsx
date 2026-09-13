@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { JobProgressCard } from '../job-progress-card';
-import { Job } from '@/types/job';
+import { Job, JobActivityEntry, AlgorithmProgress } from '@/types/job';
 
 describe('JobProgressCard', () => {
   const baseJob: Job = {
@@ -256,6 +256,138 @@ describe('JobProgressCard', () => {
       expect(screen.getByText('RandomForest')).toBeInTheDocument();
       expect(screen.getByText('Models Trained:')).toBeInTheDocument();
       expect(screen.getByText('5')).toBeInTheDocument();
+    });
+  });
+
+  describe('Algorithm Chips', () => {
+    const algorithms: AlgorithmProgress[] = [
+      { key: 'random_forest', label: 'Random Forest', state: 'completed' },
+      { key: 'xgboost', label: 'XGBoost', state: 'running' },
+    ];
+
+    it('lists algorithms with a completed count', () => {
+      render(
+        <JobProgressCard
+          job={baseJob}
+          isConnected={true}
+          isLoading={false}
+          error={null}
+          algorithms={algorithms}
+        />
+      );
+
+      expect(screen.getByText('Random Forest')).toBeInTheDocument();
+      expect(screen.getByText('XGBoost')).toBeInTheDocument();
+      expect(
+        screen.getByText('Algorithms (1/2 complete):')
+      ).toBeInTheDocument();
+    });
+
+    it('renders nothing when no algorithms are known yet', () => {
+      render(
+        <JobProgressCard
+          job={baseJob}
+          isConnected={true}
+          isLoading={false}
+          error={null}
+        />
+      );
+
+      expect(screen.queryByText(/Algorithms \(/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Activity Log', () => {
+    const activity: JobActivityEntry[] = [
+      {
+        id: 0,
+        timestamp: '2025-01-15T15:30:00Z',
+        progress_percent: 10,
+        text: 'Loading dataset...',
+        level: 'info',
+      },
+      {
+        id: 1,
+        timestamp: '2025-01-15T15:30:10Z',
+        progress_percent: 45,
+        text: 'Training XGBoost model...',
+        level: 'info',
+      },
+    ];
+
+    it('renders each activity line with its progress', () => {
+      render(
+        <JobProgressCard
+          job={baseJob}
+          isConnected={true}
+          isLoading={false}
+          error={null}
+          activity={activity}
+        />
+      );
+
+      const log = screen.getByRole('log', { name: /training activity/i });
+      expect(log).toBeInTheDocument();
+      expect(screen.getByText('Loading dataset...')).toBeInTheDocument();
+      expect(screen.getByText('Training XGBoost model...')).toBeInTheDocument();
+      expect(screen.getByText('45%')).toBeInTheDocument();
+    });
+
+    it('renders nothing when there is no activity', () => {
+      render(
+        <JobProgressCard
+          job={baseJob}
+          isConnected={true}
+          isLoading={false}
+          error={null}
+        />
+      );
+
+      expect(screen.queryByRole('log')).not.toBeInTheDocument();
+    });
+
+    it('scrolls to the newest entry', () => {
+      const { rerender } = render(
+        <JobProgressCard
+          job={baseJob}
+          isConnected={true}
+          isLoading={false}
+          error={null}
+          activity={activity}
+        />
+      );
+
+      const log = screen.getByRole('log', { name: /training activity/i });
+      // jsdom reports zero layout, so fake a scrollable box.
+      Object.defineProperty(log, 'scrollHeight', {
+        value: 500,
+        configurable: true,
+      });
+      Object.defineProperty(log, 'clientHeight', {
+        value: 98,
+        configurable: true,
+      });
+
+      rerender(
+        <JobProgressCard
+          job={baseJob}
+          isConnected={true}
+          isLoading={false}
+          error={null}
+          activity={[
+            ...activity,
+            {
+              id: 2,
+              timestamp: '2025-01-15T15:30:20Z',
+              progress_percent: 60,
+              text: 'Evaluating models...',
+              level: 'info',
+            },
+          ]}
+        />
+      );
+
+      expect(log.scrollTop).toBe(500);
     });
   });
 

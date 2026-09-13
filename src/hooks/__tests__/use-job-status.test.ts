@@ -101,6 +101,70 @@ describe('useJobStatus', () => {
     });
   });
 
+  describe('activity log and algorithms', () => {
+    it('should seed the activity log with the initial message', async () => {
+      const { result } = renderHook(() =>
+        useJobStatus('project-123', 'job-123', {
+          enabled: true,
+          useMock: true,
+        })
+      );
+
+      await waitFor(() => {
+        expect(result.current.activity).toHaveLength(1);
+      });
+
+      expect(result.current.activity[0].text).toBe(
+        'Initializing training job...'
+      );
+      expect(result.current.activity[0].progress_percent).toBe(0);
+      expect(result.current.algorithms).toEqual([]);
+    });
+
+    it('should accumulate activity lines and algorithms as progress arrives', async () => {
+      jest.useFakeTimers();
+
+      try {
+        const { result } = renderHook(() =>
+          useJobStatus('project-123', 'job-123', {
+            enabled: true,
+            useMock: true,
+          })
+        );
+
+        // Three mock ticks: "Loading dataset...", "Preprocessing data...",
+        // "Training Random Forest...".
+        act(() => {
+          jest.advanceTimersByTime(6000);
+        });
+
+        const texts = result.current.activity.map((entry) => entry.text);
+        expect(texts).toEqual([
+          'Initializing training job...',
+          'Loading dataset...',
+          'Preprocessing data...',
+          'Training Random Forest...',
+        ]);
+        expect(result.current.algorithms).toEqual([
+          { key: 'random_forest', label: 'Random Forest', state: 'running' },
+        ]);
+
+        // Next tick starts Gradient Boosting, so Random Forest is done.
+        act(() => {
+          jest.advanceTimersByTime(2000);
+        });
+
+        expect(result.current.algorithms[0]).toEqual({
+          key: 'random_forest',
+          label: 'Random Forest',
+          state: 'completed',
+        });
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
+
   describe('cleanup', () => {
     it('should disconnect on unmount', async () => {
       const { result, unmount } = renderHook(() =>

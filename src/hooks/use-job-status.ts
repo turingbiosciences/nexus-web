@@ -1,7 +1,15 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Job, JobStatus, JobStatusEvent, isJobComplete } from '@/types/job';
+import {
+  Job,
+  JobStatus,
+  JobStatusEvent,
+  JobActivityEntry,
+  AlgorithmProgress,
+  isJobComplete,
+} from '@/types/job';
+import { humanizeJobEvent, reduceAlgorithms } from '@/lib/job-activity';
 import { getApiBaseUrl } from '@/lib/api/get-api-base';
 import { logger } from '@/lib/logger';
 
@@ -19,6 +27,10 @@ interface UseJobStatusOptions {
 interface UseJobStatusReturn {
   /** Current job state */
   job: Job | null;
+  /** Human-readable log of the events seen so far, oldest first */
+  activity: JobActivityEntry[];
+  /** Per-algorithm training progress derived from the event stream */
+  algorithms: AlgorithmProgress[];
   /** Whether SSE connection is active */
   isConnected: boolean;
   /** Whether initial connection is loading */
@@ -33,6 +45,10 @@ interface UseJobStatusReturn {
 const INITIAL_RETRY_DELAY = 1000; // 1 second
 const MAX_RETRY_DELAY = 30000; // 30 seconds
 const MAX_RETRIES = 5;
+
+// Cap the in-memory activity log; long runs emit a lot of progress events and
+// only the tail is ever visible in the scrolling box.
+const MAX_ACTIVITY_ENTRIES = 200;
 
 /**
  * Hook for subscribing to real-time job status updates via SSE
@@ -53,6 +69,8 @@ export function useJobStatus(
   const { enabled = true, onComplete, onError, useMock = false } = options;
 
   const [job, setJob] = useState<Job | null>(null);
+  const [activity, setActivity] = useState<JobActivityEntry[]>([]);
+  const [algorithms, setAlgorithms] = useState<AlgorithmProgress[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +97,7 @@ export function useJobStatus(
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mockIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const jobRef = useRef<Job | null>(null);
+  const activityIdRef = useRef(0);
 
   // Keep job ref in sync
   useEffect(() => {
@@ -102,6 +121,39 @@ export function useJobStatus(
     setIsConnected(false);
   }, []);
 
+  /**
+   * Append one line to the activity log, skipping consecutive duplicates so a
+   * repeated progress message does not fill the box with the same text.
+   */
+  const appendActivity = useCallback(
+    (
+      text: string,
+      level: JobActivityEntry['level'],
+      progressPercent: number | null,
+      timestamp?: string
+    ) => {
+      setActivity((prev) => {
+        const last = prev[prev.length - 1];
+        if (last && last.text === text && last.level === level) {
+          return prev;
+        }
+
+        const entry: JobActivityEntry = {
+          id: activityIdRef.current++,
+          timestamp: timestamp || new Date().toISOString(),
+          progress_percent: progressPercent,
+          text,
+          level,
+        };
+        const next = [...prev, entry];
+        return next.length > MAX_ACTIVITY_ENTRIES
+          ? next.slice(next.length - MAX_ACTIVITY_ENTRIES)
+          : next;
+      });
+    },
+    []
+  );
+
   // Handle incoming SSE events
   const handleEvent = useCallback(
     (event: MessageEvent) => {
@@ -118,6 +170,12 @@ export function useJobStatus(
 
         if (eventType === 'error') {
           const errorMessage = data.error || 'Unknown streaming error';
+          appendActivity(
+            `Error: ${errorMessage}`,
+            'error',
+            null,
+            data.timestamp
+          );
           setError(errorMessage);
           onErrorRef.current?.(errorMessage);
           setJob((prev) =>
@@ -174,6 +232,26 @@ export function useJobStatus(
           return updated;
         });
 
+        // Derive the user-facing activity line and per-algorithm progress.
+        const line = humanizeJobEvent(jobData, eventType);
+        if (line) {
+          const level: JobActivityEntry['level'] =
+            jobData.status === 'completed'
+              ? 'success'
+              : jobData.status === 'failed' || jobData.status === 'cancelled'
+                ? 'error'
+                : 'info';
+          appendActivity(
+            line,
+            level,
+            typeof jobData.progress_percent === 'number'
+              ? jobData.progress_percent
+              : null,
+            jobData.timestamp
+          );
+        }
+        setAlgorithms((prev) => reduceAlgorithms(prev, jobData));
+
         // Handle completion
         if (jobData.type === 'complete' && isJobComplete(jobData.status)) {
           if (jobData.status === 'completed') {
@@ -195,92 +273,111 @@ export function useJobStatus(
         );
       }
     },
-    [projectId, disconnect]
+    [projectId, disconnect, appendActivity]
   );
 
   // Mock SSE for development/testing
-  const startMockSSE = useCallback((pId: string, jId: string) => {
-    setIsLoading(true);
-    setError(null);
+  const startMockSSE = useCallback(
+    (pId: string, jId: string) => {
+      setIsLoading(true);
+      setError(null);
 
-    // Initialize mock job
-    const mockJob: Job = {
-      job_id: jId,
-      project_id: pId,
-      status: 'pending',
-      created_at: new Date().toISOString(),
-      completed_at: null,
-      progress_percent: 0,
-      message: 'Initializing training job...',
-      error: null,
-      best_model: null,
-      metrics: null,
-      models_trained: null,
-      feature_importance: null,
-      results_csv_url: null,
-      graph_svg_url: null,
-    };
-    setJob(mockJob);
-    jobRef.current = mockJob;
-    setIsLoading(false);
-    setIsConnected(true);
+      // Initialize mock job
+      const mockJob: Job = {
+        job_id: jId,
+        project_id: pId,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        completed_at: null,
+        progress_percent: 0,
+        message: 'Initializing training job...',
+        error: null,
+        best_model: null,
+        metrics: null,
+        models_trained: null,
+        feature_importance: null,
+        results_csv_url: null,
+        graph_svg_url: null,
+      };
+      setJob(mockJob);
+      jobRef.current = mockJob;
+      setActivity([]);
+      setAlgorithms([]);
+      activityIdRef.current = 0;
+      appendActivity(mockJob.message, 'info', 0, mockJob.created_at);
+      setIsLoading(false);
+      setIsConnected(true);
 
-    // Simulate progress updates
-    let progress = 0;
-    const messages = [
-      'Loading dataset...',
-      'Preprocessing data...',
-      'Training Random Forest...',
-      'Training Gradient Boosting...',
-      'Training XGBoost...',
-      'Evaluating models...',
-      'Selecting best model...',
-      'Generating feature importance...',
-      'Finalizing results...',
-      'Training complete!',
-    ];
+      // Simulate progress updates
+      let progress = 0;
+      const messages = [
+        'Loading dataset...',
+        'Preprocessing data...',
+        'Training Random Forest...',
+        'Training Gradient Boosting...',
+        'Training XGBoost...',
+        'Evaluating models...',
+        'Selecting best model...',
+        'Generating feature importance...',
+        'Finalizing results...',
+        'Training complete!',
+      ];
 
-    mockIntervalRef.current = setInterval(() => {
-      progress += 10;
-      const messageIndex = Math.min(
-        Math.floor(progress / 10) - 1,
-        messages.length - 1
-      );
-
-      if (progress >= 100) {
-        const completedJob: Job = {
-          ...mockJob,
-          status: 'completed' as JobStatus,
-          progress_percent: 100,
-          message: 'Training complete!',
-          completed_at: new Date().toISOString(),
-          best_model: 'XGBoost',
-          metrics: { accuracy: 0.92, f1_score: 0.89 },
-          models_trained: 5,
-        };
-        setJob(completedJob);
-        jobRef.current = completedJob;
-
-        if (mockIntervalRef.current) {
-          clearInterval(mockIntervalRef.current);
-          mockIntervalRef.current = null;
-        }
-        setIsConnected(false);
-        onCompleteRef.current?.(completedJob);
-      } else {
-        setJob((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: 'running' as JobStatus,
-                progress_percent: progress,
-                message: messages[messageIndex] || 'Processing...',
-              }
-            : null
+      mockIntervalRef.current = setInterval(() => {
+        progress += 10;
+        const messageIndex = Math.min(
+          Math.floor(progress / 10) - 1,
+          messages.length - 1
         );
-      }
-    }, 2000); // Update every 2 seconds for demo
-  }, []);
+
+        if (progress >= 100) {
+          const completedJob: Job = {
+            ...mockJob,
+            status: 'completed' as JobStatus,
+            progress_percent: 100,
+            message: 'Training complete!',
+            completed_at: new Date().toISOString(),
+            best_model: 'XGBoost',
+            metrics: { accuracy: 0.92, f1_score: 0.89 },
+            models_trained: 5,
+          };
+          setJob(completedJob);
+          jobRef.current = completedJob;
+          appendActivity(completedJob.message, 'success', 100);
+          setAlgorithms((prev) =>
+            reduceAlgorithms(prev, {
+              status: completedJob.status,
+              message: completedJob.message,
+            })
+          );
+
+          if (mockIntervalRef.current) {
+            clearInterval(mockIntervalRef.current);
+            mockIntervalRef.current = null;
+          }
+          setIsConnected(false);
+          onCompleteRef.current?.(completedJob);
+        } else {
+          const message = messages[messageIndex] || 'Processing...';
+          setJob((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  status: 'running' as JobStatus,
+                  progress_percent: progress,
+                  message,
+                }
+              : null
+          );
+          appendActivity(message, 'info', progress);
+          setAlgorithms((prev) =>
+            reduceAlgorithms(prev, { status: 'running', message })
+          );
+        }
+      }, 2000); // Update every 2 seconds for demo
+    },
+    [appendActivity]
+  );
 
   // Effect to manage connection lifecycle
   useEffect(() => {
@@ -292,6 +389,9 @@ export function useJobStatus(
     // not when reconnecting after a transient drop (retryKey change).
     if (jobId !== prevJobIdRef.current) {
       setJob(null);
+      setActivity([]);
+      setAlgorithms([]);
+      activityIdRef.current = 0;
       retryCountRef.current = 0;
       prevJobIdRef.current = jobId;
     }
@@ -398,6 +498,8 @@ export function useJobStatus(
 
   return {
     job,
+    activity,
+    algorithms,
     isConnected,
     isLoading,
     error,

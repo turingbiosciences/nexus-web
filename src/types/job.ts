@@ -44,6 +44,40 @@ export interface JobStatusEvent {
   message: string;
   error?: string;
   timestamp: string;
+  /**
+   * Algorithm currently being trained, if the backend reports it. When absent
+   * it is inferred from `message`.
+   */
+  current_algorithm?: string;
+  /** Algorithms already finished, if the backend reports them. */
+  completed_algorithms?: string[];
+}
+
+/**
+ * A single human-readable line in the live activity log shown under the
+ * progress bar.
+ */
+export interface JobActivityEntry {
+  /** Monotonic id, unique within one job stream. */
+  id: number;
+  /** ISO timestamp of the originating event. */
+  timestamp: string;
+  /** Progress at the time of the event, when the event carried one. */
+  progress_percent: number | null;
+  /** Human-readable description of what happened. */
+  text: string;
+  level: 'info' | 'success' | 'error';
+}
+
+/**
+ * Training progress for a single algorithm in the run.
+ */
+export interface AlgorithmProgress {
+  /** snake_case identifier, e.g. `random_forest`. */
+  key: string;
+  /** Display label, e.g. `Random Forest`. */
+  label: string;
+  state: 'running' | 'completed' | 'failed';
 }
 
 /**

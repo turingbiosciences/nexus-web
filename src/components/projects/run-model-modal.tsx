@@ -14,7 +14,8 @@ interface RunModelModalProps {
     datasetId: string,
     targetColumn: string,
     excludeColumns: string[],
-    earlyStop: boolean
+    earlyStop: boolean,
+    enableParsimonious: boolean
   ) => void;
 }
 
@@ -28,6 +29,8 @@ export function RunModelModal({
   const [targetColumn, setTargetColumn] = useState<string>('');
   const [excludeColumns, setExcludeColumns] = useState<string>('');
   const [earlyStop, setEarlyStop] = useState<boolean>(false);
+  // The parsimonious re-run is the recommended path, so it is opt-out.
+  const [enableParsimonious, setEnableParsimonious] = useState<boolean>(true);
 
   // Fetch latest 3 datasets
   const { data: datasetsData, isLoading } = useDatasets(projectId, {
@@ -51,6 +54,7 @@ export function RunModelModal({
       setTargetColumn('');
       setExcludeColumns('');
       setEarlyStop(false);
+      setEnableParsimonious(true);
     }
   }, [isOpen]);
 
@@ -66,7 +70,8 @@ export function RunModelModal({
         selectedDatasetId,
         targetColumn,
         excludeColumnsArray,
-        earlyStop
+        earlyStop,
+        enableParsimonious
       );
       onClose();
     }
@@ -175,6 +180,30 @@ export function RunModelModal({
             <p className="text-xs text-gray-500 mt-0.5">
               Stop early when ROC AUC reaches 1.0. Faster but skips full ECE /
               pMad comparison across all configurations.
+            </p>
+          </label>
+        </div>
+
+        {/* Parsimonious Re-run Toggle */}
+        <div className="flex items-start gap-3">
+          <input
+            id="enable-parsimonious"
+            type="checkbox"
+            checked={enableParsimonious}
+            onChange={(e) => setEnableParsimonious(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <label
+            htmlFor="enable-parsimonious"
+            className="text-sm cursor-pointer"
+          >
+            <span className="font-medium text-gray-700">
+              Parsimonious Re-run
+            </span>
+            <p className="text-xs text-gray-500 mt-0.5">
+              After the main run, retrain using only the features that converge
+              across all models. Confirms a true signal rather than
+              model-specific noise, at the cost of extra training time.
             </p>
           </label>
         </div>

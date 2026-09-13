@@ -103,6 +103,8 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
   // Subscribe to job status updates via SSE
   const {
     job: activeJob,
+    activity: jobActivity,
+    algorithms: jobAlgorithms,
     isConnected: isJobConnected,
     isLoading: isJobLoading,
     error: jobError,
@@ -158,7 +160,8 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
     datasetId: string,
     targetColumn: string,
     excludeColumns: string[],
-    earlyStop: boolean
+    earlyStop: boolean,
+    enableParsimonious: boolean
   ) => {
     if (!project || !isAuthenticated) return;
 
@@ -178,6 +181,7 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
             exclude_columns: excludeColumns,
             exclude_rows: [],
             early_stop_on_perfect_auc: earlyStop,
+            enable_parsimonious: enableParsimonious,
           }),
         }
       );
@@ -294,6 +298,8 @@ export function ProjectDetailsClient({ projectId }: ProjectDetailsClientProps) {
             isConnected={isJobConnected}
             isLoading={isJobLoading}
             error={jobError}
+            activity={jobActivity}
+            algorithms={jobAlgorithms}
             onDismiss={handleDismissJob}
           />
         )}

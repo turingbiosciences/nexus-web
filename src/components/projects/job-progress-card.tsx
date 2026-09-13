@@ -1,9 +1,139 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Job, isJobRunning, isJobComplete } from '@/types/job';
-import { Loader2, CheckCircle, XCircle, Clock, Activity } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  Job,
+  JobActivityEntry,
+  AlgorithmProgress,
+  isJobRunning,
+  isJobComplete,
+} from '@/types/job';
+import {
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Activity,
+  Check,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
+/** Number of log lines visible in the activity box before it scrolls. */
+const ACTIVITY_VISIBLE_LINES = 5;
+/** Line height of a log line in px; must match the `leading-[18px]` below. */
+const ACTIVITY_LINE_HEIGHT = 18;
+
+/**
+ * Row of chips showing which algorithms have finished training, so the user
+ * gets a quick heads-up on progress without reading the log.
+ */
+function AlgorithmChips({ algorithms }: { algorithms: AlgorithmProgress[] }) {
+  if (algorithms.length === 0) return null;
+
+  const completedCount = algorithms.filter(
+    (a) => a.state === 'completed'
+  ).length;
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="text-xs text-gray-500">
+        Algorithms ({completedCount}/{algorithms.length} complete):
+      </span>
+      {algorithms.map((algo) => {
+        const styles =
+          algo.state === 'completed'
+            ? 'bg-green-100 text-green-800 border-green-200'
+            : algo.state === 'failed'
+              ? 'bg-red-100 text-red-800 border-red-200'
+              : 'bg-blue-100 text-blue-800 border-blue-200';
+
+        return (
+          <span
+            key={algo.key}
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${styles}`}
+            title={`${algo.label}: ${algo.state}`}
+          >
+            {algo.state === 'completed' && <Check className="h-3 w-3" />}
+            {algo.state === 'failed' && <XCircle className="h-3 w-3" />}
+            {algo.state === 'running' && (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            )}
+            {algo.label}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Scrolling, human-readable log of the most recent SSE events.
+ *
+ * Auto-scrolls to the newest line, unless the user has scrolled up to read
+ * back through the history.
+ */
+function ActivityLog({ entries }: { entries: JobActivityEntry[] }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const stickToBottomRef = useRef(true);
+
+  const handleScroll = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    // 4px of slack so a sub-pixel scroll position still counts as "at bottom".
+    stickToBottomRef.current =
+      el.scrollHeight - el.scrollTop - el.clientHeight < 4;
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !stickToBottomRef.current) return;
+    el.scrollTop = el.scrollHeight;
+  }, [entries]);
+
+  if (entries.length === 0) return null;
+
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return Number.isNaN(date.getTime())
+      ? '--:--:--'
+      : date.toLocaleTimeString([], { hour12: false });
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      onScroll={handleScroll}
+      role="log"
+      aria-live="polite"
+      aria-label="Training activity"
+      className="overflow-y-auto rounded-md border border-gray-200 bg-white px-2 py-1 font-mono text-[11px] leading-[18px]"
+      style={{ maxHeight: ACTIVITY_VISIBLE_LINES * ACTIVITY_LINE_HEIGHT + 8 }}
+    >
+      {entries.map((entry) => (
+        <div
+          key={entry.id}
+          className={`flex gap-2 whitespace-pre-wrap break-words ${
+            entry.level === 'error'
+              ? 'text-red-700'
+              : entry.level === 'success'
+                ? 'text-green-700'
+                : 'text-gray-600'
+          }`}
+        >
+          <span className="shrink-0 text-gray-400">
+            {formatTimestamp(entry.timestamp)}
+          </span>
+          {entry.progress_percent !== null && (
+            <span className="shrink-0 tabular-nums text-gray-400">
+              {entry.progress_percent}%
+            </span>
+          )}
+          <span>{entry.text}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 interface JobProgressCardProps {
   /** Current job state */
@@ -14,6 +144,10 @@ interface JobProgressCardProps {
   isLoading: boolean;
   /** Current error message */
   error: string | null;
+  /** Human-readable log of recent SSE events, oldest first */
+  activity?: JobActivityEntry[];
+  /** Per-algorithm training progress derived from the event stream */
+  algorithms?: AlgorithmProgress[];
   /** Optional callback to cancel the job */
   onCancel?: () => void;
   /** Optional callback to dismiss the card */
@@ -28,6 +162,8 @@ export function JobProgressCard({
   isConnected,
   isLoading,
   error,
+  activity = [],
+  algorithms = [],
   onCancel,
   onDismiss,
 }: JobProgressCardProps) {
@@ -221,6 +357,12 @@ export function JobProgressCard({
               style={{ width: `${progress}%` }}
             />
           </div>
+
+          {/* Completed / in-flight algorithms */}
+          <AlgorithmChips algorithms={algorithms} />
+
+          {/* Live, human-readable feed of the latest stream events */}
+          <ActivityLog entries={activity} />
         </div>
 
         {/* Error message */}
