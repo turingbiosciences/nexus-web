@@ -78,6 +78,11 @@ export interface AlgorithmProgress {
   /** Display label, e.g. `Random Forest`. */
   label: string;
   state: 'running' | 'completed' | 'failed';
+  /**
+   * Work units finished out of the total for this algorithm, when the message
+   * reports them (e.g. "Trained 190/648 configs"). Null when unknown.
+   */
+  progress: { done: number; total: number } | null;
 }
 
 /**
