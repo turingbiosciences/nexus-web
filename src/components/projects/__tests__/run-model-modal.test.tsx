@@ -256,9 +256,96 @@ describe('RunModelModal', () => {
         'ds-1',
         'outcome',
         ['id', 'timestamp'],
-        false
+        false,
+        true
       );
       expect(mockOnClose).toHaveBeenCalled();
+    });
+
+    it('defaults the parsimonious re-run toggle to on', () => {
+      render(
+        <RunModelModal
+          isOpen={true}
+          onClose={mockOnClose}
+          projectId="proj-1"
+          onConfirm={mockOnConfirm}
+        />
+      );
+
+      expect(
+        screen.getByRole('checkbox', { name: /parsimonious re-run/i })
+      ).toBeChecked();
+    });
+
+    it('passes the parsimonious flag as false when the toggle is cleared', () => {
+      render(
+        <RunModelModal
+          isOpen={true}
+          onClose={mockOnClose}
+          projectId="proj-1"
+          onConfirm={mockOnConfirm}
+        />
+      );
+
+      fireEvent.change(screen.getByLabelText('Select Dataset'), {
+        target: { value: 'ds-1' },
+      });
+      fireEvent.change(screen.getByLabelText('Target Column'), {
+        target: { value: 'outcome' },
+      });
+
+      fireEvent.click(
+        screen.getByRole('checkbox', { name: /parsimonious re-run/i })
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /confirm/i }));
+
+      expect(mockOnConfirm).toHaveBeenCalledWith(
+        'ds-1',
+        'outcome',
+        [],
+        false,
+        false
+      );
+    });
+
+    it('resets the parsimonious toggle back to on when reopened', () => {
+      const { rerender } = render(
+        <RunModelModal
+          isOpen={true}
+          onClose={mockOnClose}
+          projectId="proj-1"
+          onConfirm={mockOnConfirm}
+        />
+      );
+
+      fireEvent.click(
+        screen.getByRole('checkbox', { name: /parsimonious re-run/i })
+      );
+      expect(
+        screen.getByRole('checkbox', { name: /parsimonious re-run/i })
+      ).not.toBeChecked();
+
+      rerender(
+        <RunModelModal
+          isOpen={false}
+          onClose={mockOnClose}
+          projectId="proj-1"
+          onConfirm={mockOnConfirm}
+        />
+      );
+      rerender(
+        <RunModelModal
+          isOpen={true}
+          onClose={mockOnClose}
+          projectId="proj-1"
+          onConfirm={mockOnConfirm}
+        />
+      );
+
+      expect(
+        screen.getByRole('checkbox', { name: /parsimonious re-run/i })
+      ).toBeChecked();
     });
 
     it('disables target and exclude inputs when no dataset is selected', () => {
