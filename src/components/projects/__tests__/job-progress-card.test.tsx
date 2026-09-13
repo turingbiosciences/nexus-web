@@ -261,8 +261,18 @@ describe('JobProgressCard', () => {
 
   describe('Algorithm Chips', () => {
     const algorithms: AlgorithmProgress[] = [
-      { key: 'random_forest', label: 'Random Forest', state: 'completed' },
-      { key: 'xgboost', label: 'XGBoost', state: 'running' },
+      {
+        key: 'random_forest',
+        label: 'Random Forest',
+        state: 'completed',
+        progress: null,
+      },
+      {
+        key: 'xgboost',
+        label: 'XGBoost',
+        state: 'running',
+        progress: { done: 190, total: 648 },
+      },
     ];
 
     it('lists algorithms with a completed count', () => {
@@ -281,6 +291,20 @@ describe('JobProgressCard', () => {
       expect(
         screen.getByText('Algorithms (1/2 complete):')
       ).toBeInTheDocument();
+    });
+
+    it('shows work counts on a running algorithm', () => {
+      render(
+        <JobProgressCard
+          job={baseJob}
+          isConnected={true}
+          isLoading={false}
+          error={null}
+          algorithms={algorithms}
+        />
+      );
+
+      expect(screen.getByText('190/648')).toBeInTheDocument();
     });
 
     it('renders nothing when no algorithms are known yet', () => {
