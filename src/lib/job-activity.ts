@@ -68,18 +68,29 @@ const ALGORITHMS: AlgorithmDefinition[] = [
 const ALGORITHM_BY_KEY = new Map(ALGORITHMS.map((a) => [a.key, a]));
 
 /**
+ * The stream tags each message with the algorithm it is about, e.g.
+ * "[xgboost] Trained 190/648 configs." That tag is authoritative -- prose
+ * matching is only a fallback for untagged messages.
+ */
+const ALGORITHM_TAG = /^\s*\[([A-Za-z0-9_-]+)\]/;
+
+/**
+ * Work units reported in the message, e.g. "190/648 configs" or
+ * "30/150 trials". Gives a real completion signal rather than a guess.
+ */
+const WORK_COUNTS = /\b(\d+)\s*\/\s*(\d+)\b/;
+
+/**
  * A quantity in the message means work is still under way, even when the word
- * "complete" appears: "Training XGBoost - 45% complete" and "Random Forest:
- * 300/500 trees trained" are both progress, not completion. This check runs
- * before DONE_PHRASE for that reason.
+ * "complete" appears: "[catboost] Completed 30/150 trials" is progress, not
+ * completion. This check runs before DONE_PHRASE for that reason.
  */
 const PROGRESS_QUANTITY = /\d+\s*%|\b\d+\s*(?:\/|of)\s*\d+\b/i;
 
 /**
  * Words that mean the named algorithm has finished. Deliberately narrow:
  * falsely showing a chip as complete is worse than showing it as still
- * running, since a missed completion self-corrects when the next algorithm
- * starts or the job ends.
+ * running, since a missed completion self-corrects when the job ends.
  */
 const DONE_PHRASE = /\b(complete|completed|finished)\b/i;
 
@@ -149,14 +160,67 @@ export function detectAlgorithm(message: string | undefined): string | null {
 }
 
 /**
+ * Read the leading "[algorithm]" tag, which the stream puts on every
+ * algorithm-specific message.
+ *
+ * @returns the algorithm key, or null when the message carries no tag
+ */
+export function parseAlgorithmTag(message: string | undefined): string | null {
+  const match = message ? ALGORITHM_TAG.exec(message) : null;
+  return match ? toKey(match[1]) : null;
+}
+
+/**
+ * Read the "done/total" work counts a message reports, e.g. "Trained 190/648
+ * configs" or "Completed 30/150 trials".
+ *
+ * @returns the counts, or null when the message reports none
+ */
+export function parseWorkCounts(
+  message: string | undefined
+): { done: number; total: number } | null {
+  const match = message ? WORK_COUNTS.exec(message) : null;
+  if (!match) return null;
+
+  const done = Number(match[1]);
+  const total = Number(match[2]);
+  // A zero or inverted total is not a usable denominator.
+  if (!Number.isFinite(done) || !Number.isFinite(total) || total <= 0) {
+    return null;
+  }
+  return { done, total };
+}
+
+/**
  * Decide whether a message describes an algorithm that is still working or one
  * that has finished.
  */
 function inferState(message: string): AlgorithmProgress['state'] {
+  // Real counts beat any wording: 190 of 648 is running however it is phrased.
+  const counts = parseWorkCounts(message);
+  if (counts) {
+    return counts.done >= counts.total ? 'completed' : 'running';
+  }
+
   // A progress quantity outranks any "complete" wording in the same message.
   if (PROGRESS_QUANTITY.test(message)) return 'running';
   if (DONE_PHRASE.test(message)) return 'completed';
   return 'running';
+}
+
+/**
+ * Swap a leading "[xgboost]" tag for its display label, so log lines read as
+ * prose: "XGBoost - Trained 190/648 configs."
+ */
+function prettifyTag(message: string | undefined): string | undefined {
+  if (!message) return message;
+
+  const match = ALGORITHM_TAG.exec(message);
+  if (!match) return message;
+
+  const rest = message.slice(match[0].length).trim();
+  const label = algorithmLabel(match[1]);
+  return rest ? `${label} - ${rest}` : label;
 }
 
 /**
@@ -177,7 +241,7 @@ export function humanizeJobEvent(
     return `Error: ${event.error || 'Unknown streaming error'}`;
   }
 
-  const message = event.message?.trim();
+  const message = prettifyTag(event.message?.trim());
 
   if (event.status === 'completed') {
     return message || 'Training completed successfully.';
@@ -216,16 +280,29 @@ export function reduceAlgorithms(
   let next = previous.map((algo) => ({ ...algo }));
   let changed = false;
 
-  const upsert = (key: string, state: AlgorithmProgress['state']) => {
+  const upsert = (
+    key: string,
+    state: AlgorithmProgress['state'],
+    progress: AlgorithmProgress['progress'] = null
+  ) => {
     const existing = next.find((algo) => algo.key === key);
     if (!existing) {
-      next.push({ key, label: algorithmLabel(key), state });
+      next.push({ key, label: algorithmLabel(key), state, progress });
       changed = true;
       return;
     }
+
     // Never walk an algorithm backwards out of a terminal state.
     if (existing.state === 'running' && existing.state !== state) {
       existing.state = state;
+      changed = true;
+    }
+    // Counts only ever move forward, so ignore a stale out-of-order message.
+    if (
+      progress &&
+      (!existing.progress || progress.done > existing.progress.done)
+    ) {
+      existing.progress = progress;
       changed = true;
     }
   };
@@ -236,27 +313,33 @@ export function reduceAlgorithms(
   }
 
   const message = event.message ?? '';
+  const tagged = parseAlgorithmTag(message);
 
   if (event.current_algorithm) {
     // The backend told us exactly what is running; trust it.
-    upsert(toKey(event.current_algorithm), 'running');
+    upsert(toKey(event.current_algorithm), 'running', parseWorkCounts(message));
+  } else if (tagged) {
+    // The "[algorithm]" tag is authoritative. Note that the stream interleaves
+    // algorithms -- a catboost message can land between two xgboost ones -- so
+    // a different tag is NOT evidence that the previous algorithm finished.
+    // Completion comes from the counts reaching their total, or from the job
+    // reaching a terminal state below.
+    upsert(tagged, inferState(message), parseWorkCounts(message));
   } else {
     const mentioned = detectAlgorithms(message);
 
-    // A message naming several algorithms ("Comparing Random Forest, XGBoost")
-    // is a summary, not a statement about one algorithm's state. Guessing which
-    // it refers to is how chips end up marked complete while still training,
-    // so leave the list alone.
+    // Fallback for untagged messages. One naming several algorithms
+    // ("Comparing Random Forest, XGBoost") is a summary, not a statement about
+    // any one of them, so leave the list alone.
     if (mentioned.length === 1) {
       const current = mentioned[0];
       const state = inferState(message);
 
       if (state === 'completed') {
-        upsert(current, 'completed');
+        upsert(current, 'completed', parseWorkCounts(message));
       } else {
-        // Only conclude the pipeline moved on when this message actually says
-        // work on the new algorithm began. A passing mention is not evidence
-        // that anything else finished.
+        // Without tags there is no interleaving signal, so a message saying
+        // work on a new algorithm began does imply the previous one finished.
         if (STARTED_PHRASE.test(message)) {
           for (const algo of next) {
             if (algo.state === 'running' && algo.key !== current) {
@@ -265,7 +348,7 @@ export function reduceAlgorithms(
             }
           }
         }
-        upsert(current, 'running');
+        upsert(current, 'running', parseWorkCounts(message));
       }
     }
   }

@@ -2,6 +2,8 @@ import {
   algorithmLabel,
   detectAlgorithm,
   detectAlgorithms,
+  parseAlgorithmTag,
+  parseWorkCounts,
   humanizeJobEvent,
   reduceAlgorithms,
 } from '../job-activity';
@@ -89,6 +91,143 @@ describe('humanizeJobEvent', () => {
   });
 });
 
+describe('parseAlgorithmTag', () => {
+  it('reads the leading tag', () => {
+    expect(parseAlgorithmTag('[xgboost] Trained 190/648 configs.')).toBe(
+      'xgboost'
+    );
+    expect(parseAlgorithmTag('[catboost] Completed 30/150 trials.')).toBe(
+      'catboost'
+    );
+  });
+
+  it('returns null for an untagged message', () => {
+    expect(parseAlgorithmTag('Training XGBoost...')).toBeNull();
+    expect(parseAlgorithmTag(undefined)).toBeNull();
+  });
+});
+
+describe('parseWorkCounts', () => {
+  it('reads done/total counts', () => {
+    expect(parseWorkCounts('[xgboost] Trained 190/648 configs.')).toEqual({
+      done: 190,
+      total: 648,
+    });
+  });
+
+  it('ignores a message with no counts', () => {
+    expect(parseWorkCounts('[xgboost] Best ROC: 1.0000')).toBeNull();
+  });
+
+  it('rejects a zero denominator', () => {
+    expect(parseWorkCounts('Trained 0/0 configs')).toBeNull();
+  });
+});
+
+// The exact message shapes the stream emits, captured from a live run.
+describe('reduceAlgorithms with real stream messages', () => {
+  const LIVE_MESSAGES = [
+    '[xgboost] Trained 190/648 configs. Best ROC: 1.0000',
+    '[xgboost] Trained 210/648 configs. Best ROC: 1.0000',
+    '[catboost] Completed 30/150 trials. Best ROC AUC: 1.0000',
+    '[xgboost] Trained 230/648 configs. Best ROC: 1.0000',
+  ];
+
+  const replay = (messages: string[]) =>
+    messages.reduce<AlgorithmProgress[]>(
+      (state, message) =>
+        reduceAlgorithms(state, { status: 'running', message }),
+      []
+    );
+
+  it('keeps both algorithms running through an interleaved run', () => {
+    const state = replay(LIVE_MESSAGES);
+
+    expect(state).toEqual([
+      {
+        key: 'xgboost',
+        label: 'XGBoost',
+        state: 'running',
+        progress: { done: 230, total: 648 },
+      },
+      {
+        key: 'catboost',
+        label: 'CatBoost',
+        state: 'running',
+        progress: { done: 30, total: 150 },
+      },
+    ]);
+  });
+
+  it('does not complete xgboost when a catboost message lands between its updates', () => {
+    const state = replay(LIVE_MESSAGES.slice(0, 3));
+
+    expect(state.find((a) => a.key === 'xgboost')?.state).toBe('running');
+  });
+
+  it('reads "Completed 30/150 trials" as progress, not completion', () => {
+    const state = replay([LIVE_MESSAGES[2]]);
+
+    expect(state[0]).toEqual({
+      key: 'catboost',
+      label: 'CatBoost',
+      state: 'running',
+      progress: { done: 30, total: 150 },
+    });
+  });
+
+  it('completes an algorithm once its counts reach the total', () => {
+    const state = replay([
+      '[xgboost] Trained 600/648 configs. Best ROC: 1.0000',
+      '[xgboost] Trained 648/648 configs. Best ROC: 1.0000',
+    ]);
+
+    expect(state[0].state).toBe('completed');
+  });
+
+  it('ignores a stale out-of-order count', () => {
+    const state = replay([
+      '[xgboost] Trained 230/648 configs.',
+      '[xgboost] Trained 190/648 configs.',
+    ]);
+
+    expect(state[0].progress).toEqual({ done: 230, total: 648 });
+  });
+
+  it('completes everything still running when the job finishes', () => {
+    let state = replay(LIVE_MESSAGES);
+    state = reduceAlgorithms(state, {
+      status: 'completed',
+      message: 'Training complete!',
+    });
+
+    expect(state.map((a) => a.state)).toEqual(['completed', 'completed']);
+  });
+});
+
+describe('humanizeJobEvent with real stream messages', () => {
+  it('swaps the tag for the display label', () => {
+    expect(
+      humanizeJobEvent(
+        {
+          status: 'running',
+          message: '[xgboost] Trained 190/648 configs. Best ROC: 1.0000',
+        },
+        'progress'
+      )
+    ).toBe('XGBoost - Trained 190/648 configs. Best ROC: 1.0000');
+  });
+
+  it('leaves an untagged message alone', () => {
+    expect(
+      humanizeJobEvent(
+        { status: 'running', message: 'Preprocessing data...' },
+        'progress'
+      )
+    ).toBe('Preprocessing data...');
+  });
+});
+
 describe('reduceAlgorithms', () => {
   it('marks a detected algorithm as running', () => {
     const result = reduceAlgorithms([], {
@@ -97,7 +236,12 @@ describe('reduceAlgorithms', () => {
     });
 
     expect(result).toEqual([
-      { key: 'random_forest', label: 'Random Forest', state: 'running' },
+      {
+        key: 'random_forest',
+        label: 'Random Forest',
+        state: 'running',
+        progress: null,
+      },
     ]);
   });
 
@@ -113,8 +257,13 @@ describe('reduceAlgorithms', () => {
     });
 
     expect(state).toEqual([
-      { key: 'random_forest', label: 'Random Forest', state: 'completed' },
-      { key: 'xgboost', label: 'XGBoost', state: 'running' },
+      {
+        key: 'random_forest',
+        label: 'Random Forest',
+        state: 'completed',
+        progress: null,
+      },
+      { key: 'xgboost', label: 'XGBoost', state: 'running', progress: null },
     ]);
   });
 
@@ -125,7 +274,7 @@ describe('reduceAlgorithms', () => {
     });
 
     expect(state).toEqual([
-      { key: 'xgboost', label: 'XGBoost', state: 'completed' },
+      { key: 'xgboost', label: 'XGBoost', state: 'completed', progress: null },
     ]);
   });
 
@@ -140,7 +289,12 @@ describe('reduceAlgorithms', () => {
     });
 
     expect(state).toEqual([
-      { key: 'catboost', label: 'CatBoost', state: 'completed' },
+      {
+        key: 'catboost',
+        label: 'CatBoost',
+        state: 'completed',
+        progress: null,
+      },
     ]);
   });
 
@@ -167,8 +321,13 @@ describe('reduceAlgorithms', () => {
     });
 
     expect(state).toEqual([
-      { key: 'random_forest', label: 'Random Forest', state: 'completed' },
-      { key: 'xgboost', label: 'XGBoost', state: 'running' },
+      {
+        key: 'random_forest',
+        label: 'Random Forest',
+        state: 'completed',
+        progress: null,
+      },
+      { key: 'xgboost', label: 'XGBoost', state: 'running', progress: null },
     ]);
   });
 
@@ -196,7 +355,7 @@ describe('reduceAlgorithms', () => {
       }
 
       expect(state).toEqual([
-        { key: 'xgboost', label: 'XGBoost', state: 'running' },
+        { key: 'xgboost', label: 'XGBoost', state: 'running', progress: null },
       ]);
     });
 
@@ -227,6 +386,7 @@ describe('reduceAlgorithms', () => {
         key: 'random_forest',
         label: 'Random Forest',
         state: 'running',
+        progress: null,
       });
     });
   });

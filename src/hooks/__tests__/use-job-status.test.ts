@@ -146,7 +146,12 @@ describe('useJobStatus', () => {
           'Training Random Forest...',
         ]);
         expect(result.current.algorithms).toEqual([
-          { key: 'random_forest', label: 'Random Forest', state: 'running' },
+          {
+            key: 'random_forest',
+            label: 'Random Forest',
+            state: 'running',
+            progress: null,
+          },
         ]);
 
         // Next tick starts Gradient Boosting, so Random Forest is done.
@@ -158,6 +163,7 @@ describe('useJobStatus', () => {
           key: 'random_forest',
           label: 'Random Forest',
           state: 'completed',
+          progress: null,
         });
       } finally {
         jest.useRealTimers();
