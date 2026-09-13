@@ -1,6 +1,7 @@
 import {
   algorithmLabel,
   detectAlgorithm,
+  detectAlgorithms,
   humanizeJobEvent,
   reduceAlgorithms,
 } from '../job-activity';
@@ -20,6 +21,25 @@ describe('detectAlgorithm', () => {
   it('returns null when no algorithm is mentioned', () => {
     expect(detectAlgorithm('Preprocessing data...')).toBeNull();
     expect(detectAlgorithm(undefined)).toBeNull();
+  });
+
+  it('picks the algorithm named first in the message, not first in the catalog', () => {
+    // random_forest is defined before xgboost in the catalog.
+    expect(detectAlgorithm('Training XGBoost (Random Forest done)')).toBe(
+      'xgboost'
+    );
+  });
+});
+
+describe('detectAlgorithms', () => {
+  it('lists every algorithm in the order it appears', () => {
+    expect(
+      detectAlgorithms('Comparing Random Forest, XGBoost and LightGBM')
+    ).toEqual(['random_forest', 'xgboost', 'lightgbm']);
+  });
+
+  it('returns an empty list when nothing matches', () => {
+    expect(detectAlgorithms('Preprocessing data...')).toEqual([]);
   });
 });
 
@@ -150,6 +170,75 @@ describe('reduceAlgorithms', () => {
       { key: 'random_forest', label: 'Random Forest', state: 'completed' },
       { key: 'xgboost', label: 'XGBoost', state: 'running' },
     ]);
+  });
+
+  describe('does not mark an algorithm complete while it is still running', () => {
+    it.each([
+      'Training XGBoost - 45% complete',
+      'Training XGBoost (45% complete)',
+      'Random Forest: 300/500 trees trained',
+      'Training CatBoost, iteration 3 of 50 complete',
+      'LightGBM: 2/5 folds finished',
+    ])('treats %s as still running', (message) => {
+      const state = reduceAlgorithms([], { status: 'running', message });
+
+      expect(state).toHaveLength(1);
+      expect(state[0].state).toBe('running');
+    });
+
+    it('keeps an algorithm running across successive progress messages', () => {
+      let state: AlgorithmProgress[] = [];
+      for (const percent of [10, 45, 90]) {
+        state = reduceAlgorithms(state, {
+          status: 'running',
+          message: `Training XGBoost - ${percent}% complete`,
+        });
+      }
+
+      expect(state).toEqual([
+        { key: 'xgboost', label: 'XGBoost', state: 'running' },
+      ]);
+    });
+
+    it('does not complete anything on a message that merely mentions algorithms', () => {
+      const started = reduceAlgorithms([], {
+        status: 'running',
+        message: 'Training Random Forest...',
+      });
+      const after = reduceAlgorithms(started, {
+        status: 'running',
+        message: 'Comparing Random Forest, XGBoost and LightGBM',
+      });
+
+      expect(after).toEqual(started);
+    });
+
+    it('does not complete the running algorithm on a passing mention of another', () => {
+      const started = reduceAlgorithms([], {
+        status: 'running',
+        message: 'Training Random Forest...',
+      });
+      const after = reduceAlgorithms(started, {
+        status: 'running',
+        message: 'XGBoost queued',
+      });
+
+      expect(after[0]).toEqual({
+        key: 'random_forest',
+        label: 'Random Forest',
+        state: 'running',
+      });
+    });
+  });
+
+  it('attributes the message to the algorithm named first, not the catalog order', () => {
+    const state = reduceAlgorithms([], {
+      status: 'running',
+      message: 'Training XGBoost, Random Forest finished',
+    });
+
+    // Two algorithms named: ambiguous, so nothing is inferred either way.
+    expect(state).toEqual([]);
   });
 
   it('returns the same array reference when nothing changed', () => {
