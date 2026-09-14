@@ -43,6 +43,40 @@ export interface ModelConfig {
 
   feature_importance?: unknown;
   shap_importance?: Record<string, number> | null;
+  confusion?: ConfusionMatrix | null;
+}
+
+/**
+ * One class's row in a confusion matrix summary.
+ */
+export interface ConfusionPerClass {
+  label: number;
+  name: string;
+  support: number;
+  precision: number;
+  recall: number;
+  f1: number;
+}
+
+/**
+ * A model's confusion matrix, computed on the worker and sent as numbers.
+ *
+ * Deliberately not an image: a k-class matrix is k^2 integers, which is
+ * smaller than the PNG would be and leaves nothing to store or expire.
+ *
+ * `counts[i][j]` is the number of samples whose true class is `labels[i]` and
+ * whose predicted class is `labels[j]` -- rows are truth, columns are
+ * predictions. `rates` is the same matrix normalised by row total, which is
+ * the view that survives class imbalance.
+ */
+export interface ConfusionMatrix {
+  labels: number[];
+  names: string[];
+  counts: number[][];
+  rates: number[][];
+  per_class: ConfusionPerClass[];
+  support: number;
+  accuracy: number;
 }
 
 /**

@@ -17,6 +17,7 @@ import {
   StatisticalAnalysisSection,
   StatisticalAnalysisData,
 } from './statistical-analysis-section';
+import { ConfusionMatrixSection } from './confusion-matrix-section';
 import { ShapImportanceSection } from './shap-importance-section';
 import { ParsimoniousResultsSection } from './parsimonious-results-section';
 import {
@@ -487,6 +488,10 @@ export function ResultsSection({ projectId }: ResultsSectionProps) {
                             {/* Statistical Analysis */}
                             <StatisticalAnalysisSection
                               data={statisticalData}
+                            />
+                            {/* Per-model Confusion Matrix */}
+                            <ConfusionMatrixSection
+                              modelConfigs={modelConfigs}
                             />
                             {/* TreeSHAP Feature Importance */}
                             <ShapImportanceSection
